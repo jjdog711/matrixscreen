@@ -1,0 +1,75 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  
+  <!-- Matrix-style digital rain pattern -->
+  <group android:scaleX="0.8"
+         android:scaleY="0.8"
+         android:pivotX="54"
+         android:pivotY="54">
+    
+    <!-- Background circle for better visibility -->
+    <path
+        android:fillColor="#001100"
+        android:pathData="M54,20 A34,34 0 1,1 54,88 A34,34 0 1,1 54,20 Z"/>
+    
+    <!-- Digital rain streams -->
+    <group>
+      <!-- Stream 1 -->
+      <path android:fillColor="#00FF00"
+            android:pathData="M30,25 L32,25 L32,35 L30,35 Z"/>
+      <path android:fillColor="#00CC00"
+            android:pathData="M30,37 L32,37 L32,47 L30,47 Z"/>
+      <path android:fillColor="#008800"
+            android:pathData="M30,49 L32,49 L32,59 L30,59 Z"/>
+      
+      <!-- Stream 2 -->
+      <path android:fillColor="#00FF00"
+            android:pathData="M42,30 L44,30 L44,40 L42,40 Z"/>
+      <path android:fillColor="#00CC00"
+            android:pathData="M42,42 L44,42 L44,52 L42,52 Z"/>
+      <path android:fillColor="#008800"
+            android:pathData="M42,54 L44,54 L44,64 L42,64 Z"/>
+      <path android:fillColor="#004400"
+            android:pathData="M42,66 L44,66 L44,76 L42,76 Z"/>
+      
+      <!-- Stream 3 -->
+      <path android:fillColor="#00FF00"
+            android:pathData="M54,22 L56,22 L56,32 L54,32 Z"/>
+      <path android:fillColor="#00CC00"
+            android:pathData="M54,34 L56,34 L56,44 L54,44 Z"/>
+      <path android:fillColor="#008800"
+            android:pathData="M54,46 L56,46 L56,56 L54,56 Z"/>
+      <path android:fillColor="#004400"
+            android:pathData="M54,58 L56,58 L56,68 L54,68 Z"/>
+      <path android:fillColor="#002200"
+            android:pathData="M54,70 L56,70 L56,80 L54,80 Z"/>
+      
+      <!-- Stream 4 -->
+      <path android:fillColor="#00FF00"
+            android:pathData="M66,28 L68,28 L68,38 L66,38 Z"/>
+      <path android:fillColor="#00CC00"
+            android:pathData="M66,40 L68,40 L68,50 L66,50 Z"/>
+      <path android:fillColor="#008800"
+            android:pathData="M66,52 L68,52 L68,62 L66,62 Z"/>
+      
+      <!-- Stream 5 -->
+      <path android:fillColor="#00FF00"
+            android:pathData="M78,35 L80,35 L80,45 L78,45 Z"/>
+      <path android:fillColor="#00CC00"
+            android:pathData="M78,47 L80,47 L80,57 L78,57 Z"/>
+      <path android:fillColor="#008800"
+            android:pathData="M78,59 L80,59 L80,69 L78,69 Z"/>
+      <path android:fillColor="#004400"
+            android:pathData="M78,71 L80,71 L80,81 L78,81 Z"/>
+    </group>
+    
+    <!-- Central Matrix character (stylized M) -->
+    <path android:fillColor="#00FF00"
+          android:strokeColor="#FFFFFF"
+          android:strokeWidth="0.5"
+          android:pathData="M45,45 L45,63 M45,45 L54,57 M54,57 L63,45 M63,45 L63,63"/>
+  </group>
+</vector>

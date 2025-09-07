@@ -1,0 +1,35 @@
+# Build & caches
+.gradle/
+**/build/
+local.properties
+.cxx/
+.kotlinc/
+
+# IDE noise
+.idea/
+*.iml
+
+# Large/binary artifacts
+*.apk
+*.aab
+*.zip
+*.tar
+*.tar.gz
+*.keystore
+*.jks
+*.pem
+*.p12
+*.key
+secrets.*
+.env
+
+# Test outputs & reports
+**/reports/
+**/outputs/
+
+# Media (optional)
+**/screenshots/
+**/recordings/
+
+# Node (just in case)
+node_modules/

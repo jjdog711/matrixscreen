@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 
+        Fullscreen theme for immersive experience
+        - NoActionBar: Removes the default action bar/app bar
+        - windowFullscreen: Makes the app fill the entire screen
+        - windowNoTitle: Removes the window title bar
+    -->
+    <style name="Theme.MatrixScreen.Fullscreen" parent="android:Theme.Material.NoActionBar">
+        <!-- Enable fullscreen mode -->
+        <item name="android:windowFullscreen">true</item>
+        
+        <!-- Remove window title -->
+        <item name="android:windowNoTitle">true</item>
+        
+        <!-- Keep screen on (optional for matrix effect) -->
+        <item name="android:keepScreenOn">true</item>
+        
+        <!-- Set black background -->
+        <item name="android:windowBackground">@android:color/black</item>
+        
+        <!-- Hide status bar and navigation bar initially -->
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+</resources>

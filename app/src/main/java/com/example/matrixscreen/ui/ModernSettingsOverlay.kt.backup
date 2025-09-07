@@ -1,0 +1,4010 @@
+package com.example.matrixscreen.ui
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.MatrixColor
+import com.example.matrixscreen.data.SymbolSet
+import com.example.matrixscreen.data.CustomSymbolSet
+import com.example.matrixscreen.ui.theme.FontUtils
+import com.example.matrixscreen.ui.theme.AppTypography
+import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
+import com.example.matrixscreen.ui.theme.rememberColorScheme
+import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
+import com.example.matrixscreen.ui.theme.ModernTextWithGlow
+import com.example.matrixscreen.ui.theme.MatrixColorThemePresets
+import com.example.matrixscreen.ui.theme.ModernButtonWithGlow
+import com.example.matrixscreen.ui.components.MatrixThemeSelector
+
+/**
+ * Reusable labeled slider component with live preview and persistence
+ * Follows the design spec: label left, value right, thin track, dynamic colors
+ */
+@Composable
+private fun LabeledSlider(
+    label: String,
+    valueText: String,
+    value: Float,
+    onValueChangePreview: (Float) -> Unit,          // live preview while dragging
+    onValueChangePersist: (Float) -> Unit,          // persist on release
+    valueRange: ClosedFloatingPointRange<Float>,
+    step: Float,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    var last by remember(value) { mutableStateOf(value) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, style = AppTypography.bodyMedium, color = ui.textPrimary)
+            Text(valueText, style = AppTypography.bodySmall, color = ui.textSecondary)
+        }
+        Slider(
+            value = value,
+            onValueChange = {
+                val v = it.coerceIn(valueRange)
+                last = v
+                onValueChangePreview(v)            // live preview
+            },
+            onValueChangeFinished = { onValueChangePersist(last) }, // ✅ persist final value
+            valueRange = valueRange,
+            steps = ((valueRange.endInclusive - valueRange.start) / step)
+                .toInt().coerceAtLeast(1) - 1,    // ✅ guard against negatives
+            colors = SliderDefaults.colors(
+                thumbColor = ui.primary,
+                activeTrackColor = ui.primary,
+                inactiveTrackColor = ui.borderDim
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("LOW",  style = AppTypography.bodySmall, color = ui.textSecondary)
+            Text("HIGH", style = AppTypography.bodySmall, color = ui.textSecondary)
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Modern compact settings overlay - bottom-anchored, semi-transparent, max-width 340dp
+ */
+@Composable
+fun ModernSettingsOverlay(
+    settingsState: SettingsState,
+    currentSettings: MatrixSettings,
+    livePreviewSettings: MatrixSettings?,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    onBack: () -> Unit,
+    onNavigateUp: () -> Unit,
+    onNavigateDown: () -> Unit,
+    onUpdateLivePreview: (MatrixSettingType, Any) -> Unit,
+    onStartEditing: (MatrixSettingType) -> Unit,
+    onPersistSetting: (MatrixSettingType, Any) -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwipeDown: () -> Unit,
+    onNavigateToCustomSets: () -> Unit,
+    onNavigateToColorSettings: () -> Unit,
+    onResetSettings: () -> Unit,
+    onSaveCustomSymbolSet: ((CustomSymbolSet) -> Unit)? = null,
+    onDeleteCustomSymbolSet: ((String) -> Unit)? = null,
+    onSelectCustomSymbolSet: ((String) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val ui = getSafeUIColorScheme(currentSettings)
+    val optimizedSettings = rememberOptimizedSettings(currentSettings)
+    
+    // Font management now handled by Typography system
+    // No need for font manager initialization
+    
+    // Use live preview settings if available, otherwise use regular settings
+    val displaySettings = livePreviewSettings ?: currentSettings
+    
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(settingsState) {
+                var totalDragX = 0f
+                var totalDragY = 0f
+                val swipeThreshold = 80f // Increased threshold for less sensitivity
+                val gestureRatio = 1.5f // Horizontal must be 1.5x more than vertical to register
+                
+                detectDragGestures(
+                    onDragEnd = { 
+                        // Reset drag totals on end
+                        totalDragX = 0f
+                        totalDragY = 0f
+                    },
+                    onDrag = { _, dragAmount ->
+                        totalDragX += dragAmount.x
+                        totalDragY += dragAmount.y
+                        
+                        when (settingsState) {
+                            is SettingsState.MatrixScreen -> {
+                                // Only handle vertical swipes when on matrix screen
+                                if (kotlin.math.abs(totalDragY) > swipeThreshold && 
+                                    kotlin.math.abs(totalDragY) > kotlin.math.abs(totalDragX) * gestureRatio) {
+                                    if (totalDragY < 0f) {
+                                        onSwipeUp() // Swipe up to show overlay
+                                    } else {
+                                        onSwipeDown() // Swipe down to hide
+                                    }
+                                    totalDragX = 0f
+                                    totalDragY = 0f
+                                }
+                            }
+                            is SettingsState.SettingsList -> {
+                                // Handle vertical swipes to close overlay
+                                if (kotlin.math.abs(totalDragY) > swipeThreshold && 
+                                    kotlin.math.abs(totalDragY) > kotlin.math.abs(totalDragX) * gestureRatio) {
+                                    if (totalDragY > 0f) {
+                                        onSwipeDown() // Swipe down to close
+                                    }
+                                    totalDragX = 0f
+                                    totalDragY = 0f
+                                }
+                            }
+                            is SettingsState.Editing -> {
+                                // Handle horizontal swipes for navigation when editing
+                                if (kotlin.math.abs(totalDragX) > swipeThreshold && 
+                                    kotlin.math.abs(totalDragX) > kotlin.math.abs(totalDragY) * gestureRatio) {
+                                    if (totalDragX < 0f) {
+                                        onNavigateDown() // Swipe left to go to next setting
+                                    } else {
+                                        onNavigateUp() // Swipe right to go to previous setting
+                                    }
+                                    totalDragX = 0f
+                                    totalDragY = 0f
+                                }
+                                // Also handle vertical swipes to close when editing
+                                else if (kotlin.math.abs(totalDragY) > swipeThreshold && 
+                                         kotlin.math.abs(totalDragY) > kotlin.math.abs(totalDragX) * gestureRatio) {
+                                    if (totalDragY > 0f) {
+                                        onSwipeDown() // Swipe down to close
+                                    }
+                                    totalDragX = 0f
+                                    totalDragY = 0f
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+    ) {
+        // Compact bottom-anchored overlay
+        when (settingsState) {
+            is SettingsState.MatrixScreen -> {
+                // Show minimal overlay or nothing
+                CompactOverlayTrigger(
+                    onTap = onSwipeUp,
+                    ui = ui
+                )
+            }
+            is SettingsState.SettingsList -> {
+                CompactSettingsList(
+                    displaySettings = displaySettings,
+                    onSettingSelected = { setting ->
+                        // Start editing the setting
+                        onStartEditing(setting)
+                    },
+                    onBack = onBack,
+                    onNavigateToCustomSets = onNavigateToCustomSets,
+                    onResetSettings = onResetSettings,
+                    ui = ui,
+                    optimizedSettings = optimizedSettings
+                )
+            }
+            is SettingsState.Editing -> {
+                CompactSettingEditor(
+                    setting = settingsState.setting,
+                    currentSettings = currentSettings,
+                    displaySettings = displaySettings,
+                    onUpdateLivePreview = onUpdateLivePreview,
+                    onPersistSetting = onPersistSetting,
+                    onConfirm = onConfirm,
+                    onCancel = onCancel,
+                    onNavigateUp = onNavigateUp,
+                    onNavigateDown = onNavigateDown,
+                    onNavigateToColorSettings = onNavigateToColorSettings,
+                    ui = ui,
+                    onSaveCustomSymbolSet = onSaveCustomSymbolSet,
+                    onDeleteCustomSymbolSet = onDeleteCustomSymbolSet,
+                    onSelectCustomSymbolSet = onSelectCustomSymbolSet
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Minimal overlay trigger when on matrix screen
+ */
+@Composable
+private fun CompactOverlayTrigger(
+    onTap: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                // Double tap to open settings
+            }
+    ) {
+        // Small floating indicator in bottom right
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .size(48.dp),
+            color = ui.overlayBackground,
+            shape = RoundedCornerShape(24.dp),
+            shadowElevation = 4.dp
+        ) {
+            IconButton(
+                onClick = onTap,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = ui.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Compact settings list - bottom-anchored card
+ */
+@Composable
+private fun CompactSettingsList(
+    displaySettings: MatrixSettings,
+    onSettingSelected: (MatrixSettingType) -> Unit,
+    onBack: () -> Unit,
+    onNavigateToCustomSets: () -> Unit,
+    onResetSettings: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Surface(
+            modifier = modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .widthIn(max = 340.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .wrapContentHeight()
+                .navigationBarsPadding()
+                .pointerInput(Unit) {
+                    detectTapGestures(onPress = { /* consume tap to prevent click-through */ })
+                },
+            color = ui.overlayBackground,
+            contentColor = ui.textPrimary,
+            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Header
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+                    ModernTextWithGlow(
+                        text = "SETTINGS",
+                        style = AppTypography.headlineSmall,
+                        color = ui.textPrimary,
+                        settings = optimizedSettings
+                    )
+                    
+                    IconButton(
+            onClick = onBack,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close (or swipe down)",
+                            tint = ui.textSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                
+                
+                // Settings grid
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 300.dp)
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Basic Settings
+                    CompactSettingItem(
+                        title = "Fall Speed",
+                        value = "${(displaySettings.fallSpeed * 100).toInt()}%",
+                        onClick = { onSettingSelected(MatrixSettingType.FallSpeed) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Symbol Set",
+                        value = displaySettings.symbolSet.displayName,
+                        onClick = { onSettingSelected(MatrixSettingType.SymbolSet) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Color & Brightness",
+                        value = if (displaySettings.advancedColorsEnabled) "Advanced" else "Basic",
+                        onClick = { onSettingSelected(MatrixSettingType.ColorAndBrightness) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Font Size",
+                        value = "${displaySettings.fontSize.toInt()}dp",
+                        onClick = { onSettingSelected(MatrixSettingType.FontSize) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Columns",
+                        value = "${displaySettings.columnCount}",
+                        onClick = { onSettingSelected(MatrixSettingType.ColumnCount) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Frame Rate",
+                        value = "${displaySettings.targetFps.toInt()}fps",
+                        onClick = { onSettingSelected(MatrixSettingType.TargetFps) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Trail Length",
+                        value = "${displaySettings.maxTrailLength} chars",
+                        onClick = { onSettingSelected(MatrixSettingType.MaxTrailLength) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Bright Trail",
+                        value = "${displaySettings.maxBrightTrailLength} chars",
+                        onClick = { onSettingSelected(MatrixSettingType.MaxBrightTrailLength) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Glow Intensity",
+                        value = "${(displaySettings.glowIntensity * 100).toInt()}%",
+                        onClick = { onSettingSelected(MatrixSettingType.GlowIntensity) },
+                        ui = ui
+                    )
+                    
+                    
+                    CompactSettingItem(
+                        title = "Jitter Amount",
+                        value = "${displaySettings.jitterAmount.toInt()}px",
+                        onClick = { onSettingSelected(MatrixSettingType.JitterAmount) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Flicker Rate",
+                        value = "${(displaySettings.flickerRate * 100).toInt()}%",
+                        onClick = { onSettingSelected(MatrixSettingType.FlickerRate) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Mutation Rate",
+                        value = "${(displaySettings.mutationRate * 100).toInt()}%",
+                        onClick = { onSettingSelected(MatrixSettingType.MutationRate) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Start Delay",
+                        value = "${displaySettings.columnStartDelay.toInt()}s",
+                        onClick = { onSettingSelected(MatrixSettingType.ColumnStartDelay) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Restart Delay",
+                        value = "${displaySettings.columnRestartDelay.toInt()}s",
+                        onClick = { onSettingSelected(MatrixSettingType.ColumnRestartDelay) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Active %",
+                        value = "${(displaySettings.initialActivePercentage * 100).toInt()}%",
+                        onClick = { onSettingSelected(MatrixSettingType.InitialActivePercentage) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Speed Variation",
+                        value = "${(displaySettings.speedVariationRate * 1000).toInt()}/1000",
+                        onClick = { onSettingSelected(MatrixSettingType.SpeedVariationRate) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Grain Density",
+                        value = "${displaySettings.grainDensity}",
+                        onClick = { onSettingSelected(MatrixSettingType.GrainDensity) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Grain Opacity",
+                        value = "${(displaySettings.grainOpacity * 100).toInt()}%",
+                        onClick = { onSettingSelected(MatrixSettingType.GrainOpacity) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Row Height",
+                        value = "%.2f×".format(displaySettings.rowHeightMultiplier),
+                        onClick = { onSettingSelected(MatrixSettingType.RowHeightMultiplier) },
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Custom Sets",
+                        value = "${displaySettings.savedCustomSets.size} sets",
+                        onClick = onNavigateToCustomSets,
+                        ui = ui
+                    )
+                    
+                    CompactSettingItem(
+                        title = "Reset All",
+                        value = "Restore defaults",
+                        onClick = onResetSettings,
+                        ui = ui
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Compact setting editor - bottom-anchored card
+ */
+@Composable
+private fun CompactSettingEditor(
+    setting: MatrixSettingType,
+    currentSettings: MatrixSettings,
+    displaySettings: MatrixSettings,
+    onUpdateLivePreview: (MatrixSettingType, Any) -> Unit,
+    onPersistSetting: (MatrixSettingType, Any) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    onNavigateUp: () -> Unit,
+    onNavigateDown: () -> Unit,
+    onNavigateToColorSettings: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    onSaveCustomSymbolSet: ((CustomSymbolSet) -> Unit)? = null,
+    onDeleteCustomSymbolSet: ((String) -> Unit)? = null,
+    onSelectCustomSymbolSet: ((String) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Surface(
+            modifier = modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .widthIn(max = 340.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .wrapContentHeight()
+                .navigationBarsPadding()
+                .pointerInput(Unit) {
+                    detectTapGestures(onPress = { /* consume tap to prevent click-through */ })
+                },
+            color = ui.overlayBackground,
+            contentColor = ui.textPrimary,
+            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+        ) {
+    Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .imePadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+                // Header with navigation
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onNavigateUp,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Previous (or swipe right)",
+                            tint = ui.textSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    Text(
+                        text = setting.name.uppercase(),
+                        style = AppTypography.headlineSmall,
+                        color = ui.textPrimary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    IconButton(
+                        onClick = onNavigateDown,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Next (or swipe left)",
+                            tint = ui.textSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                
+                
+                // Setting editor content
+                when (setting) {
+                    // Motion / Performance
+                    MatrixSettingType.FallSpeed -> {
+                        LabeledSlider(
+                            label = "FALL SPEED",
+                            valueText = "%.1f×".format(displaySettings.fallSpeed),
+                            value = displaySettings.fallSpeed,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.5f..5.0f,
+                            step = 0.1f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.TargetFps -> {
+                        LabeledSlider(
+                            label = "TARGET FPS",
+                            valueText = "${displaySettings.targetFps} fps",
+                            value = displaySettings.targetFps.toFloat(),
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 15f..60f,
+                            step = 5f,
+                            ui = ui
+                        )
+                    }
+                    
+                    // Appearance / Geometry
+                    MatrixSettingType.FontSize -> {
+                        LabeledSlider(
+                            label = "FONT SIZE",
+                            valueText = "%.0fdp".format(displaySettings.fontSize),
+                            value = displaySettings.fontSize,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 8f..24f,
+                            step = 0.5f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.ColumnCount -> {
+                        LabeledSlider(
+                            label = "COLUMN COUNT",
+                            valueText = "${displaySettings.columnCount}",
+                            value = displaySettings.columnCount.toFloat(),
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v.toInt()) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v.toInt()) },
+                            valueRange = 50f..150f,
+                            step = 1f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.RowHeightMultiplier -> {
+                        LabeledSlider(
+                            label = "ROW HEIGHT MULTIPLIER",
+                            valueText = "%.2f×".format(displaySettings.rowHeightMultiplier),
+                            value = displaySettings.rowHeightMultiplier,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.7f..1.2f,
+                            step = 0.05f,
+                            ui = ui
+                        )
+                    }
+                    
+                    // Trails / Glow
+                    MatrixSettingType.MaxTrailLength -> {
+                        LabeledSlider(
+                            label = "MAX TRAIL LENGTH",
+                            valueText = "${displaySettings.maxTrailLength} px",
+                            value = displaySettings.maxTrailLength.toFloat(),
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v.toInt()) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v.toInt()) },
+                            valueRange = 20f..100f,
+                            step = 1f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.MaxBrightTrailLength -> {
+                        LabeledSlider(
+                            label = "BRIGHT TRAIL LENGTH",
+                            valueText = "${displaySettings.maxBrightTrailLength} px",
+                            value = displaySettings.maxBrightTrailLength.toFloat(),
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v.toInt()) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v.toInt()) },
+                            valueRange = 2f..15f,
+                            step = 1f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.GlowIntensity -> {
+                        LabeledSlider(
+                            label = "GLOW INTENSITY",
+                            valueText = "%.2f".format(displaySettings.glowIntensity),
+                            value = displaySettings.glowIntensity,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.0f..2.0f,
+                            step = 0.05f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.ColorAndBrightness -> {
+                        // Simple placeholder for now - will implement full functionality
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "🎨 Unified Color & Brightness",
+                                style = AppTypography.bodyMedium,
+                                color = ui.textPrimary
+                            )
+                            
+                            Text(
+                                text = "Color and brightness controls will be integrated here.",
+                                style = AppTypography.bodySmall,
+                                color = ui.textSecondary
+                            )
+                            
+                            Button(
+                                onClick = {
+                                    // For now, just toggle advanced mode
+                                    onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, !displaySettings.advancedColorsEnabled)
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ui.primary,
+                                    contentColor = ui.background
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (displaySettings.advancedColorsEnabled) "Switch to Basic" else "Switch to Advanced",
+                                    style = AppTypography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                    MatrixSettingType.BrightnessControls -> {
+                        BrightnessControlsEditor(
+                            currentSettings = currentSettings,
+                            onUpdateLivePreview = onUpdateLivePreview,
+                            onUpdateBrightnessMultiplier = { level, multiplier ->
+                                // Update the specific brightness multiplier
+                                when (level) {
+                                    4 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(leadBrightnessMultiplier = multiplier))
+                                    3 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(brightTrailBrightnessMultiplier = multiplier))
+                                    2 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(trailBrightnessMultiplier = multiplier))
+                                    1 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(dimTrailBrightnessMultiplier = multiplier))
+                                }
+                            },
+                            onUpdateAlphaMultiplier = { level, multiplier ->
+                                // Update the specific alpha multiplier
+                                when (level) {
+                                    4 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(leadAlphaMultiplier = multiplier))
+                                    3 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(brightTrailAlphaMultiplier = multiplier))
+                                    2 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(trailAlphaMultiplier = multiplier))
+                                    1 -> onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(dimTrailAlphaMultiplier = multiplier))
+                                }
+                            },
+                            onApplyPreset = { presetName ->
+                                // Apply preset - this will be handled by the ViewModel
+                                onUpdateLivePreview(MatrixSettingType.BrightnessControls, currentSettings.copy(brightnessPreset = presetName))
+                            },
+                            ui = ui
+                        )
+                    }
+                    
+                    // Dynamics
+                    MatrixSettingType.JitterAmount -> {
+                        LabeledSlider(
+                            label = "JITTER AMOUNT",
+                            valueText = "%.1f".format(displaySettings.jitterAmount),
+                            value = displaySettings.jitterAmount,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.0f..3.0f,
+                            step = 0.1f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.FlickerRate -> {
+                        LabeledSlider(
+                            label = "FLICKER RATE",
+                            valueText = "%.2f".format(displaySettings.flickerRate),
+                            value = displaySettings.flickerRate,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.0f..0.2f,
+                            step = 0.01f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.MutationRate -> {
+                        LabeledSlider(
+                            label = "MUTATION RATE",
+                            valueText = "%.3f".format(displaySettings.mutationRate),
+                            value = displaySettings.mutationRate,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.0f..0.1f,
+                            step = 0.005f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.SpeedVariationRate -> {
+                        LabeledSlider(
+                            label = "SPEED VARIATION RATE",
+                            valueText = "%.3f".format(displaySettings.speedVariationRate),
+                            value = displaySettings.speedVariationRate,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.0f..0.01f,
+                            step = 0.001f,
+                            ui = ui
+                        )
+                    }
+                    
+                    // Timing
+                    MatrixSettingType.ColumnStartDelay -> {
+                        LabeledSlider(
+                            label = "COLUMN START DELAY",
+                            valueText = "%.2fs".format(displaySettings.columnStartDelay),
+                            value = displaySettings.columnStartDelay,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0f..10f,
+                            step = 0.05f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.ColumnRestartDelay -> {
+                        LabeledSlider(
+                            label = "COLUMN RESTART DELAY",
+                            valueText = "%.2fs".format(displaySettings.columnRestartDelay),
+                            value = displaySettings.columnRestartDelay,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.5f..5.0f,
+                            step = 0.05f,
+                            ui = ui
+                        )
+                    }
+                    
+                    // Population / Grain
+                    MatrixSettingType.InitialActivePercentage -> {
+                        LabeledSlider(
+                            label = "ACTIVE %",
+                            valueText = "${(displaySettings.initialActivePercentage * 100).toInt()}%",
+                            value = displaySettings.initialActivePercentage,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.1f..0.8f,
+                            step = 0.05f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.GrainDensity -> {
+                        LabeledSlider(
+                            label = "GRAIN DENSITY",
+                            valueText = "${displaySettings.grainDensity}",
+                            value = displaySettings.grainDensity.toFloat(),
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v.toInt()) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v.toInt()) },
+                            valueRange = 0f..500f,
+                            step = 10f,
+                            ui = ui
+                        )
+                    }
+                    MatrixSettingType.GrainOpacity -> {
+                        LabeledSlider(
+                            label = "GRAIN OPACITY",
+                            valueText = "%.3f".format(displaySettings.grainOpacity),
+                            value = displaySettings.grainOpacity,
+                            onValueChangePreview = { v -> onUpdateLivePreview(setting, v) },
+                            onValueChangePersist = { v -> onPersistSetting(setting, v) },
+                            valueRange = 0.0f..0.1f,
+                            step = 0.005f,
+                            ui = ui
+                        )
+                    }
+                    
+                    // Non-slider settings
+                    MatrixSettingType.SymbolSet -> {
+                        ModernSymbolSetEditor(
+                            currentSet = displaySettings.symbolSet,
+                            onSetChanged = { onUpdateLivePreview(setting, it) },
+                            ui = ui,
+                            currentSettings = currentSettings,
+                            onSaveCustomSymbolSet = onSaveCustomSymbolSet,
+                            onDeleteCustomSymbolSet = onDeleteCustomSymbolSet,
+                            onSelectCustomSymbolSet = onSelectCustomSymbolSet
+                        )
+                    }
+                    MatrixSettingType.ColorTint -> {
+                        // Link to unified color settings screen
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "🎨 Enhanced Color Settings Available",
+                                style = AppTypography.bodyMedium,
+                                color = ui.textPrimary
+                            )
+                            
+                            Text(
+                                text = "Access the new unified color settings screen with advanced themes, brightness controls, and live preview.",
+                                style = AppTypography.bodySmall,
+                                color = ui.textSecondary
+                            )
+                            
+                            Button(
+                                onClick = {
+                                    // Navigate to the unified color settings screen
+                                    onNavigateToColorSettings()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ui.primary,
+                                    contentColor = ui.background
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Open Color Settings",
+                                    style = AppTypography.labelMedium
+                                )
+                            }
+                        }
+                    }
+                    MatrixSettingType.ColorPicker -> {
+                        // Redirect to unified color settings screen
+                        Text(
+                            text = "Color settings have been moved to the dedicated Color Settings screen",
+                            style = AppTypography.bodyMedium,
+                            color = ui.textSecondary,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                    MatrixSettingType.ResetAll -> {
+                        ModernResetAllEditor(
+                            onResetAll = {
+                                val defaultSettings = MatrixSettings()
+                                // Reset all settings to defaults
+                                onUpdateLivePreview(MatrixSettingType.FallSpeed, defaultSettings.fallSpeed)
+                                onUpdateLivePreview(MatrixSettingType.SymbolSet, defaultSettings.symbolSet)
+                                onUpdateLivePreview(MatrixSettingType.ColorTint, defaultSettings.colorTint)
+                                onUpdateLivePreview(MatrixSettingType.FontSize, defaultSettings.fontSize)
+                                onUpdateLivePreview(MatrixSettingType.ColumnCount, defaultSettings.columnCount)
+                                onUpdateLivePreview(MatrixSettingType.TargetFps, defaultSettings.targetFps)
+                                onUpdateLivePreview(MatrixSettingType.RowHeightMultiplier, defaultSettings.rowHeightMultiplier)
+                                onUpdateLivePreview(MatrixSettingType.MaxTrailLength, defaultSettings.maxTrailLength)
+                                onUpdateLivePreview(MatrixSettingType.MaxBrightTrailLength, defaultSettings.maxBrightTrailLength)
+                                onUpdateLivePreview(MatrixSettingType.GlowIntensity, defaultSettings.glowIntensity)
+                                onUpdateLivePreview(MatrixSettingType.JitterAmount, defaultSettings.jitterAmount)
+                                onUpdateLivePreview(MatrixSettingType.FlickerRate, defaultSettings.flickerRate)
+                                onUpdateLivePreview(MatrixSettingType.MutationRate, defaultSettings.mutationRate)
+                                onUpdateLivePreview(MatrixSettingType.ColumnStartDelay, defaultSettings.columnStartDelay)
+                                onUpdateLivePreview(MatrixSettingType.ColumnRestartDelay, defaultSettings.columnRestartDelay)
+                                onUpdateLivePreview(MatrixSettingType.InitialActivePercentage, defaultSettings.initialActivePercentage)
+                                onUpdateLivePreview(MatrixSettingType.SpeedVariationRate, defaultSettings.speedVariationRate)
+                                onUpdateLivePreview(MatrixSettingType.GrainDensity, defaultSettings.grainDensity)
+                                onUpdateLivePreview(MatrixSettingType.GrainOpacity, defaultSettings.grainOpacity)
+                                onUpdateLivePreview(MatrixSettingType.ColorPicker, false)
+                            },
+                            ui = ui
+                        )
+                    }
+                }
+                
+                // Bottom action bar with icon buttons
+                BottomActionBarIcons(
+                    onConfirm = onConfirm,
+                    onCancel = onCancel,
+                    onReset = { 
+                        // Reset current setting to its default value
+                        val defaultSettings = MatrixSettings()
+                        val defaultValue: Any = when (setting) {
+                            MatrixSettingType.FallSpeed -> defaultSettings.fallSpeed
+                            MatrixSettingType.SymbolSet -> defaultSettings.symbolSet
+                            MatrixSettingType.ColorAndBrightness -> defaultSettings.colorTint
+                            MatrixSettingType.ColorTint -> defaultSettings.colorTint
+                            MatrixSettingType.FontSize -> defaultSettings.fontSize
+                            MatrixSettingType.ColumnCount -> defaultSettings.columnCount
+                            MatrixSettingType.TargetFps -> defaultSettings.targetFps
+                            MatrixSettingType.RowHeightMultiplier -> defaultSettings.rowHeightMultiplier
+                            MatrixSettingType.MaxTrailLength -> defaultSettings.maxTrailLength
+                            MatrixSettingType.MaxBrightTrailLength -> defaultSettings.maxBrightTrailLength
+                            MatrixSettingType.GlowIntensity -> defaultSettings.glowIntensity
+                            MatrixSettingType.BrightnessControls -> defaultSettings.brightnessControlsEnabled
+                            MatrixSettingType.JitterAmount -> defaultSettings.jitterAmount
+                            MatrixSettingType.FlickerRate -> defaultSettings.flickerRate
+                            MatrixSettingType.MutationRate -> defaultSettings.mutationRate
+                            MatrixSettingType.ColumnStartDelay -> defaultSettings.columnStartDelay
+                            MatrixSettingType.ColumnRestartDelay -> defaultSettings.columnRestartDelay
+                            MatrixSettingType.InitialActivePercentage -> defaultSettings.initialActivePercentage
+                            MatrixSettingType.SpeedVariationRate -> defaultSettings.speedVariationRate
+                            MatrixSettingType.GrainDensity -> defaultSettings.grainDensity
+                            MatrixSettingType.GrainOpacity -> defaultSettings.grainOpacity
+                            MatrixSettingType.ColorPicker -> defaultSettings.advancedColorsEnabled
+                            MatrixSettingType.ResetAll -> Unit // No-op for ResetAll
+                        }
+                        onUpdateLivePreview(setting, defaultValue)
+                    },
+                    ui = ui
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Compact setting item for the settings list
+ */
+@Composable
+private fun CompactSettingItem(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        color = ui.backgroundSecondary,
+        shape = RoundedCornerShape(6.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = AppTypography.bodyMedium,
+                color = ui.textPrimary
+            )
+            
+            Text(
+                text = value,
+                style = AppTypography.bodyMedium,
+                color = ui.textAccent
+            )
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Compact slider editor
+ */
+@Composable
+private fun CompactSliderEditor(
+    title: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    formatValue: (Float) -> String,
+    onValueChange: (Float) -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = AppTypography.bodyMedium,
+                color = ui.textPrimary
+            )
+            
+            Text(
+                text = formatValue(value),
+                style = AppTypography.bodyMedium,
+                color = ui.textAccent
+            )
+        }
+        
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = range,
+            colors = SliderDefaults.colors(
+                thumbColor = ui.primary,
+                activeTrackColor = ui.sliderActive,
+                inactiveTrackColor = ui.sliderInactive
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "SMALL",
+                style = AppTypography.bodySmall,
+                color = ui.textSecondary
+            )
+            Text(
+                text = "LARGE",
+                style = AppTypography.bodySmall,
+                color = ui.textSecondary
+            )
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Bottom action bar with icon buttons (≥48dp tap targets)
+ */
+@Composable
+private fun BottomActionBarIcons(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    onReset: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+    ) {
+        IconButton(
+            onClick = onCancel,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "Cancel",
+                tint = ui.buttonCancelText,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        
+        IconButton(
+            onClick = onReset,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                Icons.Default.Refresh,
+                contentDescription = "Reset",
+                tint = ui.buttonCancelText,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        
+        IconButton(
+            onClick = onConfirm,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = "Confirm",
+                tint = ui.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Modern symbol set editor with tab-based interface
+ */
+@Composable
+private fun ModernSymbolSetEditor(
+    currentSet: SymbolSet,
+    onSetChanged: (SymbolSet) -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    currentSettings: MatrixSettings,
+    onSaveCustomSymbolSet: ((CustomSymbolSet) -> Unit)? = null,
+    onDeleteCustomSymbolSet: ((String) -> Unit)? = null,
+    onSelectCustomSymbolSet: ((String) -> Unit)? = null
+) {
+    var selectedTab by remember { mutableStateOf(0) } // 0 = Default, 1 = Custom
+    var showFullScreenEditor by remember { mutableStateOf(false) }
+    var editingCustomSet by remember { mutableStateOf<CustomSymbolSet?>(null) }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 300.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Tab selector
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Default tab
+            Surface(
+                onClick = { selectedTab = 0 },
+                modifier = Modifier.weight(1f),
+                color = if (selectedTab == 0) ui.primary.copy(alpha = 0.2f) else ui.backgroundSecondary,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "Default",
+                    style = AppTypography.bodyMedium,
+                    color = if (selectedTab == 0) ui.primary else ui.textPrimary,
+                    fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                )
+            }
+            
+            // Custom tab
+            Surface(
+                onClick = { selectedTab = 1 },
+                modifier = Modifier.weight(1f),
+                color = if (selectedTab == 1) ui.primary.copy(alpha = 0.2f) else ui.backgroundSecondary,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "Custom",
+                    style = AppTypography.bodyMedium,
+                    color = if (selectedTab == 1) ui.primary else ui.textPrimary,
+                    fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                )
+            }
+        }
+        
+        // Tab content
+        when (selectedTab) {
+            0 -> {
+                // Default symbol sets
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SymbolSet.values().filter { it != SymbolSet.CUSTOM }.forEach { symbolSet ->
+                        val isSelected = symbolSet == currentSet
+                        val backgroundColor by animateColorAsState(
+                            targetValue = if (isSelected) ui.primary.copy(alpha = 0.2f) else ui.backgroundSecondary,
+                            animationSpec = tween(200),
+                            label = "background_color"
+                        )
+                        val borderColor by animateColorAsState(
+                            targetValue = if (isSelected) ui.primary else ui.borderDim,
+                            animationSpec = tween(200),
+                            label = "border_color"
+                        )
+                        
+                        Surface(
+                            onClick = { onSetChanged(symbolSet) },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = backgroundColor,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                // Symbol set name
+                                Text(
+                                    text = symbolSet.displayName,
+                                    style = AppTypography.bodyMedium,
+                                    color = if (isSelected) ui.primary else ui.textPrimary,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                                
+                                // Live character preview
+                                val previewCharacters = symbolSet.effectiveCharacters(currentSettings)
+                                val previewText = if (previewCharacters.length > 20) {
+                                    previewCharacters.take(20) + "..."
+                                } else {
+                                    previewCharacters
+                                }
+                                
+                                Text(
+                                    text = previewText,
+                                    style = AppTypography.bodySmall.copy(
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                    ),
+                                    color = ui.textSecondary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            1 -> {
+                // Custom symbol sets
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Add New button
+                    Surface(
+                        onClick = { 
+                            editingCustomSet = null
+                            showFullScreenEditor = true 
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = ui.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, ui.primary.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add",
+                                tint = ui.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "CREATE NEW SET",
+                                style = AppTypography.bodyMedium,
+                                color = ui.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    // Custom sets list
+                    currentSettings.savedCustomSets.forEach { customSet ->
+                        val isSelected = currentSettings.activeCustomSetId == customSet.id
+                        val backgroundColor by animateColorAsState(
+                            targetValue = if (isSelected) ui.primary.copy(alpha = 0.2f) else ui.backgroundSecondary,
+                            animationSpec = tween(200),
+                            label = "background_color"
+                        )
+                        val borderColor by animateColorAsState(
+                            targetValue = if (isSelected) ui.primary else ui.borderDim,
+                            animationSpec = tween(200),
+                            label = "border_color"
+                        )
+                        
+                        Surface(
+                            onClick = { 
+                                onSelectCustomSymbolSet?.invoke(customSet.id)
+                                onSetChanged(SymbolSet.CUSTOM)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = backgroundColor,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = customSet.name,
+                                        style = AppTypography.bodyMedium,
+                                        color = if (isSelected) ui.primary else ui.textPrimary,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                    
+                                    val previewText = if (customSet.characters.length > 20) {
+                                        customSet.characters.take(20) + "..."
+                                    } else {
+                                        customSet.characters
+                                    }
+                                    
+                                    Text(
+                                        text = previewText,
+                                        style = AppTypography.bodySmall.copy(
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                        ),
+                                        color = ui.textSecondary
+                                    )
+                                }
+                                
+                                IconButton(
+                                    onClick = { 
+                                        editingCustomSet = customSet
+                                        showFullScreenEditor = true 
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "Edit",
+                                        tint = ui.textSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Full-screen custom symbol set editor
+    if (showFullScreenEditor) {
+        ModernCustomSymbolSetFullScreenEditor(
+            customSet = editingCustomSet,
+            onSave = { customSet ->
+                onSaveCustomSymbolSet?.invoke(customSet)
+                showFullScreenEditor = false
+                editingCustomSet = null
+            },
+            onDelete = editingCustomSet?.let { customSet ->
+                {
+                    onDeleteCustomSymbolSet?.invoke(customSet.id)
+                    showFullScreenEditor = false
+                    editingCustomSet = null
+                }
+            },
+            onClose = {
+                showFullScreenEditor = false
+                editingCustomSet = null
+            },
+            ui = ui
+        )
+    }
+}
+
+/**
+ * Modern Matrix theme preset selector with diagonal split previews
+ * Replaces the old color tint system with curated theme presets
+ */
+@Composable
+private fun ModernColorTintEditor(
+    currentSettings: MatrixSettings,
+    onThemeSelected: (com.example.matrixscreen.ui.theme.MatrixColorTheme) -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Select Matrix Theme",
+            style = AppTypography.bodyMedium,
+            color = ui.textPrimary
+        )
+        
+        // Matrix Theme Preset Selector
+        MatrixThemeSelector(
+            currentThemeName = currentSettings.selectedThemeName,
+            onThemeSelected = onThemeSelected
+        )
+    }
+}
+
+/**
+ * Modern color picker editor with Basic/Advanced toggle
+ */
+@Composable
+private fun ModernColorPickerEditor(
+    currentSettings: MatrixSettings,
+    displaySettings: MatrixSettings,
+    onUpdateLivePreview: (MatrixSettingType, Any) -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    var showAdvancedMode by remember { mutableStateOf(displaySettings.advancedColorsEnabled) }
+    
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Mode toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Color Mode",
+                style = AppTypography.bodyMedium,
+                color = ui.textPrimary
+            )
+            
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (showAdvancedMode) "Advanced" else "Basic",
+                    style = AppTypography.bodySmall,
+                    color = ui.textSecondary
+                )
+                
+                IconButton(
+                    onClick = { 
+                        showAdvancedMode = !showAdvancedMode
+                        onUpdateLivePreview(MatrixSettingType.ColorPicker, showAdvancedMode)
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Toggle Advanced Mode",
+                        tint = ui.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+        
+        if (showAdvancedMode) {
+            // Advanced color picker
+            Text(
+                text = "Advanced color customization available in full settings",
+                style = AppTypography.bodySmall,
+                color = ui.textSecondary
+            )
+        } else {
+            // Matrix theme preset selector
+            ModernColorTintEditor(
+                currentSettings = currentSettings,
+                onThemeSelected = { theme -> 
+                    // Direct theme application
+                    onUpdateLivePreview(MatrixSettingType.ColorTint, theme)
+                },
+                ui = ui
+            )
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Modern reset all editor with confirmation
+ */
+@Composable
+private fun ModernResetAllEditor(
+    onResetAll: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    var showConfirmation by remember { mutableStateOf(false) }
+    
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Warning message
+        Text(
+            text = "⚠️ Reset All Settings",
+            style = AppTypography.bodyMedium,
+            color = ui.textPrimary,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+        
+        Text(
+            text = "This will restore all settings to their default values. Custom symbol sets will be preserved.",
+            style = AppTypography.bodySmall,
+            color = ui.textSecondary,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+        
+        // Reset button
+        Surface(
+            onClick = { showConfirmation = true },
+            modifier = Modifier.fillMaxWidth(),
+            color = ui.backgroundSecondary,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, ui.border, RoundedCornerShape(8.dp))
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = "Reset",
+                    tint = ui.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "RESET ALL SETTINGS",
+                    style = AppTypography.bodyMedium,
+                    color = ui.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+    
+    // Confirmation dialog
+    if (showConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showConfirmation = false },
+            title = {
+                Text(
+                    text = "Reset All Settings",
+                    style = AppTypography.bodyMedium,
+                    color = ui.textPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to reset all settings to their default values? Custom symbol sets will be preserved.",
+                    style = AppTypography.bodySmall,
+                    color = ui.textPrimary
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmation = false
+                        onResetAll()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = ui.primary
+                    )
+                ) {
+                    Text(
+                        text = "RESET ALL",
+                        style = AppTypography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmation = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = ui.textSecondary
+                    )
+                ) {
+                    Text(
+                        text = "CANCEL",
+                        style = AppTypography.bodySmall
+                    )
+                }
+            }
+        )
+    }
+}
+
+
+/**
+ * Modern custom symbol set editor overlay
+ */
+@Composable
+private fun ModernCustomSymbolSetEditorOverlay(
+    customSet: CustomSymbolSet?,
+    onSave: (CustomSymbolSet) -> Unit,
+    onDelete: (() -> Unit)? = null,
+    onClose: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ui.background.copy(alpha = 0.8f))
+            .pointerInput(Unit) {
+                detectTapGestures(onPress = { /* consume tap to prevent click-through */ })
+            }
+    ) {
+        Surface(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .widthIn(max = 340.dp)
+                .padding(16.dp),
+            color = ui.overlayBackground,
+            contentColor = ui.textPrimary,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (customSet != null) "EDIT SET" else "CREATE SET",
+                        style = AppTypography.headlineSmall,
+                        color = ui.textPrimary
+                    )
+                    
+                    IconButton(
+                        onClick = onClose,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = ui.textSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                
+                // Editor content
+                ModernCustomSymbolSetEditor(
+                    customSet = customSet,
+                    onSave = onSave,
+                    onDelete = onDelete,
+                    ui = ui
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Modern custom symbol set editor component
+ */
+@Composable
+private fun ModernCustomSymbolSetEditor(
+    customSet: CustomSymbolSet?,
+    onSave: (CustomSymbolSet) -> Unit,
+    onDelete: (() -> Unit)? = null,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    val isEditing = customSet != null
+    var name by remember { mutableStateOf(customSet?.name ?: "") }
+    var characters by remember { mutableStateOf(customSet?.characters ?: "") }
+    var selectedFont by remember { mutableStateOf(customSet?.fontFileName ?: "matrix_code_nfi.ttf") }
+    var availableFonts by remember { mutableStateOf<List<String>>(emptyList()) }
+    
+    // Load available fonts using FontUtils
+    LaunchedEffect(Unit) {
+        try {
+            availableFonts = FontUtils.getAvailableFontFiles()
+        } catch (e: Exception) {
+            availableFonts = listOf("matrix_code_nfi.ttf")
+        }
+    }
+    
+    val isValid = name.isNotBlank() && characters.isNotBlank()
+    
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Name input
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "SET NAME",
+                style = AppTypography.bodySmall,
+                color = ui.textSecondary
+            )
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = ui.primary,
+                    unfocusedBorderColor = ui.borderDim,
+                    focusedTextColor = ui.textPrimary,
+                    unfocusedTextColor = ui.textPrimary
+                ),
+                textStyle = AppTypography.bodyMedium,
+                singleLine = true
+            )
+        }
+        
+        // Characters input
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "CHARACTERS",
+                style = AppTypography.bodySmall,
+                color = ui.textSecondary
+            )
+            OutlinedTextField(
+                value = characters,
+                onValueChange = { characters = it },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = ui.primary,
+                    unfocusedBorderColor = ui.borderDim,
+                    focusedTextColor = ui.textPrimary,
+                    unfocusedTextColor = ui.textPrimary
+                ),
+                textStyle = AppTypography.bodyMedium.copy(
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                ),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    keyboardType = KeyboardType.Text
+                ),
+                maxLines = 3
+            )
+            Text(
+                text = "${characters.length} characters",
+                style = AppTypography.bodySmall,
+                color = ui.textSecondary
+            )
+        }
+        
+        // Font picker
+        if (availableFonts.isNotEmpty()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "FONT",
+                    style = AppTypography.bodySmall,
+                    color = ui.textSecondary
+                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    availableFonts.forEach { fontFile ->
+                        val isSelected = fontFile == selectedFont
+                        val backgroundColor by animateColorAsState(
+                            targetValue = if (isSelected) ui.primary.copy(alpha = 0.2f) else ui.backgroundSecondary,
+                            animationSpec = tween(200),
+                            label = "font_background"
+                        )
+                        val borderColor by animateColorAsState(
+                            targetValue = if (isSelected) ui.primary else ui.borderDim,
+                            animationSpec = tween(200),
+                            label = "font_border"
+                        )
+                        
+                        Surface(
+                            onClick = { selectedFont = fontFile },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = backgroundColor,
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = fontFile.removeSuffix(".ttf").replace("_", " ").uppercase(),
+                                style = AppTypography.bodySmall,
+                                color = if (isSelected) ui.primary else ui.textPrimary,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, borderColor, RoundedCornerShape(6.dp))
+                                    .padding(8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Preview
+        if (characters.isNotBlank()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "PREVIEW",
+                    style = AppTypography.bodySmall,
+                    color = ui.textSecondary
+                )
+                Text(
+                    text = if (characters.length > 30) characters.take(30) + "..." else characters,
+                    style = AppTypography.bodyMedium.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    ),
+                    color = ui.textPrimary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(ui.backgroundSecondary, RoundedCornerShape(6.dp))
+                        .padding(8.dp)
+                )
+            }
+        }
+        
+        // Action buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (isEditing && onDelete != null) {
+                Button(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ui.buttonCancel,
+                        contentColor = ui.buttonCancelText
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("DELETE", style = AppTypography.bodySmall)
+                }
+            }
+            
+            Button(
+                onClick = {
+                    val newSet = if (isEditing) {
+                        customSet!!.copy(
+                            name = name,
+                            characters = characters,
+                            fontFileName = selectedFont
+                        )
+                    } else {
+                        CustomSymbolSet(
+                            name = name,
+                            characters = characters,
+                            fontFileName = selectedFont
+                        )
+                    }
+                    onSave(newSet)
+                },
+                enabled = isValid,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ui.primary,
+                    contentColor = ui.background
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    if (isEditing) "UPDATE" else "CREATE",
+                    style = AppTypography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Helper function to get current value for a setting
+ */
+private fun getCurrentValue(settings: MatrixSettings, setting: MatrixSettingType): Any {
+    return when (setting) {
+        MatrixSettingType.FallSpeed -> settings.fallSpeed
+        MatrixSettingType.SymbolSet -> settings.symbolSet
+        MatrixSettingType.ColorAndBrightness -> settings.advancedColorsEnabled
+        MatrixSettingType.ColorTint -> settings.colorTint
+        MatrixSettingType.FontSize -> settings.fontSize
+        MatrixSettingType.ColumnCount -> settings.columnCount
+        MatrixSettingType.TargetFps -> settings.targetFps
+        MatrixSettingType.RowHeightMultiplier -> settings.rowHeightMultiplier
+        MatrixSettingType.MaxTrailLength -> settings.maxTrailLength
+        MatrixSettingType.MaxBrightTrailLength -> settings.maxBrightTrailLength
+        MatrixSettingType.GlowIntensity -> settings.glowIntensity
+        MatrixSettingType.BrightnessControls -> settings.brightnessControlsEnabled
+        MatrixSettingType.JitterAmount -> settings.jitterAmount
+        MatrixSettingType.FlickerRate -> settings.flickerRate
+        MatrixSettingType.MutationRate -> settings.mutationRate
+        MatrixSettingType.ColumnStartDelay -> settings.columnStartDelay
+        MatrixSettingType.ColumnRestartDelay -> settings.columnRestartDelay
+        MatrixSettingType.InitialActivePercentage -> settings.initialActivePercentage
+        MatrixSettingType.SpeedVariationRate -> settings.speedVariationRate
+        MatrixSettingType.GrainDensity -> settings.grainDensity
+        MatrixSettingType.GrainOpacity -> settings.grainOpacity
+        MatrixSettingType.ColorPicker -> settings.advancedColorsEnabled
+        MatrixSettingType.ResetAll -> Unit
+    }
+}
+
+/**
+ * Full-screen custom symbol set editor with comprehensive functionality
+ */
+@Composable
+private fun ModernCustomSymbolSetFullScreenEditor(
+    customSet: CustomSymbolSet?,
+    onSave: (CustomSymbolSet) -> Unit,
+    onDelete: (() -> Unit)? = null,
+    onClose: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    val scrollState = rememberScrollState()
+    val isEditing = customSet != null
+    
+    // Form state
+    var name by remember { mutableStateOf(customSet?.name ?: "") }
+    var characters by remember { mutableStateOf(customSet?.characters ?: "") }
+    var selectedFont by remember { mutableStateOf(customSet?.fontFileName ?: "matrix_code_nfi.ttf") }
+    var nameError by remember { mutableStateOf("") }
+    var charactersError by remember { mutableStateOf("") }
+    var hasChanges by remember { mutableStateOf(false) }
+    
+    // Available fonts - start with default font to ensure it's always available
+    var availableFonts by remember { mutableStateOf(listOf("matrix_code_nfi.ttf")) }
+    
+    // Load available fonts using FontUtils
+    LaunchedEffect(Unit) {
+        try {
+            availableFonts = FontUtils.getAvailableFontFiles()
+        } catch (e: Exception) {
+            // Fallback to default font if loading fails
+            availableFonts = listOf("matrix_code_nfi.ttf")
+        }
+    }
+    
+    // Character sanitization (preserving repetition for weighting)
+    val sanitizedCharacters = remember(characters) {
+        characters
+            .trim()
+            .filter { it.isDefined() && !it.isISOControl() }
+    }
+    
+    val characterCount = sanitizedCharacters.length
+    val isValid = name.isNotBlank() && characterCount > 0 && characterCount <= 512
+    
+    // Track changes
+    LaunchedEffect(name, characters, selectedFont) {
+        hasChanges = name != (customSet?.name ?: "") || 
+                    characters != (customSet?.characters ?: "") || 
+                    selectedFont != (customSet?.fontFileName ?: "matrix_code_nfi.ttf")
+    }
+    
+    // Wrap with keyboard dismissal
+    TapOutsideToDismissKeyboard(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ui.background.copy(alpha = 0.95f))
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            color = ui.overlayBackground,
+            contentColor = ui.textPrimary,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(20.dp)
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isEditing) "EDIT CUSTOM SET" else "CREATE CUSTOM SET",
+                        style = AppTypography.headlineSmall,
+                        color = ui.textPrimary
+                    )
+                    
+                    IconButton(
+                        onClick = onClose,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = ui.textSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                
+                // Name input with validation
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "SET NAME",
+                        style = AppTypography.bodyMedium,
+                        color = ui.textPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { 
+                            name = it
+                            nameError = ""
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Enter set name", color = ui.textSecondary) },
+                        isError = nameError.isNotEmpty(),
+                        supportingText = if (nameError.isNotEmpty()) {
+                            { Text(nameError, color = androidx.compose.ui.graphics.Color(0xFFFF6666)) }
+                        } else null,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ui.primary,
+                            unfocusedBorderColor = ui.borderDim,
+                            focusedTextColor = ui.textPrimary,
+                            unfocusedTextColor = ui.textPrimary,
+                            cursorColor = ui.primary,
+                            errorBorderColor = androidx.compose.ui.graphics.Color(0xFFFF6666)
+                        ),
+                        textStyle = AppTypography.bodyMedium,
+                        singleLine = true
+                    )
+                }
+                
+                // Characters input with validation and tips
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "CHARACTERS",
+                        style = AppTypography.bodyMedium,
+                        color = ui.textPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    OutlinedTextField(
+                        value = characters,
+                        onValueChange = { 
+                            characters = it
+                            charactersError = ""
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Enter characters", color = ui.textSecondary) },
+                        isError = charactersError.isNotEmpty(),
+                        supportingText = if (charactersError.isNotEmpty()) {
+                            { Text(charactersError, color = androidx.compose.ui.graphics.Color(0xFFFF6666)) }
+                        } else null,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ui.primary,
+                            unfocusedBorderColor = ui.borderDim,
+                            focusedTextColor = ui.textPrimary,
+                            unfocusedTextColor = ui.textPrimary,
+                            cursorColor = ui.primary,
+                            errorBorderColor = androidx.compose.ui.graphics.Color(0xFFFF6666)
+                        ),
+                        textStyle = AppTypography.bodyMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.None,
+                            keyboardType = KeyboardType.Text
+                        ),
+                        minLines = 3,
+                        maxLines = 6
+                    )
+                    
+                    // Character count and validation
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                    Text(
+                            text = "$characterCount characters",
+                        style = AppTypography.bodySmall,
+                            color = if (characterCount > 0 && characterCount <= 512) 
+                                ui.primary else androidx.compose.ui.graphics.Color(0xFFFF6666)
+                        )
+                        
+                        if (characterCount > 512) {
+                            Text(
+                                text = "MAX 512",
+                                style = AppTypography.bodySmall,
+                                color = androidx.compose.ui.graphics.Color(0xFFFF6666),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    // Character weighting tip
+                    Text(
+                        text = "💡 Tip: Repeat characters to make them appear more often in the Matrix rain",
+                        style = AppTypography.bodySmall,
+                        color = ui.textSecondary,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                    
+                    // Per-column character pools tip
+                    Text(
+                        text = "🎯 Pro Tip: Separate words with commas to make each rain column use a different word or character group (e.g. lol,wtf,smh)",
+                        style = AppTypography.bodySmall,
+                        color = ui.textSecondary,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+                
+                // Font picker with enhanced selection
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "FONT SELECTION",
+                        style = AppTypography.bodyMedium,
+                        color = ui.textPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    if (availableFonts.isNotEmpty()) {
+                    LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.height(80.dp)
+                        ) {
+                            items(availableFonts) { fontFileName ->
+                                val isSelected = fontFileName == selectedFont
+                                val displayName = FontUtils.getFontDisplayName(fontFileName)
+                                val isSpaceGrotesk = fontFileName.contains("space", ignoreCase = true) || 
+                                                    fontFileName.contains("grotesk", ignoreCase = true)
+                                
+                                Card(
+                                    onClick = { selectedFont = fontFileName },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) ui.primary.copy(alpha = 0.2f) else ui.backgroundSecondary
+                                    ),
+                                    modifier = Modifier
+                                        .width(140.dp)
+                                        .height(70.dp)
+                                        .border(
+                                            1.dp, 
+                                            if (isSelected) ui.primary else ui.borderDim, 
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(8.dp),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = if (isSpaceGrotesk) "Space Grotesk (Modern)" else displayName,
+                                            color = if (isSelected) ui.primary else ui.textPrimary,
+                                            fontSize = 9.sp,
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        
+                                        // Inline preview using Typography system
+                                        Text(
+                                            text = "A9$@",
+                                            style = if (fontFileName == "matrix_code_nfi.ttf") {
+                                                com.example.matrixscreen.ui.theme.MatrixTextStyles.MatrixFontPreview
+                                            } else {
+                                                AppTypography.bodyMedium
+                                            },
+                                            color = if (isSelected) ui.primary else ui.textSecondary,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "Loading fonts...",
+                            style = AppTypography.bodySmall,
+                            color = ui.textSecondary
+                        )
+                    }
+                }
+                
+                // Character preview with dual samples
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                        text = "PREVIEW",
+                        style = AppTypography.bodyMedium,
+                        color = ui.textPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    // Fixed sample row (stable preview)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Fixed Sample",
+                                    style = AppTypography.bodySmall,
+                            color = ui.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        val fixedSample = "A B C 1 2 3 $ @ # ? ! % * { }"
+                        Text(
+                            text = fixedSample,
+                            style = if (selectedFont == "matrix_code_nfi.ttf") {
+                                com.example.matrixscreen.ui.theme.MatrixTextStyles.MatrixSymbolPreview
+                            } else {
+                                AppTypography.bodyLarge
+                            },
+                            color = ui.primary
+                        )
+                    }
+                    
+                    // User sample row (dynamic preview)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Your Characters",
+                            style = AppTypography.bodySmall,
+                            color = ui.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        if (sanitizedCharacters.isNotEmpty()) {
+                            Text(
+                                text = sanitizedCharacters.take(64) + if (sanitizedCharacters.length > 64) "..." else "",
+                                style = if (selectedFont == "matrix_code_nfi.ttf") {
+                                    com.example.matrixscreen.ui.theme.MatrixTextStyles.MatrixSymbolPreview
+                                } else {
+                                    AppTypography.bodyLarge
+                                },
+                                color = ui.primary
+                            )
+                            
+                            Text(
+                                text = "These characters will be used in your Matrix rain effect",
+                                style = AppTypography.bodySmall,
+                                color = ui.textSecondary
+                            )
+                        } else {
+                            Text(
+                                text = "Enter characters above to see preview",
+                                style = AppTypography.bodySmall,
+                                color = ui.textSecondary
+                            )
+                        }
+                    }
+                }
+                
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Revert button (only show if there are changes)
+                    if (hasChanges) {
+                        Button(
+                            onClick = {
+                                name = customSet?.name ?: ""
+                                characters = customSet?.characters ?: ""
+                                selectedFont = customSet?.fontFileName ?: "matrix_code_nfi.ttf"
+                                nameError = ""
+                                charactersError = ""
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ui.backgroundSecondary,
+                                contentColor = ui.textSecondary
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "REVERT",
+                                style = AppTypography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    // Delete button (only show when editing existing set)
+                    if (customSet != null && onDelete != null) {
+                        Button(
+                            onClick = onDelete,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = androidx.compose.ui.graphics.Color(0xFFFF4444),
+                                contentColor = androidx.compose.ui.graphics.Color.White
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "DELETE",
+                                style = AppTypography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    // Save button with comprehensive validation
+                    Button(
+                        onClick = {
+                            // Validate inputs
+                            var hasError = false
+                            
+                            if (name.isBlank()) {
+                                nameError = "Name is required"
+                                hasError = true
+                            }
+                            
+                            if (characterCount == 0) {
+                                charactersError = "At least one character is required"
+                                hasError = true
+                            } else if (characterCount > 512) {
+                                charactersError = "Maximum 512 characters allowed"
+                                hasError = true
+                            }
+                            
+                            if (!hasError) {
+                            val newCustomSet = CustomSymbolSet(
+                                id = customSet?.id ?: java.util.UUID.randomUUID().toString(),
+                                name = name.trim(),
+                                    characters = sanitizedCharacters,
+                                fontFileName = selectedFont
+                            )
+                            onSave(newCustomSet)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isValid) ui.primary else ui.backgroundSecondary,
+                            contentColor = if (isValid) ui.textPrimary else ui.textSecondary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = isValid
+                    ) {
+                        Text(
+                            text = if (customSet != null) "SAVE CHANGES" else "CREATE SET",
+                            style = AppTypography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(32.dp)) // Bottom padding
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Unified Color and Brightness Editor
+ * Combines color selection and brightness controls in one compact interface
+ */
+@Composable
+private fun UnifiedColorAndBrightnessEditor(
+    currentSettings: MatrixSettings,
+    displaySettings: MatrixSettings,
+    onUpdateLivePreview: (MatrixSettingType, Any) -> Unit,
+    onPersistSetting: (MatrixSettingType, Any) -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+) {
+    var isAdvancedMode by remember { mutableStateOf(displaySettings.advancedColorsEnabled) }
+    
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Mode Toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Color Mode",
+                style = AppTypography.bodyMedium,
+                color = ui.textPrimary
+            )
+            
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (isAdvancedMode) "Advanced" else "Basic",
+                    style = AppTypography.bodySmall,
+                    color = ui.textSecondary
+                )
+                
+                IconButton(
+                    onClick = { 
+                        isAdvancedMode = !isAdvancedMode
+                        onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, isAdvancedMode)
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Toggle Advanced Mode",
+                        tint = ui.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+        
+        if (isAdvancedMode) {
+            // Advanced Mode: Theme Gallery + Full Brightness Controls
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Theme Gallery",
+                    style = AppTypography.bodyMedium,
+                    color = ui.textPrimary
+                )
+                
+                // Theme Grid (3x3)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.height(180.dp)
+                ) {
+                    items(MatrixColorThemePresets) { theme ->
+                        SimpleThemeSwatch(
+                            theme = theme,
+                            isSelected = displaySettings.selectedThemeName == theme.name,
+                            onClick = {
+                                onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, theme)
+                            },
+                            ui = ui
+                        )
+                    }
+                }
+                
+                // Full Brightness Controls
+                BrightnessControlsEditor(
+                    currentSettings = currentSettings,
+                    onUpdateLivePreview = onUpdateLivePreview,
+                    onUpdateBrightnessMultiplier = { level, multiplier ->
+                        when (level) {
+                            4 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(leadBrightnessMultiplier = multiplier))
+                            3 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(brightTrailBrightnessMultiplier = multiplier))
+                            2 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(trailBrightnessMultiplier = multiplier))
+                            1 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(dimTrailBrightnessMultiplier = multiplier))
+                        }
+                    },
+                    onUpdateAlphaMultiplier = { level, multiplier ->
+                        when (level) {
+                            4 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(leadAlphaMultiplier = multiplier))
+                            3 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(brightTrailAlphaMultiplier = multiplier))
+                            2 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(trailBrightnessMultiplier = multiplier))
+                            1 -> onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(dimTrailAlphaMultiplier = multiplier))
+                        }
+                    },
+                    onApplyPreset = { presetName ->
+                        onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, currentSettings.copy(brightnessPreset = presetName))
+                    },
+                    ui = ui
+                )
+            }
+        } else {
+            // Basic Mode: Simple Color Selection + Basic Brightness
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Color Selection",
+                    style = AppTypography.bodyMedium,
+                    color = ui.textPrimary
+                )
+                
+                // Basic Color Grid (4x2)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.height(100.dp)
+                ) {
+                    val basicColors = listOf(
+                        MatrixColor.GREEN to "Matrix Green",
+                        MatrixColor.BLUE to "Neo Blue", 
+                        MatrixColor.RED to "Cyber Red",
+                        MatrixColor.CYAN to "Cyan",
+                        MatrixColor.PURPLE to "Purple",
+                        MatrixColor.ORANGE to "Orange",
+                        MatrixColor.WHITE to "White",
+                        MatrixColor.BLACK to "Black"
+                    )
+                    
+                    items(basicColors) { (color, name) ->
+                        SimpleColorSwatch(
+                            color = Color(color.colorValue),
+                            isSelected = displaySettings.colorTint == color,
+                            onClick = {
+                                onUpdateLivePreview(MatrixSettingType.ColorAndBrightness, color)
+                            },
+                            colorName = name,
+                            ui = ui
+                        )
+                    }
+                }
+                
+                // Basic Brightness Control
+                LabeledSlider(
+                    label = "BRIGHTNESS",
+                    valueText = "${(displaySettings.glowIntensity * 100).toInt()}%",
+                    value = displaySettings.glowIntensity,
+                    onValueChangePreview = { v -> onUpdateLivePreview(MatrixSettingType.GlowIntensity, v) },
+                    onValueChangePersist = { v -> onPersistSetting(MatrixSettingType.GlowIntensity, v) },
+                    valueRange = 0.0f..2.0f,
+                    step = 0.05f,
+                    ui = ui
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Simple theme swatch for theme selection
+ */
+@Composable
+private fun SimpleThemeSwatch(
+    theme: com.example.matrixscreen.ui.theme.MatrixColorTheme,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(theme.backgroundColor)
+                .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+        ) {
+            // Mini color preview
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                // Head color
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.headColor, RoundedCornerShape(2.dp))
+                )
+                // Trail colors
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.brightTrailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.trailColor, RoundedCornerShape(2.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(theme.dimTrailColor, RoundedCornerShape(2.dp))
+                )
+            }
+        }
+        
+        Text(
+            text = theme.name,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+/**
+ * Simple color swatch for basic color selection
+ */
+@Composable
+private fun SimpleColorSwatch(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colorName: String,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) ui.primary else ui.borderDim
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(borderWidth, borderColor, CircleShape)
+                .clickable { onClick() }
+        )
+        
+        Text(
+            text = colorName,
+            color = ui.textSecondary,
+            style = AppTypography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
