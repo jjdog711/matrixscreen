@@ -65,24 +65,42 @@ fun PresetButton(
     onClick: () -> Unit,
     ui: MatrixUIColorScheme,
     optimizedSettings: MatrixSettings,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    swatches: List<Long>? = null
 ) {
     Card(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = ui.selectionBackground,
             contentColor = ui.textPrimary
         )
     ) {
-        ModernTextWithGlow(
-            text = name,
-            style = AppTypography.labelSmall,
-            color = ui.textPrimary,
-            settings = optimizedSettings,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-        )
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ModernTextWithGlow(
+                text = name,
+                style = AppTypography.labelMedium,
+                color = ui.textPrimary,
+                settings = optimizedSettings
+            )
+            if (!swatches.isNullOrEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    swatches.take(6).forEach { c ->
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(Color(c))
+                                .border(1.dp, ui.textSecondary.copy(alpha = 0.25f), CircleShape)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

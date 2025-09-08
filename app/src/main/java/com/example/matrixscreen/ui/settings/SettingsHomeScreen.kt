@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,7 @@ import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.ui.NewSettingsViewModel
+import com.example.matrixscreen.ui.settings.components.SettingsSection
 
 
 /**
@@ -43,8 +46,10 @@ fun SettingsHomeScreen(
     onNavigateToEffects: () -> Unit,
     onNavigateToTiming: () -> Unit,
     onNavigateToBackground: () -> Unit,
+    onNavigateToUIPreview: () -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false
 ) {
     // Get current settings for UI theming
     val uiState by settingsViewModel.uiState.collectAsState()
@@ -59,9 +64,18 @@ fun SettingsHomeScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .widthIn(max = 400.dp)
-                .padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.lg, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
-                .wrapContentHeight()
+                .let { base ->
+                    if (isExpanded) {
+                        base
+                            .padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.md, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
+                            .fillMaxSize()
+                    } else {
+                        base
+                            .widthIn(max = 400.dp)
+                            .padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.lg, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
+                            .wrapContentHeight()
+                    }
+                }
                 .navigationBarsPadding(),
             colors = CardDefaults.cardColors(
                 containerColor = ui.overlayBackground,
@@ -73,65 +87,72 @@ fun SettingsHomeScreen(
                 modifier = Modifier
                     .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
                     .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
                 // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                com.example.matrixscreen.ui.settings.components.SettingsScreenHeader(
+                    title = "SETTINGS",
+                    onBack = onBack,
+                    ui = ui,
+                    optimizedSettings = optimizedSettings
+                )
+                
+                // Presets Section (wrapped for preview-style card)
+                SettingsSection(
+                    title = "Presets",
+                    ui = ui,
+                    optimizedSettings = optimizedSettings
                 ) {
-                    ModernTextWithGlow(
-                        text = "SETTINGS",
-                        style = AppTypography.headlineSmall,
-                        color = ui.textPrimary,
-                        settings = optimizedSettings
+                    PresetsSection(
+                        settingsViewModel = settingsViewModel,
+                        ui = ui,
+                        optimizedSettings = optimizedSettings
                     )
-                    
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.size(32.dp)
+                }
+                
+                // Categories Grid (wrapped for preview-style card)
+                SettingsSection(
+                    title = "Categories",
+                    ui = ui,
+                    optimizedSettings = optimizedSettings
+                ) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
+                        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
+                        modifier = Modifier.height(300.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = ui.textSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        items(SettingCategory.values()) { category ->
+                            CategoryCard(
+                                category = category,
+                                onClick = {
+                                    when (category) {
+                                        SettingCategory.THEME -> onNavigateToTheme()
+                                        SettingCategory.CHARACTERS -> onNavigateToCharacters()
+                                        SettingCategory.MOTION -> onNavigateToMotion()
+                                        SettingCategory.EFFECTS -> onNavigateToEffects()
+                                        SettingCategory.TIMING -> onNavigateToTiming()
+                                        SettingCategory.BACKGROUND -> onNavigateToBackground()
+                                    }
+                                },
+                                ui = ui,
+                                optimizedSettings = optimizedSettings
+                            )
+                        }
                     }
                 }
                 
-                // Presets Section
-                PresetsSection(
-                    settingsViewModel = settingsViewModel,
+                // Developer Tools Section (wrapped for preview-style card)
+                SettingsSection(
+                    title = "Developer Tools",
                     ui = ui,
-                    optimizedSettings = currentSettings
-                )
-                
-                // Categories Grid
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
-                    verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
-                    modifier = Modifier.height(300.dp)
+                    optimizedSettings = optimizedSettings
                 ) {
-                    items(SettingCategory.values()) { category ->
-                        CategoryCard(
-                            category = category,
-                            onClick = {
-                                when (category) {
-                                    SettingCategory.THEME -> onNavigateToTheme()
-                                    SettingCategory.CHARACTERS -> onNavigateToCharacters()
-                                    SettingCategory.MOTION -> onNavigateToMotion()
-                                    SettingCategory.EFFECTS -> onNavigateToEffects()
-                                    SettingCategory.TIMING -> onNavigateToTiming()
-                                    SettingCategory.BACKGROUND -> onNavigateToBackground()
-                                }
-                            },
-                            ui = ui,
-                            optimizedSettings = optimizedSettings
-                        )
-                    }
+                    DeveloperToolsSection(
+                        onNavigateToUIPreview = onNavigateToUIPreview,
+                        ui = ui,
+                        optimizedSettings = optimizedSettings
+                    )
                 }
             }
         }
@@ -214,44 +235,98 @@ private fun CategoryCard(
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
 ) {
+    val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)
+    val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 2f)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .let { base ->
+                if (glowIntensity > 0.1f) {
+                    val innerGlowElevation = (glowIntensity * 1.5f + 1f).dp
+                    val outerGlowElevation = (glowIntensity * 4f + 2f).dp
+                    val innerGlowAlpha = (glowIntensity * 0.2f + 0.3f).coerceIn(0.3f, 0.5f)
+                    val outerGlowAlpha = (glowIntensity * 0.075f + 0.1f).coerceIn(0.1f, 0.25f)
+
+                    base
+                        .shadow(
+                            elevation = outerGlowElevation,
+                            shape = cardShape,
+                            ambientColor = ui.textAccent.copy(alpha = outerGlowAlpha),
+                            spotColor = ui.textAccent.copy(alpha = outerGlowAlpha * 0.8f)
+                        )
+                        .shadow(
+                            elevation = innerGlowElevation,
+                            shape = cardShape,
+                            ambientColor = ui.textAccent.copy(alpha = innerGlowAlpha),
+                            spotColor = ui.textAccent.copy(alpha = innerGlowAlpha * 0.9f)
+                        )
+                        .border(1.dp, ui.textAccent, cardShape)
+                        .clickable { onClick() }
+                } else {
+                    base.clickable { onClick() }
+                }
+            },
         colors = CardDefaults.cardColors(
-            containerColor = ui.selectionBackground,
+            containerColor = ui.overlayBackground,
             contentColor = ui.textPrimary
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = cardShape,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = com.example.matrixscreen.core.design.DesignTokens.Elevation.previewCard
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.Center
         ) {
-            // Icon/Emoji
-            ModernTextWithGlow(
-                text = category.icon,
-                style = AppTypography.headlineMedium,
-                color = ui.textPrimary,
-                settings = optimizedSettings
-            )
-            
-            // Title
+            // Title only - clean and minimal
             ModernTextWithGlow(
                 text = category.displayName,
                 style = AppTypography.titleMedium,
                 color = ui.textPrimary,
                 settings = optimizedSettings
             )
-            
-            // Description
-            ModernTextWithGlow(
-                text = category.description,
-                style = AppTypography.bodySmall,
-                color = ui.textSecondary,
-                settings = optimizedSettings
-            )
+        }
+    }
+}
+
+/**
+ * Developer Tools section with UI Preview access
+ */
+@Composable
+private fun DeveloperToolsSection(
+    onNavigateToUIPreview: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onNavigateToUIPreview() },
+            colors = CardDefaults.cardColors(
+                containerColor = ui.selectionBackground,
+                contentColor = ui.textPrimary
+            ),
+            shape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.card)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "UI Style Preview",
+                    style = AppTypography.bodyMedium,
+                    color = ui.textPrimary
+                )
+            }
         }
     }
 }

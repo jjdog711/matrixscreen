@@ -84,8 +84,8 @@ data class RendererParams(
                 brightTrailColor = 0xFF00CC00L,
                 trailColor = 0xFF008800L,
                 dimColor = 0xFF004400L,
-                uiAccent = 0xFF00CC00L,
-                uiOverlayBg = 0x80000000L,
+                uiAccent = 0xFF00FF00L, // Use bright electric green like matrix rain
+                uiOverlayBg = 0x26000000L, // Much more transparent for floating glass effect
                 uiSelectionBg = 0x4000FF00L
             )
         }

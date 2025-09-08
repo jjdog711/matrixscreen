@@ -37,7 +37,8 @@ fun ThemeSettingsScreen(
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onBack: () -> Unit,
     onNavigateToCustomSets: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
     val currentSettings = uiState.draft
@@ -53,6 +54,7 @@ fun ThemeSettingsScreen(
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
+        expanded = isExpanded,
         content = {
         Column(
             modifier = Modifier
@@ -74,15 +76,17 @@ fun ThemeSettingsScreen(
                 }
             )
             
-            // Advanced Colors Toggle Section
+            // UI Link Toggle (Link UI & Rain Colors)
             SettingsSection(
-                title = "Color Mode",
+                title = "UI Color Linking",
                 ui = ui,
                 optimizedSettings = optimizedSettings,
                 content = {
-                AdvancedColorsToggle(
-                    settingsViewModel = settingsViewModel,
-                    currentSettings = currentSettings,
+                val linkSpec = THEME_SPECS.find { it.id == LinkUiAndRainColors } as BooleanSpec
+                LabeledSwitch(
+                    spec = linkSpec,
+                    value = currentSettings.linkUiAndRainColors,
+                    onValueChange = { settingsViewModel.updateDraft(LinkUiAndRainColors, it) },
                     ui = ui,
                     optimizedSettings = optimizedSettings
                 )
@@ -137,15 +141,32 @@ private fun PresetsRow(
 ) {
     val themeRegistry = remember { ThemePresetRegistryImpl() }
     
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
+    // Grid layout for better fit and visual balance
+    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+        columns = androidx.compose.foundation.lazy.grid.GridCells.Adaptive(minSize = 120.dp),
+        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 200.dp)
     ) {
-        BuiltInThemes.ALL_BUILT_IN.forEach { themeId ->
+        items(BuiltInThemes.ALL_BUILT_IN.size) { index ->
+            val themeId = BuiltInThemes.ALL_BUILT_IN[index]
+            val colors = themeRegistry.getColors(themeId)
             PresetButton(
                 name = themeRegistry.getDisplayName(themeId),
                 onClick = { applyThemePreset(settingsViewModel, themeId, themeRegistry) },
                 ui = ui,
-                optimizedSettings = optimizedSettings
+                optimizedSettings = optimizedSettings,
+                modifier = Modifier.fillMaxWidth(),
+                swatches = listOf(
+                    colors.backgroundColor,
+                    colors.headColor,
+                    colors.brightTrailColor,
+                    colors.trailColor,
+                    colors.dimColor,
+                    colors.uiAccent
+                )
             )
         }
     }
@@ -290,13 +311,18 @@ private fun ColorPickerDialog(
 ) {
     var selectedColor by remember { mutableStateOf(Color(currentColor)) }
     
+    // Get UI colors for consistent theming
+    val ui = getSafeUIColorScheme(MatrixSettings()) // Use default for dialog
+    val optimizedSettings = rememberOptimizedSettings(MatrixSettings())
+    
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = ui.overlayBackground,
+                contentColor = ui.textPrimary
             ),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.card)
         ) {
@@ -305,12 +331,11 @@ private fun ColorPickerDialog(
                 verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
             ) {
                 // Title
-                Text(
+                ModernTextWithGlow(
                     text = "Select Color",
-                    color = Color(0xFF00FF00),
-                    fontSize = 18.sp,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    style = AppTypography.headlineMedium,
+                    color = ui.textAccent,
+                    settings = optimizedSettings
                 )
                 
                 // Color picker
@@ -329,15 +354,15 @@ private fun ColorPickerDialog(
                     Button(
                         onClick = onDismiss,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF330000),
-                            contentColor = Color(0xFFFF6666)
+                            containerColor = ui.selectionBackground,
+                            contentColor = ui.textSecondary
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             text = "Cancel",
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            style = AppTypography.labelMedium,
+                            color = ui.textSecondary
                         )
                     }
                     
@@ -347,15 +372,15 @@ private fun ColorPickerDialog(
                             onDismiss()
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF00FF00),
-                            contentColor = Color.Black
+                            containerColor = ui.textAccent,
+                            contentColor = ui.backgroundPrimary
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             text = "Select",
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            style = AppTypography.labelMedium,
+                            color = ui.backgroundPrimary
                         )
                     }
                 }
@@ -420,6 +445,8 @@ private fun applyThemePreset(
     settingsViewModel.updateDraft(UiAccent, colors.uiAccent)
     settingsViewModel.updateDraft(UiOverlay, colors.uiOverlayBg)
     settingsViewModel.updateDraft(UiSelectBg, colors.uiSelectionBg)
+    // Ensure renderer uses per-setting rain colors instead of legacy tint
+    settingsViewModel.updateDraft(AdvancedColorsEnabled, true)
     
     // Set the theme preset ID
     settingsViewModel.updateDraft(ThemePresetId, themeId.value)

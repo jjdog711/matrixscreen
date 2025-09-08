@@ -43,8 +43,8 @@ data class MatrixSettings(
     val dimColor: Long = 0xFF004400L,
     
     // UI theme colors
-    val uiAccent: Long = 0xFF00CC00L,
-    val uiOverlayBg: Long = 0x80000000L,
+    val uiAccent: Long = 0xFF00FF00L, // Use bright electric green like matrix rain
+    val uiOverlayBg: Long = 0x26000000L, // Much more transparent for floating glass effect
     val uiSelectionBg: Long = 0x4000FF00L,
     
     // Advanced color system

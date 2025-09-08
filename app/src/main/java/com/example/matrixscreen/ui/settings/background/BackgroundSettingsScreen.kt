@@ -31,7 +31,8 @@ import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 fun BackgroundSettingsScreen(
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
     val currentSettings = uiState.draft
@@ -51,6 +52,7 @@ fun BackgroundSettingsScreen(
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
+        expanded = isExpanded,
         content = {
         Column(
             modifier = Modifier

@@ -47,7 +47,7 @@ fun MatrixSettings.getSavedCustomSets(): List<CustomSymbolSet> {
 
 fun MatrixSettings.getActiveCustomSetId(): String? = this.activeCustomSetId
 
-fun MatrixSettings.getAdvancedColorsEnabled(): Boolean = false // Default false
+fun MatrixSettings.getAdvancedColorsEnabled(): Boolean = this.advancedColorsEnabled
 
 fun MatrixSettings.getSelectedThemeName(): String? = null // Default null
 

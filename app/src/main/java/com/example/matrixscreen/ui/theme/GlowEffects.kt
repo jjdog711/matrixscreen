@@ -8,10 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -25,7 +22,8 @@ import com.example.matrixscreen.data.model.MatrixSettings
  */
 
 /**
- * Apply glow effect to text based on MatrixSettings
+ * Apply glow effect to text using readability-first approach (like real game UI)
+ * Text must be fully readable without glow - glow is purely atmospheric
  */
 @Composable
 fun TextWithGlow(
@@ -36,37 +34,39 @@ fun TextWithGlow(
     modifier: Modifier = Modifier,
     glowColor: Color? = null
 ) {
-    val effectiveGlowColor = glowColor ?: color
     val glowIntensity = settings.glowIntensity.coerceIn(0f, 2f)
-    val glowAlpha = (glowIntensity * 0.3f).coerceIn(0f, 0.6f)
     
-    if (glowIntensity > 0.1f) {
-        // Apply glow effect
-        Text(
-            text = text,
-            style = style,
-            color = color,
-            modifier = modifier.drawBehind {
-                drawGlowEffect(
-                    glowColor = effectiveGlowColor,
-                    glowAlpha = glowAlpha,
-                    glowRadius = (glowIntensity * 8f).dp.toPx()
-                )
-            }
+    // Readability-first: Ensure high contrast base text
+    val readableColor = color // Keep original color for readability
+    
+    val glowStyle = if (glowIntensity > 0.1f) {
+        // Professional approach: Minimal atmospheric glow only
+        val effectiveGlowColor = glowColor ?: color
+        val subtleBlurRadius = (glowIntensity * 2f).coerceIn(0.5f, 4f) // Much more subtle
+        val atmosphericAlpha = (glowIntensity * 0.15f).coerceIn(0.05f, 0.3f) // Very low opacity
+        
+        style.copy(
+            shadow = Shadow(
+                color = effectiveGlowColor.copy(alpha = atmosphericAlpha),
+                offset = androidx.compose.ui.geometry.Offset(0f, 0f),
+                blurRadius = subtleBlurRadius
+            )
         )
     } else {
-        // No glow
-        Text(
-            text = text,
-            style = style,
-            color = color,
-            modifier = modifier
-        )
+        style
     }
+    
+    Text(
+        text = text,
+        style = glowStyle,
+        color = readableColor, // Always use high-contrast readable color
+        modifier = modifier
+    )
 }
 
 /**
  * Apply glow effect to button based on MatrixSettings
+ * Note: Button glow is handled through elevation and border styling
  */
 @Composable
 fun ButtonWithGlow(
@@ -74,37 +74,21 @@ fun ButtonWithGlow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit,
-    settings: MatrixSettings,
-    glowColor: Color? = null
+    @Suppress("UNUSED_PARAMETER") settings: MatrixSettings,
+    @Suppress("UNUSED_PARAMETER") glowColor: Color? = null
 ) {
-    val glowIntensity = settings.glowIntensity.coerceIn(0f, 2f)
-    val glowAlpha = (glowIntensity * 0.2f).coerceIn(0f, 0.4f)
-    
-    if (glowIntensity > 0.1f) {
-        Button(
-            onClick = onClick,
-            modifier = modifier.drawBehind {
-                drawGlowEffect(
-                    glowColor = glowColor ?: Color.White,
-                    glowAlpha = glowAlpha,
-                    glowRadius = (glowIntensity * 6f).dp.toPx()
-                )
-            },
-            enabled = enabled,
-            content = content
-        )
-    } else {
-        Button(
-            onClick = onClick,
-            modifier = modifier,
-            enabled = enabled,
-            content = content
-        )
-    }
+    // For buttons, we rely on elevation and border styling rather than text shadow
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        content = content
+    )
 }
 
 /**
  * Apply glow effect to card/container based on MatrixSettings
+ * Note: Card glow is handled through elevation and border styling
  */
 @Composable
 fun CardWithGlow(
@@ -114,90 +98,23 @@ fun CardWithGlow(
     elevation: CardElevation = CardDefaults.cardElevation(),
     border: androidx.compose.foundation.BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
-    settings: MatrixSettings,
-    glowColor: Color? = null
+    @Suppress("UNUSED_PARAMETER") settings: MatrixSettings,
+    @Suppress("UNUSED_PARAMETER") glowColor: Color? = null
 ) {
-    val glowIntensity = settings.glowIntensity.coerceIn(0f, 2f)
-    val glowAlpha = (glowIntensity * 0.15f).coerceIn(0f, 0.3f)
-    
-    if (glowIntensity > 0.1f) {
-        Card(
-            modifier = modifier.drawBehind {
-                drawGlowEffect(
-                    glowColor = glowColor ?: Color.White,
-                    glowAlpha = glowAlpha,
-                    glowRadius = (glowIntensity * 4f).dp.toPx()
-                )
-            },
-            shape = shape,
-            colors = colors,
-            elevation = elevation,
-            border = border,
-            content = content
-        )
-    } else {
-        Card(
-            modifier = modifier,
-            shape = shape,
-            colors = colors,
-            elevation = elevation,
-            border = border,
-            content = content
-        )
-    }
+    // For cards, we rely on elevation and border styling rather than drawing effects
+    Card(
+        modifier = modifier,
+        shape = shape,
+        colors = colors,
+        elevation = elevation,
+        border = border,
+        content = content
+    )
 }
 
-/**
- * Draw glow effect behind composable
- */
-private fun DrawScope.drawGlowEffect(
-    glowColor: Color,
-    glowAlpha: Float,
-    glowRadius: Float
-) {
-    // Validate parameters to prevent crashes
-    val safeGlowAlpha = glowAlpha.coerceIn(0f, 1f)
-    val safeGlowRadius = glowRadius.coerceIn(0f, 50f) // Limit max radius
-    
-    if (safeGlowAlpha <= 0f || safeGlowRadius <= 0f) {
-        return // Skip drawing if parameters are invalid
-    }
-    
-    val glowPaint = Paint().apply {
-        color = glowColor.copy(alpha = safeGlowAlpha)
-        style = PaintingStyle.Stroke
-        strokeWidth = safeGlowRadius
-        isAntiAlias = true
-        // maskFilter = MaskFilter.blur(BlurStyle.Normal, safeGlowRadius)
-    }
-    
-    // Draw multiple glow layers for better effect
-    repeat(3) { layer ->
-        val layerAlpha = safeGlowAlpha * (1f - layer * 0.3f).coerceIn(0f, 1f)
-        val layerRadius = safeGlowRadius * (1f + layer * 0.5f).coerceIn(0f, 50f)
-        
-        glowPaint.color = glowColor.copy(alpha = layerAlpha)
-        glowPaint.strokeWidth = layerRadius
-        
-        try {
-            drawRoundRect(
-                color = glowColor.copy(alpha = layerAlpha),
-                topLeft = androidx.compose.ui.geometry.Offset(-layerRadius, -layerRadius),
-                size = androidx.compose.ui.geometry.Size(
-                    size.width + layerRadius * 2,
-                    size.height + layerRadius * 2
-                ),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(8.dp.toPx() + layerRadius)
-            )
-        } catch (e: Exception) {
-            android.util.Log.e("GlowEffect", "Error drawing glow layer: ${e.message}")
-            // Skip this layer if drawing fails
-        }
-    }
-}
 
 /**
- * Enhanced text style with glow support
+ * Enhanced text style with readability-first glow support
  */
 @Composable
 fun createGlowTextStyle(
@@ -208,11 +125,16 @@ fun createGlowTextStyle(
     val glowIntensity = settings.glowIntensity.coerceIn(0f, 2f)
     
     return if (glowIntensity > 0.1f) {
+        // Professional approach: Minimal atmospheric glow that doesn't hurt readability
+        val effectiveGlowColor = glowColor ?: Color.White
+        val subtleBlurRadius = (glowIntensity * 2f).coerceIn(0.5f, 4f) // Much more subtle
+        val atmosphericAlpha = (glowIntensity * 0.15f).coerceIn(0.05f, 0.3f) // Very low opacity
+        
         baseStyle.copy(
             shadow = Shadow(
-                color = glowColor ?: Color.White,
+                color = effectiveGlowColor.copy(alpha = atmosphericAlpha),
                 offset = androidx.compose.ui.geometry.Offset(0f, 0f),
-                blurRadius = (glowIntensity * 8f).sp.value
+                blurRadius = subtleBlurRadius
             )
         )
     } else {

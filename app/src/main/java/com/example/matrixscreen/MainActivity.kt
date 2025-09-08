@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MatrixApp() {
     val navController = rememberNavController()
-    val settingsViewModel: NewSettingsViewModel = viewModel()
+    val settingsViewModel: NewSettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     
     
     NavHost(
@@ -121,17 +121,9 @@ fun MatrixApp() {
         }
         composable("matrix") {
             MatrixScreen(
-                onSettingsClick = { navController.navigate("settings") },
+                onSettingsClick = { /* state-driven overlay */ },
                 settingsViewModel = settingsViewModel,
                 navController = navController
-            )
-        }
-        composable("settings") {
-            com.example.matrixscreen.ui.settings.SettingsNavGraph(
-                navController = rememberNavController(),
-                settingsViewModel = settingsViewModel,
-                onBack = { navController.popBackStack() },
-                onNavigateToCustomSets = { navController.navigate("custom-symbol-sets") }
             )
         }
         
@@ -186,6 +178,7 @@ fun MatrixScreen(
     // val settingsState = SettingsState.MatrixScreen // Default state for matrix screen - moved to legacy
     val livePreviewSettings = null // No live preview in new system
     
+    var settingsOpen by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxSize()) {
         // Matrix animation background with dynamic color support
         Surface(
@@ -221,41 +214,25 @@ fun MatrixScreen(
                 }
                 .pointerInput(Unit) {
                     // Only handle swipe gestures when settings overlay is not visible
-                    // if (settingsState is SettingsState.MatrixScreen) {
                         detectDragGestures(
                             onDragEnd = { },
                             onDrag = { _, dragAmount ->
                                 // Detect swipe gestures
                                 when {
-                                    dragAmount.y < -50f -> onSettingsClick() // Swipe up - open settings
+                                    dragAmount.y < -50f -> settingsOpen = true // Swipe up - open settings
                                     dragAmount.y > 50f -> { /* Swipe down - could be used for other actions */ }
                                 }
                             }
                         )
-                    // }
                 }
         )
         
-        // TODO: ModernSettingsOverlay needs to be updated to use domain model
-        // Temporarily disabled during domain model migration
-        // ModernSettingsOverlay(
-        //     settingsState = settingsState,
-        //     currentSettings = legacySettings,
-        //     livePreviewSettings = null,
-        //     onConfirm = { settingsViewModel.commit() },
-        //     onCancel = { settingsViewModel.revert() },
-        //     onBack = { /* No back action needed */ },
-        //     onNavigateUp = { /* No navigation needed */ },
-        //     onNavigateDown = { /* No navigation needed */ },
-        //     onUpdateLivePreview = { _, _ -> /* No live preview in new system */ },
-        //     onStartEditing = { /* No editing needed */ },
-        //     onPersistSetting = { _, _ -> /* No persistence needed */ },
-        //     onSwipeUp = onSettingsClick,
-        //     onSwipeDown = { /* No action needed */ },
-        //     onNavigateToCustomSets = { /* No custom sets needed */ },
-        //     viewModel = settingsViewModel,
-        //     navController = navController
-        // )
+        // New settings overlay host - keeps matrix visible behind
+        com.example.matrixscreen.ui.settings.SettingsOverlayHost(
+            isOpen = settingsOpen,
+            onOpenChange = { settingsOpen = it },
+            settingsViewModel = settingsViewModel
+        )
     }
 }
 
@@ -993,11 +970,16 @@ private fun DrawScope.drawMatrixColumn(
     val adjustedXPos = xPosition - fontSize * 0.4f
     
     drawIntoCanvas { canvas ->
-        // Get base color components
-        val matrixColor = animationConfig.matrixColor.color
-        val red = (matrixColor.red * 255).toInt()
-        val green = (matrixColor.green * 255).toInt()
-        val blue = (matrixColor.blue * 255).toInt()
+        fun lightenColor(argb: Int, factor: Float): Int {
+            val a = android.graphics.Color.alpha(argb)
+            val r = android.graphics.Color.red(argb)
+            val g = android.graphics.Color.green(argb)
+            val b = android.graphics.Color.blue(argb)
+            val lr = (r + (255 - r) * factor).toInt().coerceAtMost(255)
+            val lg = (g + (255 - g) * factor).toInt().coerceAtMost(255)
+            val lb = (b + (255 - b) * factor).toInt().coerceAtMost(255)
+            return android.graphics.Color.argb(a, lr, lg, lb)
+        }
         
         // Draw each character at its discrete row position
         for (glyph in column.glyphs) {
@@ -1027,20 +1009,13 @@ private fun DrawScope.drawMatrixColumn(
             
             // AUTHENTIC MATRIX: Enhanced stepped brightness levels with advanced color support
             when (glyph.brightness) {
-                4 -> { // Lead character - use rain head color
-                    val headColor = if (settings.getAdvancedColorsEnabled()) {
-                        settings.getRainHeadColor().toInt()
-                    } else {
-                        // Use traditional color scheme logic for basic mode
-                        val lightRed = (red + (255 - red) * 0.5f).toInt().coerceAtMost(255)
-                        val lightGreen = (green + (255 - green) * 0.5f).toInt().coerceAtMost(255)
-                        val lightBlue = (blue + (255 - blue) * 0.5f).toInt().coerceAtMost(255)
-                        android.graphics.Color.argb(255, lightRed, lightGreen, lightBlue)
-                    }
+                4 -> { // Lead character - unified color with cinematic lift
+                    val headBase = settings.getRainHeadColor().toInt()
+                    val headColor = lightenColor(headBase, 0.5f) // ~50% toward white for punch
                     
                     // Draw enhanced glow first
                     paintCache.leadGlowPaint.color = android.graphics.Color.argb(
-                        (150 * glyph.glowIntensity * animationConfig.glowIntensity).toInt(), 
+                        (200 * glyph.glowIntensity * animationConfig.glowIntensity).toInt().coerceAtMost(255), 
                         android.graphics.Color.red(headColor),
                         android.graphics.Color.green(headColor),
                         android.graphics.Color.blue(headColor)
@@ -1058,16 +1033,9 @@ private fun DrawScope.drawMatrixColumn(
                     paintCache.brightPaint.typeface = charTypeface
                     canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.brightPaint)
                 }
-                3 -> { // Bright trail - use rain bright trail color
-                    val brightTrailColor = if (settings.getAdvancedColorsEnabled()) {
-                        settings.getRainBrightTrailColor().toInt()
-                    } else {
-                        // Use traditional color scheme logic for basic mode
-                        val brightRed = (red + (255 - red) * 0.15f).toInt().coerceAtMost(255)
-                        val brightGreen = (green + (255 - green) * 0.15f).toInt().coerceAtMost(255)
-                        val brightBlue = (blue + (255 - blue) * 0.15f).toInt().coerceAtMost(255)
-                        android.graphics.Color.argb(220, brightRed, brightGreen, brightBlue)
-                    }
+                3 -> { // Bright trail - unified color with slight cinematic lift
+                    val brightBase = settings.getRainBrightTrailColor().toInt()
+                    val brightTrailColor = lightenColor(brightBase, 0.15f) // ~15% toward white
                     
                     // Draw subtle glow
                     paintCache.glowPaint.color = android.graphics.Color.argb(
@@ -1089,13 +1057,8 @@ private fun DrawScope.drawMatrixColumn(
                     paintCache.mainPaint.typeface = charTypeface
                     canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
                 }
-                2 -> { // Regular trail - use rain trail color
-                    val trailColor = if (settings.getAdvancedColorsEnabled()) {
-                        settings.getRainTrailColor().toInt()
-                    } else {
-                        // Use traditional color scheme logic for basic mode
-                        android.graphics.Color.argb(160, (red * 0.7f).toInt(), (green * 0.8f).toInt(), (blue * 0.7f).toInt())
-                    }
+                2 -> { // Regular trail - use rain trail color (unified)
+                    val trailColor = settings.getRainTrailColor().toInt()
                     
                     paintCache.mainPaint.color = android.graphics.Color.argb(
                         (android.graphics.Color.alpha(trailColor) * glyph.flickerAlpha).toInt(), 
@@ -1106,13 +1069,8 @@ private fun DrawScope.drawMatrixColumn(
                     paintCache.mainPaint.typeface = charTypeface
                     canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
                 }
-                1 -> { // Dim trail - use rain dim trail color
-                    val dimTrailColor = if (settings.getAdvancedColorsEnabled()) {
-                        settings.getRainDimTrailColor().toInt()
-                    } else {
-                        // Use traditional color scheme logic for basic mode
-                        android.graphics.Color.argb(120, (red * 0.5f).toInt(), (green * 0.7f).toInt(), (blue * 0.5f).toInt())
-                    }
+                1 -> { // Dim trail - use rain dim trail color (unified)
+                    val dimTrailColor = settings.getRainDimTrailColor().toInt()
                     
                     paintCache.mainPaint.color = android.graphics.Color.argb(
                         (android.graphics.Color.alpha(dimTrailColor) * glyph.flickerAlpha).toInt(), 

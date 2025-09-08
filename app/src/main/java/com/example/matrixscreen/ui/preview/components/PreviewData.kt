@@ -38,24 +38,24 @@ val FakeMatrixSettings = MatrixSettings(
     dimColor = 0xFF004400L,
     
     // UI theme colors
-    uiAccent = 0xFF00CC00L,
-    uiOverlayBg = 0x80000000L,
+    uiAccent = 0xFF00FF00L, // Use bright electric green like matrix rain
+    uiOverlayBg = 0x26000000L, // Much more transparent for floating glass effect
     uiSelectionBg = 0x4000FF00L,
     
     // Character settings
     fontSize = 16
 )
 
-// Fake color values for previews
+// Fake color values for previews - Cyberpunk 2077 style
 val FakeColors = listOf(
-    0xFF00FF00L, // Matrix green
+    0xFF00FF00L, // Matrix green (accent)
+    0xFFFFFFFF, // Pure white (primary text)
+    0xFFCCCCCCL, // Light gray (secondary text)
     0xFF00FFFFL, // Cyan
     0xFFFF00FFL, // Magenta
     0xFFFFFF00L, // Yellow
     0xFFFF0000L, // Red
-    0xFF0000FFL, // Blue
-    0xFF000000L, // Black
-    0xFFFFFFFFL  // White
+    0xFF0000FFL  // Blue
 )
 
 // Fake FPS options for previews

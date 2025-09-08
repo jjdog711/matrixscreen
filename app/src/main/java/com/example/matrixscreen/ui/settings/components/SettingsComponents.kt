@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +24,8 @@ import com.example.matrixscreen.ui.settings.model.BooleanSpec
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.ui.theme.MatrixUIColorScheme
+import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
+import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 
 /**
  * Standard header for all settings screens
@@ -42,22 +45,12 @@ fun SettingsScreenHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = ui.textSecondary,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Spacer(modifier = Modifier.size(32.dp))
         
         ModernTextWithGlow(
             text = title,
-            style = AppTypography.headlineSmall,
-            color = ui.textPrimary,
+            style = AppTypography.headlineMedium,
+            color = androidx.compose.ui.graphics.Color.White,
             settings = optimizedSettings
         )
         
@@ -76,7 +69,8 @@ fun SettingsScreenContainer(
     ui: MatrixUIColorScheme,
     optimizedSettings: MatrixSettings,
     content: @Composable ColumnScope.() -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false
 ) {
     Box(
         modifier = modifier.fillMaxSize()
@@ -85,9 +79,18 @@ fun SettingsScreenContainer(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .widthIn(max = 400.dp)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .wrapContentHeight()
+                .let { base ->
+                    if (expanded) {
+                        base
+                            .padding(horizontal = 12.dp, vertical = 12.dp)
+                            .fillMaxSize()
+                    } else {
+                        base
+                            .widthIn(max = 400.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .height(com.example.matrixscreen.core.design.DesignTokens.Sizing.overlayMaxHeight)
+                    }
+                }
                 .navigationBarsPadding(),
             colors = CardDefaults.cardColors(
                 containerColor = ui.overlayBackground,
@@ -202,41 +205,107 @@ fun LabeledSlider(
 }
 
 /**
- * Section card for grouping related settings
+ * Section card for grouping related settings - matches PreviewSectionCard styling
  */
 @Composable
 fun SettingsSection(
     title: String? = null,
     ui: MatrixUIColorScheme,
     optimizedSettings: MatrixSettings,
-    content: @Composable ColumnScope.() -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = ui.selectionBackground,
-            contentColor = ui.textPrimary
-        ),
-        shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .let { cardModifier ->
+                val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 2f)
+                val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)
+
+                if (glowIntensity > 0.1f) {
+                    // Industry standard neon values (based on Cyberpunk 2077, Unity/Unreal)
+                    val innerGlowElevation = (glowIntensity * 1.5f + 1f).dp // 1-4dp inner glow
+                    val outerGlowElevation = (glowIntensity * 4f + 2f).dp // 2-10dp outer glow
+
+                    val innerGlowAlpha = (glowIntensity * 0.2f + 0.3f).coerceIn(0.3f, 0.5f) // 30-50% inner
+                    val outerGlowAlpha = (glowIntensity * 0.075f + 0.1f).coerceIn(0.1f, 0.25f) // 10-25% outer
+
+                    cardModifier
+                        // Outer glow (subtle, wide spread)
+                        .shadow(
+                            elevation = outerGlowElevation,
+                            shape = cardShape,
+                            ambientColor = ui.textAccent.copy(alpha = outerGlowAlpha),
+                            spotColor = ui.textAccent.copy(alpha = outerGlowAlpha * 0.8f)
+                        )
+                        // Inner glow (brighter, tighter)
+                        .shadow(
+                            elevation = innerGlowElevation,
+                            shape = cardShape,
+                            ambientColor = ui.textAccent.copy(alpha = innerGlowAlpha),
+                            spotColor = ui.textAccent.copy(alpha = innerGlowAlpha * 0.9f)
+                        )
+                        // Clean border on top
+                        .border(
+                            width = 1.dp,
+                            color = ui.textAccent,
+                            shape = cardShape
+                        )
+                } else {
+                    cardModifier
+                }
+                },
+            colors = CardDefaults.cardColors(
+                containerColor = ui.overlayBackground,
+                contentColor = ui.textPrimary
+            ),
+            shape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = com.example.matrixscreen.core.design.DesignTokens.Elevation.previewCard
+            )
         ) {
-            if (title != null) {
-                ModernTextWithGlow(
-                    text = title,
-                    style = AppTypography.titleMedium,
-                    color = ui.textPrimary,
-                    settings = optimizedSettings
-                )
+            Column(
+                modifier = Modifier.padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionPadding),
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.elementSpacing)
+            ) {
+                if (title != null) {
+                    ModernTextWithGlow(
+                        text = title.uppercase(),
+                        style = AppTypography.headlineMedium,
+                        color = ui.textAccent,
+                        settings = optimizedSettings
+                    )
+                }
+                
+                content()
             }
-            
-            content()
         }
     }
+}
+
+/**
+ * Preview-friendly overload that supplies default UI/optimized settings.
+ */
+@Composable
+fun SettingsSection(
+    title: String? = null,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val defaults = MatrixSettings.DEFAULT
+    val ui = getSafeUIColorScheme(defaults)
+    val optimized = rememberOptimizedSettings(defaults)
+    SettingsSection(
+        title = title,
+        ui = ui,
+        optimizedSettings = optimized,
+        modifier = modifier,
+        content = content
+    )
 }
 
 /**

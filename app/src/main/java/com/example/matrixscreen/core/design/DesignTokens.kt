@@ -40,10 +40,11 @@ object DesignTokens {
         val full = 999.dp
         
         // Component-specific radii
-        val card = 8.dp
+        val card = md // Increased for more pronounced corners
         val button = 6.dp
         val overlay = lg
         val colorPicker = md
+        val previewCard = lg // Special radius for preview cards
         
         // New unified radius
         val pill = 24.dp
@@ -59,9 +60,10 @@ object DesignTokens {
         val xl = 16.dp
         
         // Component-specific elevations
-        val card = sm
+        val card = md // Increased for floating glass effect
         val overlay = lg
         val floatingButton = md
+        val previewCard = lg // Special elevation for preview cards
     }
     
     // Outline tokens

@@ -17,8 +17,8 @@ class ThemePresetRegistryImpl @Inject constructor() : ThemePresetRegistry {
                 brightTrailColor = 0xFF00CC00L,
                 trailColor = 0xFF008800L,
                 dimColor = 0xFF004400L,
-                uiAccent = 0xFF00CC00L,
-                uiOverlayBg = 0x80000000L,
+                uiAccent = 0xFF00FF00L,
+                uiOverlayBg = 0x26000000L,
                 uiSelectionBg = 0x4000FF00L
             )
             "MATRIX_BLUE" -> ThemeColorConfig(
@@ -28,18 +28,18 @@ class ThemePresetRegistryImpl @Inject constructor() : ThemePresetRegistry {
                 trailColor = 0xFF004499L,
                 dimColor = 0xFF002266L,
                 uiAccent = 0xFF0066CCL,
-                uiOverlayBg = 0x80000000L,
+                uiOverlayBg = 0x26000000L,
                 uiSelectionBg = 0x400080FFL
             )
-            "MATRIX_RED" -> ThemeColorConfig(
+            "TRON_CYAN" -> ThemeColorConfig(
                 backgroundColor = 0xFF000000L,
-                headColor = 0xFFFF0000L,
-                brightTrailColor = 0xFFCC0000L,
-                trailColor = 0xFF990000L,
-                dimColor = 0xFF660000L,
-                uiAccent = 0xFFCC0000L,
-                uiOverlayBg = 0x80000000L,
-                uiSelectionBg = 0x40FF0000L
+                headColor = 0xFF00F0FFL,
+                brightTrailColor = 0xFF00C8FFL,
+                trailColor = 0xFF00A0CCL,
+                dimColor = 0xFF006B88L,
+                uiAccent = 0xFF00E5FFL,
+                uiOverlayBg = 0x26000000L,
+                uiSelectionBg = 0x4000E5FFL
             )
             "MATRIX_PURPLE" -> ThemeColorConfig(
                 backgroundColor = 0xFF000000L,
@@ -48,28 +48,58 @@ class ThemePresetRegistryImpl @Inject constructor() : ThemePresetRegistry {
                 trailColor = 0xFF4D0099L,
                 dimColor = 0xFF330066L,
                 uiAccent = 0xFF6600CCL,
-                uiOverlayBg = 0x80000000L,
+                uiOverlayBg = 0x26000000L,
                 uiSelectionBg = 0x408000FFL
             )
-            "MATRIX_ORANGE" -> ThemeColorConfig(
+            "NEON_MAGENTA" -> ThemeColorConfig(
                 backgroundColor = 0xFF000000L,
-                headColor = 0xFFFF8000L,
-                brightTrailColor = 0xFFCC6600L,
-                trailColor = 0xFF994D00L,
-                dimColor = 0xFF663300L,
-                uiAccent = 0xFFCC6600L,
-                uiOverlayBg = 0x80000000L,
-                uiSelectionBg = 0x40FF8000L
+                headColor = 0xFFFF00FFL,
+                brightTrailColor = 0xFFCC00CCL,
+                trailColor = 0xFF990099L,
+                dimColor = 0xFF660066L,
+                uiAccent = 0xFFFF00FFL,
+                uiOverlayBg = 0x26000000L,
+                uiSelectionBg = 0x40FF00FFL
             )
-            "MATRIX_WHITE" -> ThemeColorConfig(
+            "CYBERPUNK_NEON" -> ThemeColorConfig(
+                backgroundColor = 0xFF000000L,
+                headColor = 0xFFFF2BD7L,
+                brightTrailColor = 0xFF00E0FFL,
+                trailColor = 0xFF00AACCL,
+                dimColor = 0xFF005A6BL,
+                uiAccent = 0xFFFF2BD7L,
+                uiOverlayBg = 0x26000000L,
+                uiSelectionBg = 0x40FF2BD7L
+            )
+            "HIGH_CONTRAST_WHITE" -> ThemeColorConfig(
                 backgroundColor = 0xFF000000L,
                 headColor = 0xFFFFFFFFL,
                 brightTrailColor = 0xFFCCCCCCL,
                 trailColor = 0xFF999999L,
                 dimColor = 0xFF666666L,
-                uiAccent = 0xFFCCCCCCL,
-                uiOverlayBg = 0x80000000L,
+                uiAccent = 0xFFFFFFFFL,
+                uiOverlayBg = 0x33000000L,
                 uiSelectionBg = 0x40FFFFFFL
+            )
+            "RETRO_AMBER" -> ThemeColorConfig(
+                backgroundColor = 0xFF000000L,
+                headColor = 0xFFFFBF00L,
+                brightTrailColor = 0xFFE6A600L,
+                trailColor = 0xFFCC8C00L,
+                dimColor = 0xFF996600L,
+                uiAccent = 0xFFFFBF00L,
+                uiOverlayBg = 0x26000000L,
+                uiSelectionBg = 0x40FFBF00L
+            )
+            "RETRO_PHOSPHOR_GREEN" -> ThemeColorConfig(
+                backgroundColor = 0xFF000000L,
+                headColor = 0xFF00FF41L,
+                brightTrailColor = 0xFF00CC33L,
+                trailColor = 0xFF009926L,
+                dimColor = 0xFF00661AL,
+                uiAccent = 0xFF00FF41L,
+                uiOverlayBg = 0x26000000L,
+                uiSelectionBg = 0x4000FF41L
             )
             else -> getColors(BuiltInThemes.MATRIX_GREEN) // Default fallback
         }
@@ -79,18 +109,22 @@ class ThemePresetRegistryImpl @Inject constructor() : ThemePresetRegistry {
         return when (id.value) {
             "MATRIX_GREEN" -> "Matrix Green"
             "MATRIX_BLUE" -> "Matrix Blue"
-            "MATRIX_RED" -> "Matrix Red"
             "MATRIX_PURPLE" -> "Matrix Purple"
-            "MATRIX_ORANGE" -> "Matrix Orange"
-            "MATRIX_WHITE" -> "Matrix White"
+            "TRON_CYAN" -> "Tron Cyan"
+            "NEON_MAGENTA" -> "Neon Magenta"
+            "CYBERPUNK_NEON" -> "Cyberpunk Neon"
+            "HIGH_CONTRAST_WHITE" -> "High Contrast White"
+            "RETRO_AMBER" -> "Retro Amber"
+            "RETRO_PHOSPHOR_GREEN" -> "Retro Phosphor Green"
             else -> "Unknown"
         }
     }
     
     override fun isValid(id: ThemePresetId): Boolean {
         return when (id.value) {
-            "MATRIX_GREEN", "MATRIX_BLUE", "MATRIX_RED", 
-            "MATRIX_PURPLE", "MATRIX_ORANGE", "MATRIX_WHITE" -> true
+            "MATRIX_GREEN", "MATRIX_BLUE", "MATRIX_PURPLE",
+            "TRON_CYAN", "NEON_MAGENTA", "CYBERPUNK_NEON",
+            "HIGH_CONTRAST_WHITE", "RETRO_AMBER", "RETRO_PHOSPHOR_GREEN" -> true
             else -> false
         }
     }

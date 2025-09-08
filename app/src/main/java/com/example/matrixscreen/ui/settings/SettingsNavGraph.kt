@@ -21,7 +21,8 @@ fun SettingsNavGraph(
     navController: NavHostController,
     settingsViewModel: NewSettingsViewModel,
     onBack: () -> Unit,
-    onNavigateToCustomSets: () -> Unit
+    onNavigateToCustomSets: () -> Unit,
+    onNavigateToUIPreview: () -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -36,6 +37,7 @@ fun SettingsNavGraph(
                 onNavigateToEffects = { navController.navigate("effects") },
                 onNavigateToTiming = { navController.navigate("timing") },
                 onNavigateToBackground = { navController.navigate("background") },
+                onNavigateToUIPreview = onNavigateToUIPreview,
                 onBack = onBack
             )
         }

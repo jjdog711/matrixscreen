@@ -66,25 +66,25 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
     val buttonGlow = baseColor.copy(alpha = (glowIntensity * 0.2f).coerceIn(0f, 0.4f))
     
     return MatrixUIColorScheme(
-        // Text colors - adapt to background with error handling
+        // Text colors - Cyberpunk 2077 hierarchy with theme support
         textPrimary = try {
             if (isLightBackground(settings.backgroundColor)) {
                 Color(0xFF1A1A1A) // Dark text for light backgrounds
             } else {
-                Color(0xFFCCCCCC) // Light text for dark backgrounds
+                Color(0xFFFFFFFF) // Pure white for dark backgrounds (Cyberpunk style)
             }
         } catch (e: Exception) {
             android.util.Log.e("ColorScheme", "Error calculating text color: ${e.message}")
-            Color(0xFFCCCCCC) // Fallback to light text
+            Color(0xFFFFFFFF) // Fallback to pure white
         },
         textSecondary = try {
             if (isLightBackground(settings.backgroundColor)) {
-                Color(0xFF666666)
+                Color(0xFF666666) // Dark gray for light backgrounds
             } else {
-                Color(0xFF666666)
+                Color(0xFFCCCCCC) // Light gray for dark backgrounds (improved readability)
             }
         } catch (e: Exception) {
-            Color(0xFF666666) // Fallback
+            Color(0xFFCCCCCC) // Fallback to light gray
         },
         textAccent = baseColor,
         
@@ -100,7 +100,7 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         } catch (e: Exception) {
             Color(0xFF000000).copy(alpha = 0.8f)
         },
-        overlayBackground = Color(settings.uiOverlayBg).copy(alpha = 0.85f),
+        overlayBackground = Color(settings.uiOverlayBg), // Use the alpha from settings directly
         
         // Slider colors
         sliderActive = baseColor,
@@ -133,19 +133,19 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
  */
 @Composable
 fun getFallbackUIColorScheme(): MatrixUIColorScheme {
-    val fallbackGreen = Color(0xFF33FF66) // Default Matrix green
-    val fallbackBackground = Color(0xFF121212) // Dark background
+    val fallbackGreen = Color(0xFF00FF00) // Bright electric green like matrix rain
+    val fallbackBackground = Color(0xFF000000) // Pure black background
     
     return MatrixUIColorScheme(
-        // Text colors
-        textPrimary = Color(0xFFCCCCCC),
-        textSecondary = Color(0xFF666666),
+        // Text colors - Cyberpunk 2077 hierarchy
+        textPrimary = Color(0xFFFFFFFF), // Pure white for readability
+        textSecondary = Color(0xFFCCCCCC), // Light gray for descriptions
         textAccent = fallbackGreen,
         
         // Background colors
         backgroundPrimary = fallbackBackground,
         backgroundSecondary = fallbackBackground.copy(alpha = 0.8f),
-        overlayBackground = fallbackBackground.copy(alpha = 0.85f),
+        overlayBackground = fallbackBackground.copy(alpha = 0.15f), // Much more transparent for floating glass
         
         // Slider colors
         sliderActive = fallbackGreen,

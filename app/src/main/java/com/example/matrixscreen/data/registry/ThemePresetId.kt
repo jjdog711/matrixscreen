@@ -70,17 +70,23 @@ data class ThemeColorConfig(
 object BuiltInThemes {
     val MATRIX_GREEN = ThemePresetId("MATRIX_GREEN")
     val MATRIX_BLUE = ThemePresetId("MATRIX_BLUE")
-    val MATRIX_RED = ThemePresetId("MATRIX_RED")
     val MATRIX_PURPLE = ThemePresetId("MATRIX_PURPLE")
-    val MATRIX_ORANGE = ThemePresetId("MATRIX_ORANGE")
-    val MATRIX_WHITE = ThemePresetId("MATRIX_WHITE")
+    val TRON_CYAN = ThemePresetId("TRON_CYAN")
+    val NEON_MAGENTA = ThemePresetId("NEON_MAGENTA")
+    val CYBERPUNK_NEON = ThemePresetId("CYBERPUNK_NEON")
+    val HIGH_CONTRAST_WHITE = ThemePresetId("HIGH_CONTRAST_WHITE")
+    val RETRO_AMBER = ThemePresetId("RETRO_AMBER")
+    val RETRO_PHOSPHOR_GREEN = ThemePresetId("RETRO_PHOSPHOR_GREEN")
     
     val ALL_BUILT_IN = listOf(
         MATRIX_GREEN,
         MATRIX_BLUE,
-        MATRIX_RED,
         MATRIX_PURPLE,
-        MATRIX_ORANGE,
-        MATRIX_WHITE
+        TRON_CYAN,
+        NEON_MAGENTA,
+        CYBERPUNK_NEON,
+        HIGH_CONTRAST_WHITE,
+        RETRO_AMBER,
+        RETRO_PHOSPHOR_GREEN
     )
 }
