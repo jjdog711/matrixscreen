@@ -26,7 +26,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matrixscreen.data.CustomSymbolSet
+import com.example.matrixscreen.data.custom.CustomSymbolSet
 import com.example.matrixscreen.ui.theme.FontUtils
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.MatrixTextStyles
@@ -39,8 +39,8 @@ import com.example.matrixscreen.ui.components.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateOrEditSymbolSetScreen(
+    viewModel: CustomSymbolSetViewModel,
     onBackPressed: () -> Unit,
-    onSave: (CustomSymbolSet) -> Unit,
     onDelete: (() -> Unit)? = null,
     existingSet: CustomSymbolSet? = null
 ) {
@@ -407,7 +407,8 @@ fun CreateOrEditSymbolSetScreen(
                             characters = sanitizedCharacters,
                             fontFileName = selectedFont
                         )
-                        onSave(customSet)
+                        viewModel.saveCustomSet(customSet)
+                        onBackPressed()
                     }
                 },
                 enabled = isValid,

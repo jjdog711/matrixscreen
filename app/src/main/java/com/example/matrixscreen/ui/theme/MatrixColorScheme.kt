@@ -3,7 +3,7 @@ package com.example.matrixscreen.ui.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
 
 /**
  * Modern color scheme system for MatrixScreen UI
@@ -59,11 +59,7 @@ data class MatrixUIColorScheme(
 fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
     // Get base color from settings with error handling
     val baseColor = try {
-        if (settings.advancedColorsEnabled) {
-            Color(settings.getEffectiveUiColor())
-        } else {
-            settings.colorTint.color
-        }
+        Color(settings.uiAccent)
     } catch (e: Exception) {
         android.util.Log.e("ColorScheme", "Error getting base color: ${e.message}")
         Color(0xFF00CC00) // Fallback to Matrix green
@@ -82,21 +78,17 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         
         // Background colors - use dynamic background from settings with error handling
         background = try {
-            Color(settings.getEffectiveBackgroundColor())
+            Color(settings.backgroundColor)
         } catch (e: Exception) {
             android.util.Log.e("ColorScheme", "Error getting background color: ${e.message}")
             Color(0xFF000000) // Fallback to black
         },
         backgroundSecondary = try {
-            Color(settings.getEffectiveBackgroundColor()).copy(alpha = 0.8f)
+            Color(settings.backgroundColor).copy(alpha = 0.8f)
         } catch (e: Exception) {
             Color(0xFF000000).copy(alpha = 0.8f)
         },
-        overlayBackground = try {
-            Color(settings.getEffectiveBackgroundColor()).copy(alpha = 0.85f) // 85% opacity
-        } catch (e: Exception) {
-            Color(0xFF000000).copy(alpha = 0.85f)
-        },
+        overlayBackground = Color(settings.uiOverlayBg),
         
         // Border colors
         border = baseColor,
@@ -104,7 +96,7 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         
         // Text colors - adapt to background with error handling
         textPrimary = try {
-            if (isLightBackground(settings.getEffectiveBackgroundColor())) {
+            if (isLightBackground(settings.backgroundColor)) {
                 Color(0xFF1A1A1A) // Dark text for light backgrounds
             } else {
                 Color(0xFFCCCCCC) // Light text for dark backgrounds
@@ -114,7 +106,7 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
             Color(0xFFCCCCCC) // Fallback to light text
         },
         textSecondary = try {
-            if (isLightBackground(settings.getEffectiveBackgroundColor())) {
+            if (isLightBackground(settings.backgroundColor)) {
                 Color(0xFF666666)
             } else {
                 Color(0xFF666666)
@@ -134,7 +126,7 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         sliderInactive = baseColor.copy(alpha = 0.3f),
         
         // Selection colors
-        selectionBackground = baseColor.copy(alpha = 0.2f),
+        selectionBackground = Color(settings.uiSelectionBg),
         
         // Glow colors
         textGlow = textGlow,

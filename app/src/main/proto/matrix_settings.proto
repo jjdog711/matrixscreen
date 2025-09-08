@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package com.example.matrixscreen.data.proto;
+
+option java_package = "com.example.matrixscreen.data.proto";
+option java_multiple_files = true;
+
+// MatrixScreen settings stored in Proto DataStore
+// Schema version for migration compatibility
+message MatrixSettingsProto {
+  // Schema version for migration compatibility
+  int32 schema_version = 1;
+  
+  // Motion settings
+  float fall_speed = 2;
+  int32 column_count = 3;
+  float line_spacing = 4;
+  float active_percentage = 5;
+  float speed_variance = 6;
+  
+  // Effects settings
+  float glow_intensity = 7;
+  float jitter_amount = 8;
+  float flicker_amount = 9;
+  float mutation_rate = 10;
+  
+  // Background settings
+  int32 grain_density = 11;
+  float grain_opacity = 12;
+  int32 target_fps = 13;
+  
+  // Color settings (stored as int64 ARGB values)
+  int64 background_color = 14;
+  int64 head_color = 15;
+  int64 bright_trail_color = 16;
+  int64 trail_color = 17;
+  int64 dim_color = 18;
+  
+  // UI theme colors
+  int64 ui_accent = 19;
+  int64 ui_overlay_bg = 20;
+  int64 ui_selection_bg = 21;
+  
+  // Character settings
+  int32 font_size = 22;
+  
+  // Symbol set settings
+  string symbol_set_id = 23;
+  string saved_custom_sets = 24; // JSON string
+  string active_custom_set_id = 25;
+  
+  // Trail length settings
+  int32 max_trail_length = 26;
+  int32 max_bright_trail_length = 27;
+  
+  // Theme preset settings
+  string theme_preset_id = 28;
+}

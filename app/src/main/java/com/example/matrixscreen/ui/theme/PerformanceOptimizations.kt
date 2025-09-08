@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
 // Font management now handled by Typography system
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -31,15 +31,15 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 fun rememberColorScheme(settings: MatrixSettings?): MatrixUIColorScheme {
-    val uiColor = settings?.getEffectiveUiColor()
-    val backgroundColor = settings?.getEffectiveBackgroundColor()
+    val uiAccent = settings?.uiAccent
+    val backgroundColor = settings?.backgroundColor
     val glowIntensity = settings?.glowIntensity
     
-    return remember(uiColor, backgroundColor, glowIntensity) {
+    return remember(uiAccent, backgroundColor, glowIntensity) {
         if (settings != null) {
             // Create color scheme without composable calls
-            val baseColor = Color(settings.getEffectiveUiColor())
-            val bgColor = Color(settings.getEffectiveBackgroundColor())
+            val baseColor = Color(settings.uiAccent)
+            val bgColor = Color(settings.backgroundColor)
             val effectiveGlowIntensity = settings.glowIntensity.coerceIn(0f, 2f)
             
             MatrixUIColorScheme(
@@ -48,7 +48,7 @@ fun rememberColorScheme(settings: MatrixSettings?): MatrixUIColorScheme {
                 primaryBright = baseColor.copy(alpha = 1.0f),
                 background = bgColor,
                 backgroundSecondary = bgColor.copy(alpha = 0.8f),
-                overlayBackground = bgColor.copy(alpha = 0.85f),
+                overlayBackground = Color(settings.uiOverlayBg),
                 border = baseColor,
                 borderDim = baseColor.copy(alpha = 0.3f),
                 textPrimary = Color(0xFFCCCCCC),
@@ -59,7 +59,7 @@ fun rememberColorScheme(settings: MatrixSettings?): MatrixUIColorScheme {
                 buttonCancelText = Color(0xFFFF6666),
                 sliderActive = baseColor,
                 sliderInactive = baseColor.copy(alpha = 0.3f),
-                selectionBackground = baseColor.copy(alpha = 0.2f),
+                selectionBackground = Color(settings.uiSelectionBg),
                 textGlow = baseColor.copy(alpha = (effectiveGlowIntensity * 0.3f).coerceIn(0f, 0.6f)),
                 buttonGlow = baseColor.copy(alpha = (effectiveGlowIntensity * 0.2f).coerceIn(0f, 0.4f))
             )
@@ -214,15 +214,26 @@ fun rememberOptimizedSettings(
 ): MatrixSettings {
     return remember(
         settings.fallSpeed,
-        settings.symbolSet,
-        settings.colorTint,
-        settings.fontSize,
         settings.columnCount,
-        settings.targetFps,
+        settings.lineSpacing,
+        settings.activePercentage,
+        settings.speedVariance,
         settings.glowIntensity,
-        settings.advancedColorsEnabled,
-        settings.getEffectiveUiColor(),
-        settings.getEffectiveBackgroundColor()
+        settings.jitterAmount,
+        settings.flickerAmount,
+        settings.mutationRate,
+        settings.grainDensity,
+        settings.grainOpacity,
+        settings.targetFps,
+        settings.backgroundColor,
+        settings.headColor,
+        settings.brightTrailColor,
+        settings.trailColor,
+        settings.dimColor,
+        settings.uiAccent,
+        settings.uiOverlayBg,
+        settings.uiSelectionBg,
+        settings.fontSize
     ) {
         settings
     }
@@ -294,8 +305,8 @@ fun rememberEfficientColorScheme(
     
     // Only recalculate if essential properties change
     return remember(
-        settings?.getEffectiveUiColor(),
-        settings?.getEffectiveBackgroundColor(),
+        settings?.uiAccent,
+        settings?.backgroundColor,
         settings?.glowIntensity
     ) {
         colorScheme

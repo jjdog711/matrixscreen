@@ -26,11 +26,12 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 - **Loading Animation**: Animated dots with staggered timing
 - **Auto-dismiss**: 3-second splash screen with smooth transition to main effect
 
-### Real-time Settings Overlay
-- **Compact Design**: 40% screen height overlay that doesn't obstruct the Matrix effect
-- **Gesture Navigation**: Swipe up/down to navigate between settings, tap to edit
-- **Live Preview**: All changes visible instantly in the background animation
-- **Smart Confirmation**: Regular symbol sets auto-save, custom sets require explicit confirmation
+### Modern Settings Architecture
+- **6-Category Navigation**: Organized settings into Theme, Characters, Motion, Effects, Timing, and Background
+- **Type-Safe Settings**: Full compile-time type safety with `SettingId<T>` constants
+- **Domain Model**: Clean separation between UI and business logic
+- **Registry System**: Extensible symbol sets and theme presets
+- **Live Settings**: All changes apply instantly without animation restart
 
 ### Symbol Sets
 - **Matrix Authentic** (default): Latin + half-width Katakana + Matrix glyphs (200+ characters)
@@ -57,7 +58,7 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 - **Intuitive Weighting**: Simply repeat characters in your input string to control their frequency
 
 ### Advanced Color System 🎨
-- **Basic Mode**: 8 predefined color themes with authentic Matrix green default
+- **Theme Presets**: 6 built-in themes (Matrix Green, Blue, Red, Purple, Orange, White)
 - **Advanced Mode**: Full color customization with individual control over:
   - Rain head color (brightest characters)
   - Bright trail color (characters behind head)
@@ -65,10 +66,12 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
   - Dim trail color (fading characters)
   - UI accent color (settings overlay)
   - Background color (canvas background)
+  - UI overlay background
+  - UI selection background
 - **Live Color Preview**: See color changes instantly in the animation
 - **Color Picker Dialog**: Full HSV color picker with hex input
-- **Smart Transitions**: Automatic color generation when switching between modes
-- **Conflict Prevention**: UI prevents identical UI and background colors
+- **UI/Rain Color Linking**: Option to link UI colors to rain colors for cohesive themes
+- **Color Resolution Pipeline**: Theme presets and advanced logic applied before rendering
 
 ### Custom Font Picker 🎨
 - **Font Discovery**: Automatically scans `assets/fonts/` for available `.ttf` files
@@ -78,7 +81,6 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 - **Fallback Support**: Graceful fallback to system fonts if custom fonts fail
 - **Display Names**: User-friendly font names (e.g., "Matrix Code NFI", "Space Grotesk", "Digital 7")
 - **Performance Optimized**: Efficient font loading and memory management
-- **Space Grotesk Support**: Ready for Space Grotesk Regular and Bold fonts when provided
 
 ## Default Settings
 
@@ -88,7 +90,7 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 | Font Size | 14dp | 8-24dp | Character size |
 | Column Count | 150 | 50-150 | Number of Matrix columns |
 | Target FPS | 60fps | 15-60fps | Animation frame rate |
-| Row Height | 90% | 70%-120% | Vertical spacing multiplier |
+| Line Spacing | 90% | 70%-120% | Vertical spacing multiplier |
 | Trail Length | 100 chars | 20-100 chars | Maximum trail length |
 | Bright Trail | 15 chars | 2-15 chars | Bright characters behind head |
 | Glow Intensity | 200% | 0%-200% | Glow effect strength |
@@ -96,9 +98,9 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 | Flicker Rate | 20% | 0%-20% | Character flicker frequency |
 | Mutation Rate | 8% | 0%-10% | Character change frequency |
 | Start Delay | 0.01s | 0-10s | Column start delay |
-| Restart Delay | 0.01s | 0.5-5s | Column restart delay |
+| Restart Delay | 0.5s | 0.5-5s | Column restart delay |
 | Active % | 40% | 10%-80% | Initial active columns |
-| Speed Variation | 10/1000 | 0-10/1000 | Runtime speed changes |
+| Speed Variation | 1% | 0-10% | Runtime speed changes |
 | Grain Density | 200 | 0-500 | Grain texture points |
 | Grain Opacity | 3% | 0%-10% | Grain texture opacity |
 
@@ -107,7 +109,7 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 - **Android**: 5.0+ (API 21)
 - **Java**: 17
 - **Android Studio**: Koala (2024.1) or later
-- **Gradle**: 8.7.2
+- **Gradle**: 8.11.1
 - **Kotlin**: 1.9.22
 - **Compose BOM**: 2024.10.01
 - **Theme**: Material3 (no AppCompat dependency)
@@ -117,21 +119,21 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 
 ### Basic Usage
 1. **Launch**: App starts with Matrix splash screen
-2. **Settings**: Double-tap anywhere or swipe up to open settings overlay
-3. **Navigate**: Swipe left/right to browse settings, tap to edit
+2. **Settings**: Double-tap anywhere or swipe up to open settings
+3. **Navigate**: Use the settings home screen to access different categories
 4. **Live Preview**: All changes apply instantly to the background animation
 5. **Confirm**: Regular settings auto-save, use Confirm/Cancel for custom symbol sets
 
 ### Advanced Color Customization
-1. **Access**: Settings → Color Picker
-2. **Basic Mode**: Choose from 8 predefined themes
+1. **Access**: Settings → Theme
+2. **Presets**: Choose from 6 built-in theme presets
 3. **Advanced Mode**: Toggle to Advanced for full color control
 4. **Customize**: Adjust individual color components (head, trail, UI, background)
 5. **Live Preview**: See changes instantly in the Matrix rain
 6. **Color Picker**: Tap any color to open full HSV picker with hex input
 
 ### Custom Symbol Sets
-1. **Access**: Settings → Symbol Set → Toggle "Custom Symbol Sets"
+1. **Access**: Settings → Characters → Toggle "Custom Symbol Sets"
 2. **Create**: Tap "CREATE NEW SET" button
 3. **Name**: Enter a descriptive name for your symbol set
 4. **Characters**: Type any characters you want (max 512)
@@ -192,13 +194,20 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 
 ## Technical Implementation
 
+### Modern Architecture
+- **Domain Model**: Clean separation between UI and business logic with `MatrixSettings`
+- **Type Safety**: Full compile-time safety with `SettingId<T>` constants
+- **Registry System**: Extensible symbol sets and theme presets
+- **Color Resolution Pipeline**: Theme presets and advanced logic applied before rendering
+- **Live Settings**: All settings apply instantly without animation restart
+
 ### Live Settings Architecture
-- **rememberUpdatedState**: Animation loop reads fresh values every frame
+- **Domain Model**: `MatrixSettings` with 32+ configurable parameters
+- **Type-Safe Access**: `settings.get(SettingId)` and `settings.with(SettingId, value)`
 - **No Restart Semantics**: Only "Reset All" requires restart, all other settings apply live
 - **Smart Auto-confirm**: Regular symbol sets auto-save, custom sets require manual confirmation
 - **Real-time FPS**: Target frame rate adjusts live without effect restart
 - **Custom Set Switching**: Immediate character set updates when switching between custom symbol sets
-- **Hot-swap Loop**: LaunchedEffect(lifecycleOwner) with minimal dependencies prevents animation restarts
 
 ### Custom Symbol Sets Architecture
 - **Data Model**: `CustomSymbolSet` with `id`, `name`, `characters`, `fontFileName`
@@ -207,17 +216,18 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 - **Font System**: `MatrixFontManager` with font discovery, caching, and fallback support
 
 ### Advanced Color System
-- **Dual Mode**: Basic (8 themes) and Advanced (full customization)
+- **Theme Presets**: 6 built-in themes with registry system
+- **Color Resolution**: Pipeline applies presets, advanced logic, and UI/Rain linking
 - **Live Application**: Color changes apply instantly to animation
 - **Smart Generation**: Automatic color derivation when switching modes
-- **Conflict Prevention**: UI validation prevents identical colors
 
 ### Key Components
+- **SettingsNavGraph**: 6-category navigation (Theme, Characters, Motion, Effects, Timing, Background)
 - **CustomSymbolSetsScreen**: Management UI with list, edit, delete functionality
 - **CreateOrEditSymbolSetScreen**: Editor with live preview and font picker
 - **MatrixFontManager**: Font discovery, loading, caching, and fallback system
-- **SettingsViewModel**: Custom set CRUD operations and state management
-- **ColorPickerComponents**: Advanced color picker with HSV support
+- **NewSettingsViewModel**: Type-safe settings management with domain model
+- **ResolveColors**: Color resolution pipeline for theme presets and advanced logic
 
 ### Font System
 - **Discovery**: Async scanning of `assets/fonts/` directory
@@ -248,15 +258,18 @@ The app features a comprehensive font system with automatic discovery and custom
 - `digital_7.ttf` - LED-style
 - `orbitron.ttf` - Futuristic
 - `cascadia_mono.ttf` - Clean monospace
-- `space_grotesk_regular.ttf` - Modern sans-serif (when provided)
-- `space_grotesk_bold.ttf` - Modern sans-serif bold (when provided)
+- `jetbrains_mono_regular.ttf` - Developer-friendly monospace
+- `jetbrains_mono_light.ttf` - Light weight variant
+- `space_grotesk_regular.ttf` - Modern sans-serif
+- `space_grotesk_medium.ttf` - Medium weight variant
+- `space_grotesk_semibold.ttf` - Semi-bold variant
 
 ### Font Fallback System
 - **Custom Symbol Sets**: Use selected custom font with fallback chain
 - **Regular Symbol Sets**: Matrix Code NFI → Noto Sans JP → System monospace
 - **Performance**: Intelligent font caching and efficient loading
 
-**Legal Note**: Matrix Code NFI is generally free for personal use but not suitable for commercial redistribution without proper licensing. For commercial releases, consider using open-source alternatives like Noto Sans JP + monospace fonts.
+**Legal Note**: Matrix Code NFI is generally free for non-commercial use but not suitable for commercial redistribution without proper licensing. For commercial releases, consider using open-source alternatives like Noto Sans JP + monospace fonts.
 
 ## Screenshots
 
@@ -276,6 +289,11 @@ The app features a comprehensive font system with automatic discovery and custom
 - [x] R8 minification and resource shrinking ✅
 - [x] Custom symbol set switching fix ✅
 - [x] Space Grotesk font support ✅
+- [x] Modern settings architecture ✅
+- [x] Type-safe settings system ✅
+- [x] Theme preset system ✅
+- [x] Color resolution pipeline ✅
+- [x] Registry system for extensibility ✅
 - [ ] Add open-source font pack for commercial use
 - [ ] Implement preset save/load functionality
 - [ ] Add settings export/import feature
@@ -299,22 +317,15 @@ Consider creating issue templates in `/.github/` for bug reports and feature req
 
 ## Changelog
 
-### v1.2 (Latest)
-- **Hot-swap Settings System**: All settings apply live without animation restart - only "Reset All" requires restart
-- **Efficient Grain Overlay**: High-performance tiled noise bitmap with subtle animated drift (4.5s X, 6.1s Y cycles)
-- **De-AppCompat Migration**: Switched to Material3 theme, removed AppCompat dependency for cleaner architecture
-- **R8 Minification**: Enabled R8 minification and resource shrinking for optimized release builds
-- **Custom Symbol Set Switching Fix**: Immediate character set updates when switching between custom symbol sets
-- **Space Grotesk Font Support**: Ready for Space Grotesk Regular and Bold fonts with friendly display names
-- **Packaging Hygiene**: Added comprehensive `.gitignore` and `.cursorignore` files
-- **Performance Improvements**: No per-frame Paint allocation in grain overlay, optimized memory usage
-- **Build System**: Enhanced build configuration with proper release trimming
-
-### v1.1
-- **Live Settings System**: All settings now apply in real-time without animation restart
-- **Advanced Color System**: Full color customization with individual component control
-- **Smart Auto-confirm**: Regular symbol sets auto-save, custom sets require manual confirmation
-- **Real-time FPS**: Target frame rate adjusts live without effect restart
+### v1.1 (Latest)
+- **Modern Settings Architecture**: Complete rewrite with 6-category navigation and type-safe settings
+- **Domain Model**: Clean separation between UI and business logic with `MatrixSettings`
+- **Type Safety**: Full compile-time safety with `SettingId<T>` constants and `WidgetSpec<T>`
+- **Registry System**: Extensible symbol sets and theme presets with `SymbolSetRegistry` and `ThemePresetRegistry`
+- **Color Resolution Pipeline**: Theme presets and advanced logic applied before rendering
+- **Theme Presets**: 6 built-in themes (Matrix Green, Blue, Red, Purple, Orange, White)
+- **UI/Rain Color Linking**: Option to link UI colors to rain colors for cohesive themes
+- **Live Settings**: All settings apply instantly without animation restart
 - **Custom Symbol Sets**: Create and edit your own symbol sets with any characters
 - **Character Weighting**: Repeat characters to control their frequency in the Matrix rain
 - **Custom Font Picker**: Choose from available fonts or system fonts for your symbol sets

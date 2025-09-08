@@ -16,6 +16,13 @@
   - `SettingsSection` & `SettingsScreenContainer` **must use trailing lambdas** (no `content = {}`)  
   - No references to `ui.surface` (use `ui.selectionBackground` or `ui.overlayBackground`).
 - **Naming sanity:** No marketing adjectives in code. Use descriptive, stable names.
+- **Single source of truth for settings:**
+  - Use `com.example.matrixscreen.data.model.MatrixSettings` ONLY.
+  - The legacy `com.example.matrixscreen.data.MatrixSettings` must not appear in code.
+  - `MatrixColor` and `SymbolSet` live in `com.example.matrixscreen.data` as enums.
+- **Theme must consume the domain model:**
+  - `MatrixUIColorScheme`/`GlowEffects`/`PerformanceOptimizations` helpers accept domain `MatrixSettings` and use explicit ARGB fields
+  - Use: `backgroundColor`, `headColor`, `brightTrailColor`, `trailColor`, `dimColor`, `uiAccent`, `uiOverlayBg`, `uiSelectionBg`.
 
 ## UI/UX Invariants
 - **QuickSettingsPanel** (bottom dock) + **Full Settings** (SettingsHome + categories; deep links to advanced per setting)

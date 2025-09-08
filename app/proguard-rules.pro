@@ -23,3 +23,13 @@
 # Keep Compose related classes
 -keep class androidx.compose.** { *; }
 -keep class kotlin.Metadata { *; }
+
+# Kotlinx Serialization (keep generated serializers)
+-keepclassmembers class com.example.matrixscreen.data.custom.** {
+    *** Companion;
+}
+-keepclassmembers class com.example.matrixscreen.data.custom.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class **$$serializer { *; }

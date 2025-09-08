@@ -20,12 +20,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
+import com.example.matrixscreen.data.model.*
 import com.example.matrixscreen.ui.settings.model.SettingCategory
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
+import com.example.matrixscreen.ui.NewSettingsViewModel
+
 
 /**
  * Home screen for the new settings architecture
@@ -33,7 +36,7 @@ import com.example.matrixscreen.ui.theme.ModernTextWithGlow
  */
 @Composable
 fun SettingsHomeScreen(
-    settingsViewModel: com.example.matrixscreen.ui.SettingsViewModel,
+    settingsViewModel: NewSettingsViewModel,
     onNavigateToTheme: () -> Unit,
     onNavigateToCharacters: () -> Unit,
     onNavigateToMotion: () -> Unit,
@@ -44,7 +47,8 @@ fun SettingsHomeScreen(
     modifier: Modifier = Modifier
 ) {
     // Get current settings for UI theming
-    val currentSettings by settingsViewModel.settings.collectAsState()
+    val uiState by settingsViewModel.uiState.collectAsState()
+    val currentSettings = uiState.draft
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
@@ -101,7 +105,7 @@ fun SettingsHomeScreen(
                 PresetsSection(
                     settingsViewModel = settingsViewModel,
                     ui = ui,
-                    optimizedSettings = optimizedSettings
+                    optimizedSettings = currentSettings
                 )
                 
                 // Categories Grid
@@ -139,7 +143,7 @@ fun SettingsHomeScreen(
  */
 @Composable
 private fun PresetsSection(
-    settingsViewModel: com.example.matrixscreen.ui.SettingsViewModel,
+    settingsViewModel: NewSettingsViewModel,
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
 ) {
@@ -159,7 +163,10 @@ private fun PresetsSection(
             listOf("Film-Accurate", "Performance", "Showcase").forEach { preset ->
                 PresetButton(
                     name = preset,
-                    onClick = { settingsViewModel.applyPreset(preset) },
+                    onClick = { 
+                        // TODO: Implement preset functionality in NewSettingsViewModel
+                        // settingsViewModel.applyPreset(preset) 
+                    },
                     ui = ui,
                     optimizedSettings = optimizedSettings
                 )

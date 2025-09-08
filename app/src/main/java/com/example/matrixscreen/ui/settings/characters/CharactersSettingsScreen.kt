@@ -9,10 +9,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.SymbolSet
 import com.example.matrixscreen.ui.settings.components.*
-import com.example.matrixscreen.ui.settings.model.SettingsSpecs
+import com.example.matrixscreen.ui.settings.model.*
+import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -23,12 +24,13 @@ import com.example.matrixscreen.ui.theme.ModernTextWithGlow
  */
 @Composable
 fun CharactersSettingsScreen(
-    settingsViewModel: com.example.matrixscreen.ui.SettingsViewModel,
+    settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onBack: () -> Unit,
     onNavigateToCustomSets: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currentSettings by settingsViewModel.settings.collectAsState()
+    val uiState by settingsViewModel.uiState.collectAsState()
+    val currentSettings = uiState.draft
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
@@ -51,8 +53,8 @@ fun CharactersSettingsScreen(
                 optimizedSettings = optimizedSettings,
                 content = {
                 SymbolSetSelector(
-                    currentSet = currentSettings.symbolSet,
-                    onSetChanged = { settingsViewModel.updateSymbolSet(it) },
+                    currentSet = SymbolSet.MATRIX_AUTHENTIC, // TODO: Add symbolSet to domain model
+                    onSetChanged = { /* TODO: Implement symbol set updates */ },
                     onNavigateToCustomSets = onNavigateToCustomSets,
                     ui = ui,
                     optimizedSettings = optimizedSettings
@@ -67,8 +69,8 @@ fun CharactersSettingsScreen(
                 optimizedSettings = optimizedSettings,
                 content = {
                 FontSizeControl(
-                    currentSize = currentSettings.fontSize,
-                    onSizeChanged = { settingsViewModel.updateFontSize(it) },
+                    currentSize = currentSettings.get(FontSize),
+                    onSizeChanged = { settingsViewModel.updateDraft(FontSize, it) },
                     ui = ui,
                     optimizedSettings = optimizedSettings
                 )
@@ -186,18 +188,16 @@ private fun SymbolPreview(
  */
 @Composable
 private fun FontSizeControl(
-    currentSize: Float,
-    onSizeChanged: (Float) -> Unit,
+    currentSize: Int,
+    onSizeChanged: (Int) -> Unit,
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
 ) {
-    val fontSizeSpec = SettingsSpecs.CHARACTERS_SPECS.find { it.key == "fontSize" }!!
+    val fontSizeSpec = CHARACTERS_SPECS.find { it.id == FontSize }!!
     
-    LabeledSlider(
+    RenderSetting(
         spec = fontSizeSpec,
         value = currentSize,
-        onValueChange = onSizeChanged,
-        ui = ui,
-        optimizedSettings = optimizedSettings
+        onValueChange = onSizeChanged
     )
 }

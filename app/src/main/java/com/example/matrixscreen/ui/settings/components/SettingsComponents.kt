@@ -17,8 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.ui.settings.model.SettingSpec
+import com.example.matrixscreen.ui.settings.model.BooleanSpec
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.ui.theme.MatrixUIColorScheme
@@ -263,6 +264,53 @@ fun ResetSectionButton(
             color = ui.textSecondary,
             settings = optimizedSettings,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        )
+    }
+}
+
+/**
+ * Labeled switch component for boolean settings
+ */
+@Composable
+fun LabeledSwitch(
+    spec: BooleanSpec,
+    value: Boolean,
+    onValueChange: (Boolean) -> Unit,
+    ui: MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            ModernTextWithGlow(
+                text = spec.label,
+                style = AppTypography.titleMedium,
+                color = ui.textPrimary,
+                settings = optimizedSettings
+            )
+            if (spec.help != null) {
+                ModernTextWithGlow(
+                    text = spec.help,
+                    style = AppTypography.bodySmall,
+                    color = ui.textSecondary,
+                    settings = optimizedSettings
+                )
+            }
+        }
+        
+        Switch(
+            checked = value,
+            onCheckedChange = onValueChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = ui.primary,
+                checkedTrackColor = ui.primary.copy(alpha = 0.5f),
+                uncheckedThumbColor = ui.textSecondary,
+                uncheckedTrackColor = ui.textSecondary.copy(alpha = 0.3f)
+            )
         )
     }
 }

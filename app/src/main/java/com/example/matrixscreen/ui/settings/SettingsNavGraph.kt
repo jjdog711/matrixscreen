@@ -10,6 +10,7 @@ import com.example.matrixscreen.ui.settings.effects.EffectsSettingsScreen
 import com.example.matrixscreen.ui.settings.motion.MotionSettingsScreen
 import com.example.matrixscreen.ui.settings.theme.ThemeSettingsScreen
 import com.example.matrixscreen.ui.settings.timing.TimingSettingsScreen
+import com.example.matrixscreen.ui.NewSettingsViewModel
 
 /**
  * Navigation graph for the new settings architecture
@@ -18,7 +19,7 @@ import com.example.matrixscreen.ui.settings.timing.TimingSettingsScreen
 @Composable
 fun SettingsNavGraph(
     navController: NavHostController,
-    settingsViewModel: com.example.matrixscreen.ui.SettingsViewModel,
+    settingsViewModel: NewSettingsViewModel,
     onBack: () -> Unit,
     onNavigateToCustomSets: () -> Unit
 ) {

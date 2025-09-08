@@ -6,27 +6,31 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.matrixscreen.data.MatrixSettings
 import com.example.matrixscreen.ui.settings.components.*
-import com.example.matrixscreen.ui.settings.model.SettingsSpecs
+import com.example.matrixscreen.ui.settings.model.*
+import com.example.matrixscreen.ui.settings.model.get
+import com.example.matrixscreen.ui.settings.model.specFor
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 
 /**
- * Motion settings screen with rain speed, columns, and flow controls
+ * Motion settings screen with spec-driven UI for rain speed, columns, and flow controls.
+ * 
+ * This screen uses the MOTION_SPECS from SpecsCatalog to render settings dynamically,
+ * following the spec-driven UI pattern with proper UDF (draft/confirm/cancel) integration.
  */
 @Composable
 fun MotionSettingsScreen(
-    settingsViewModel: com.example.matrixscreen.ui.SettingsViewModel,
+    settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currentSettings by settingsViewModel.settings.collectAsState()
+    val uiState by settingsViewModel.uiState.collectAsState()
+    val currentSettings = uiState.draft
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
@@ -36,105 +40,111 @@ fun MotionSettingsScreen(
         ui = ui,
         optimizedSettings = optimizedSettings,
         content = {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Description
-            ModernTextWithGlow(
-                text = "Controls flow density and pacing.",
-                style = AppTypography.bodyMedium,
-                color = ui.textSecondary,
-                settings = optimizedSettings
-            )
-            
-            // Rain Speed Section
-            SettingsSection(
-                title = "Rain Speed",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                val fallSpeedSpec = SettingsSpecs.MOTION_SPECS.find { it.key == "fallSpeed" }!!
-                LabeledSlider(
-                    spec = fallSpeedSpec,
-                    value = currentSettings.fallSpeed,
-                    onValueChange = { settingsViewModel.updateFallSpeed(it) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Description
+                ModernTextWithGlow(
+                    text = "Controls flow density and pacing.",
+                    style = AppTypography.bodyMedium,
+                    color = ui.textSecondary,
+                    settings = optimizedSettings
                 )
+                
+                // Live Preview Section
+                SettingsSection {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        ModernTextWithGlow(
+                            text = "Live Preview",
+                            style = AppTypography.titleSmall,
+                            color = ui.textPrimary,
+                            settings = optimizedSettings
+                        )
+                        
+                        MotionPreviewTile(
+                            settings = currentSettings,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
-            )
-            
-            // Columns Section
-            SettingsSection(
-                title = "Columns",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                val columnCountSpec = SettingsSpecs.MOTION_SPECS.find { it.key == "columnCount" }!!
-                LabeledSlider(
-                    spec = columnCountSpec,
-                    value = currentSettings.columnCount.toFloat(),
-                    onValueChange = { settingsViewModel.updateColumnCount(it.toInt()) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
+                
+                // Motion Settings Section
+                SettingsSection {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Render all motion specs using typed SettingId access
+                        val speedSpec = MOTION_SPECS.specFor(Speed)
+                        AnimatedRenderSetting(
+                            spec = speedSpec,
+                            value = currentSettings.get(Speed),
+                            onValueChange = { value -> settingsViewModel.updateDraft(Speed, value) },
+                            showPreview = true
+                        )
+
+                        val columnsSpec = MOTION_SPECS.specFor(Columns)
+                        AnimatedRenderSetting(
+                            spec = columnsSpec,
+                            value = currentSettings.get(Columns),
+                            onValueChange = { value -> settingsViewModel.updateDraft(Columns, value) },
+                            showPreview = true
+                        )
+
+                        val lineSpaceSpec = MOTION_SPECS.specFor(LineSpace)
+                        AnimatedRenderSetting(
+                            spec = lineSpaceSpec,
+                            value = currentSettings.get(LineSpace),
+                            onValueChange = { value -> settingsViewModel.updateDraft(LineSpace, value) },
+                            showPreview = true
+                        )
+
+                        val activePctSpec = MOTION_SPECS.specFor(ActivePct)
+                        AnimatedRenderSetting(
+                            spec = activePctSpec,
+                            value = currentSettings.get(ActivePct),
+                            onValueChange = { value -> settingsViewModel.updateDraft(ActivePct, value) },
+                            showPreview = true
+                        )
+
+                        val speedVarSpec = MOTION_SPECS.specFor(SpeedVar)
+                        AnimatedRenderSetting(
+                            spec = speedVarSpec,
+                            value = currentSettings.get(SpeedVar),
+                            onValueChange = { value -> settingsViewModel.updateDraft(SpeedVar, value) },
+                            showPreview = true
+                        )
+                        
+                        // Reset button for motion settings with animation
+                        AnimatedResetSectionButton(
+                            onReset = {
+                                // Reset motion settings to defaults
+                                MOTION_SPECS.forEach { spec ->
+                                    when (spec) {
+                                        is SliderSpec -> {
+                                            settingsViewModel.updateDraft(spec.id, spec.default)
+                                        }
+                                        is IntSliderSpec -> {
+                                            settingsViewModel.updateDraft(spec.id, spec.default)
+                                        }
+                                        is ToggleSpec -> {
+                                            settingsViewModel.updateDraft(spec.id, spec.default)
+                                        }
+                                        else -> {
+                                            // Handle other spec types if needed
+                                            throw IllegalArgumentException("Unsupported spec type for reset: ${spec::class.simpleName}")
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
-            )
-            
-            // Line Spacing Section
-            SettingsSection(
-                title = "Line Spacing",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                val rowHeightSpec = SettingsSpecs.MOTION_SPECS.find { it.key == "rowHeightMultiplier" }!!
-                LabeledSlider(
-                    spec = rowHeightSpec,
-                    value = currentSettings.rowHeightMultiplier,
-                    onValueChange = { settingsViewModel.updateRowHeightMultiplier(it) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
-                }
-            )
-            
-            // Active Columns Section
-            SettingsSection(
-                title = "Active Columns",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                val activePercentageSpec = SettingsSpecs.MOTION_SPECS.find { it.key == "initialActivePercentage" }!!
-                LabeledSlider(
-                    spec = activePercentageSpec,
-                    value = currentSettings.initialActivePercentage,
-                    onValueChange = { settingsViewModel.updateInitialActivePercentage(it) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
-                }
-            )
-            
-            // Speed Variance Section
-            SettingsSection(
-                title = "Speed Variance",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                val speedVariationSpec = SettingsSpecs.MOTION_SPECS.find { it.key == "speedVariationRate" }!!
-                LabeledSlider(
-                    spec = speedVariationSpec,
-                    value = currentSettings.speedVariationRate,
-                    onValueChange = { settingsViewModel.updateSpeedVariationRate(it) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
-                }
-            )
-        }
+            }
         },
         modifier = modifier
     )

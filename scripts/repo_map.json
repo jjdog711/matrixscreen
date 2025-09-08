@@ -1,0 +1,142 @@
+{
+  "project_name": "MatrixScreen",
+  "version": "1.0.0",
+  "last_updated": "2025-09-07T15:00:00Z",
+  "description": "Repository map for MatrixScreen Android app - visual Matrix rain console",
+  
+  "architecture": {
+    "pattern": "MVVM with UDF (Unidirectional Data Flow)",
+    "ui_framework": "Jetpack Compose with Material 3",
+    "persistence": "Proto DataStore",
+    "navigation": "Navigation Compose"
+  },
+  
+  "key_paths": {
+    "overlay": {
+      "description": "Quick Settings Panel - bottom dock overlay",
+      "path": "app/src/main/java/com/example/matrixscreen/ui/QuickSettingsPanel.kt",
+      "status": "planned"
+    },
+    "navigation": {
+      "description": "Settings navigation graph and home screen",
+      "paths": [
+        "app/src/main/java/com/example/matrixscreen/ui/settings/SettingsNavGraph.kt",
+        "app/src/main/java/com/example/matrixscreen/ui/settings/SettingsHomeScreen.kt"
+      ],
+      "status": "planned"
+    },
+    "specs": {
+      "description": "SettingId and WidgetSpec definitions",
+      "paths": [
+        "app/src/main/java/com/example/matrixscreen/ui/settings/model/SettingSpec.kt",
+        "app/src/main/java/com/example/matrixscreen/ui/settings/model/SettingsSpecs.kt"
+      ],
+      "status": "existing"
+    },
+    "bindings": {
+      "description": "MatrixSettings data binding and persistence",
+      "paths": [
+        "app/src/main/java/com/example/matrixscreen/data/MatrixSettings.kt",
+        "app/src/main/java/com/example/matrixscreen/data/MatrixSettingsRepository.kt"
+      ],
+      "status": "planned"
+    },
+    "presets": {
+      "description": "Preset management and import/export",
+      "paths": [
+        "app/src/main/java/com/example/matrixscreen/data/presets/",
+        "app/src/main/java/com/example/matrixscreen/ui/presets/"
+      ],
+      "status": "planned"
+    },
+    "design_tokens": {
+      "description": "Centralized design system tokens",
+      "path": "app/src/main/java/com/example/matrixscreen/core/design/DesignTokens.kt",
+      "status": "created"
+    },
+    "theme_system": {
+      "description": "UI theming and color management",
+      "paths": [
+        "app/src/main/java/com/example/matrixscreen/ui/theme/",
+        "app/src/main/java/com/example/matrixscreen/ui/settings/theme/"
+      ],
+      "status": "existing"
+    }
+  },
+  
+  "category_screens": {
+    "motion": {
+      "path": "app/src/main/java/com/example/matrixscreen/ui/settings/motion/MotionSettingsScreen.kt",
+      "status": "existing"
+    },
+    "effects": {
+      "path": "app/src/main/java/com/example/matrixscreen/ui/settings/effects/EffectsSettingsScreen.kt",
+      "status": "existing"
+    },
+    "background": {
+      "path": "app/src/main/java/com/example/matrixscreen/ui/settings/background/BackgroundSettingsScreen.kt",
+      "status": "existing"
+    },
+    "timing": {
+      "path": "app/src/main/java/com/example/matrixscreen/ui/settings/timing/TimingSettingsScreen.kt",
+      "status": "existing"
+    },
+    "characters": {
+      "path": "app/src/main/java/com/example/matrixscreen/ui/settings/characters/CharactersSettingsScreen.kt",
+      "status": "existing"
+    },
+    "theme": {
+      "path": "app/src/main/java/com/example/matrixscreen/ui/settings/theme/ThemeSettingsScreen.kt",
+      "status": "existing"
+    }
+  },
+  
+  "engine_boundaries": {
+    "description": "Renderer and core Matrix logic - DO NOT MODIFY",
+    "protected_paths": [
+      "app/src/main/java/com/example/matrixscreen/renderer/",
+      "app/src/main/java/com/example/matrixscreen/shaders/",
+      "app/src/main/java/com/example/matrixscreen/columns/"
+    ],
+    "note": "Engine components remain functionally intact. UI controls via parameters only."
+  },
+  
+  "standards": {
+    "documentation": {
+      "original": "docs/standards/original/",
+      "dev_copies": "docs/standards/dev/",
+      "note": "Never edit originals. Copy to dev/ for annotations."
+    },
+    "compose_rules": [
+      "Material 3 components only",
+      "Trailing lambdas for SettingsSection/SettingsScreenContainer",
+      "No ui.surface references",
+      "State hoisting for all components"
+    ],
+    "naming_conventions": [
+      "No marketing adjectives in code",
+      "Descriptive, stable names",
+      "No 'modern' prefixes"
+    ]
+  },
+  
+  "import_export": {
+    "formats": [".ms-preset.json", ".ms-theme.json", ".ms-symbols.json"],
+    "storage": "Android SAF (Storage Access Framework)",
+    "default_location": "Documents/MatrixScreen/"
+  },
+  
+  "fps_policy": {
+    "ui_range": "5-120 FPS",
+    "default": "60 FPS",
+    "coercion": "Nearest device-supported rate within [5..120]"
+  },
+  
+  "guardrails": {
+    "engine_sacred": "Renderer, shaders, column logic remain intact",
+    "spec_driven": "All settings declared as data specs",
+    "udf_pattern": "ViewModel exposes UiState(saved, draft, dirty)",
+    "material3_only": "androidx.compose.material3.* components only",
+    "no_ui_surface": "Use ui.selectionBackground or ui.overlayBackground"
+  }
+}

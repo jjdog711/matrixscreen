@@ -26,7 +26,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matrixscreen.data.CustomSymbolSet
+import com.example.matrixscreen.data.custom.CustomSymbolSet
 import com.example.matrixscreen.ui.theme.FontUtils
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.MatrixTextStyles

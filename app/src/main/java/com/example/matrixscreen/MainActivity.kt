@@ -46,21 +46,26 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
+import com.example.matrixscreen.data.custom.CustomSymbolSet
+import com.example.matrixscreen.data.model.*
 import com.example.matrixscreen.data.SymbolSet
 import com.example.matrixscreen.data.MatrixColor
 import com.example.matrixscreen.ui.MatrixSplashScreen
-import com.example.matrixscreen.ui.SettingsScreen
-import com.example.matrixscreen.ui.SettingsListScreen
-import com.example.matrixscreen.ui.SettingsViewModel
-import com.example.matrixscreen.ui.SettingsOverlay
-import com.example.matrixscreen.ui.ModernSettingsOverlay
-import com.example.matrixscreen.ui.SettingsState
-import com.example.matrixscreen.ui.MatrixSettingType
+// import com.example.matrixscreen.ui.SettingsListScreen // TODO: Update to use domain model
+// import com.example.matrixscreen.ui.SettingsOverlay // Moved to legacy
+// import com.example.matrixscreen.ui.ModernSettingsOverlay // TODO: Update to use domain model
+// import com.example.matrixscreen.ui.SettingsState // Moved to legacy
+// import com.example.matrixscreen.ui.MatrixSettingType // Moved to legacy
 import com.example.matrixscreen.ui.CustomSymbolSetsScreen
 import com.example.matrixscreen.ui.CreateOrEditSymbolSetScreen
+import com.example.matrixscreen.ui.NewSettingsViewModel
 import com.example.matrixscreen.ui.settings.SettingsNavGraph
+import com.example.matrixscreen.data.model.MatrixSettings as LegacyMatrixSettings
 import com.example.matrixscreen.ui.theme.MatrixScreenTheme
+import com.example.matrixscreen.ui.preview.DebugSettingsHarness
+import com.example.matrixscreen.BuildConfig
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.isActive
 import kotlin.math.exp
 import kotlin.math.pow
@@ -68,6 +73,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,13 +96,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 /**
  * Main app with splash screen and navigation between Matrix screen and Settings
  */
 @Composable
 fun MatrixApp() {
     val navController = rememberNavController()
-    val settingsViewModel: SettingsViewModel = viewModel()
+    val settingsViewModel: NewSettingsViewModel = viewModel()
     
     
     NavHost(
@@ -127,60 +134,35 @@ fun MatrixApp() {
                 onNavigateToCustomSets = { navController.navigate("custom-symbol-sets") }
             )
         }
+        
+        // Debug route - only available in debug builds
+        if (BuildConfig.DEBUG) {
+            composable("debug-settings") {
+                DebugSettingsHarness()
+            }
+        }
         composable("custom-symbol-sets") {
-            val settings by settingsViewModel.settings.collectAsState()
-            CustomSymbolSetsScreen(
-                onBackPressed = { navController.popBackStack() },
-                onNavigateToCreate = { navController.navigate("create-symbol-set") },
-                onNavigateToEdit = { setId -> navController.navigate("edit-symbol-set/$setId") },
-                savedCustomSets = settings.savedCustomSets,
-                activeCustomSetId = settings.activeCustomSetId,
-                onSelectCustomSet = { setId -> settingsViewModel.selectCustomSymbolSet(setId) },
-                onDeleteCustomSet = { setId -> settingsViewModel.deleteCustomSymbolSet(setId) }
-            )
+            // TODO: Custom symbol sets functionality will be implemented in later phases
+            LaunchedEffect(Unit) {
+                navController.navigate("settings") {
+                    popUpTo("settings") { inclusive = false }
+                }
+            }
         }
         composable("create-symbol-set") {
-            val context = LocalContext.current
-            val fontManager = remember { MatrixFontManager(context) }
+            // TODO: Custom symbol sets functionality will be implemented in later phases
             LaunchedEffect(Unit) {
-                fontManager.initializeFonts()
-            }
-            
-            CreateOrEditSymbolSetScreen(
-                onBackPressed = { navController.popBackStack() },
-                onSave = { customSet -> 
-                    settingsViewModel.saveCustomSymbolSet(customSet)
-                    navController.popBackStack()
-                },
-            )
-        }
-        composable("edit-symbol-set/{setId}") { backStackEntry ->
-            val setId = backStackEntry.arguments?.getString("setId") ?: ""
-            val settings by settingsViewModel.settings.collectAsState()
-            val customSet = settings.savedCustomSets.find { it.id == setId }
-            
-            if (customSet != null) {
-                val context = LocalContext.current
-                val fontManager = remember { MatrixFontManager(context) }
-                LaunchedEffect(Unit) {
-                    fontManager.initializeFonts()
+                navController.navigate("settings") {
+                    popUpTo("settings") { inclusive = false }
                 }
-                
-                CreateOrEditSymbolSetScreen(
-                    onBackPressed = { navController.popBackStack() },
-                    onSave = { updatedSet -> 
-                        settingsViewModel.saveCustomSymbolSet(updatedSet)
-                        navController.popBackStack()
-                    },
-                    onDelete = {
-                        settingsViewModel.deleteCustomSymbolSet(setId)
-                        navController.popBackStack()
-                    },
-                    existingSet = customSet,
-                )
-            } else {
-                // Handle case where custom set is not found
-                navController.popBackStack()
+            }
+        }
+        composable("edit-symbol-set/{setId}") {
+            // TODO: Custom symbol sets functionality will be implemented in later phases
+            LaunchedEffect(Unit) {
+                navController.navigate("settings") {
+                    popUpTo("settings") { inclusive = false }
+                }
             }
         }
     }
@@ -193,33 +175,29 @@ fun MatrixApp() {
 @Composable
 fun MatrixScreen(
     onSettingsClick: () -> Unit,
-    settingsViewModel: SettingsViewModel,
+    settingsViewModel: NewSettingsViewModel,
     navController: androidx.navigation.NavController
 ) {
-    val settings by settingsViewModel.settings.collectAsState()
-    val settingsState by settingsViewModel.settingsState.collectAsState()
-    val livePreviewSettings by settingsViewModel.livePreviewSettings.collectAsState()
-    
-    // Use live preview settings if available, otherwise use regular settings
-    val currentSettings = livePreviewSettings ?: settings
+    val uiState by settingsViewModel.uiState.collectAsState()
+    val currentSettings = uiState.draft
+    // val settingsState = SettingsState.MatrixScreen // Default state for matrix screen - moved to legacy
+    val livePreviewSettings = null // No live preview in new system
     
     Box(modifier = Modifier.fillMaxSize()) {
         // Matrix animation background with dynamic color support
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = androidx.compose.ui.graphics.Color(currentSettings.getEffectiveBackgroundColor()).also { color ->
+            color = androidx.compose.ui.graphics.Color(currentSettings.backgroundColor).also { color ->
                 android.util.Log.d("ColorPicker", "MainActivity: Applying background color: ${color.toArgb().toString(16)}")
             }
         ) {
             // Add subtle grain texture overlay
             Box(modifier = Modifier.fillMaxSize()) {
+                // Real matrix rain effect using new domain model
                 MatrixDigitalRain(settings = currentSettings)
                 
-                // Efficient tiled grain overlay
-                MatrixGrainOverlay(
-                    settings = currentSettings,
-                    modifier = Modifier.fillMaxSize()
-                )
+                // Real grain overlay using new domain model
+                MatrixGrainOverlay(settings = currentSettings)
             }
         }
         
@@ -229,12 +207,18 @@ fun MatrixScreen(
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onDoubleTap = { onSettingsClick() }
+                        onDoubleTap = { onSettingsClick() },
+                        onLongPress = { 
+                            // Long press to access debug harness (debug builds only)
+                            if (BuildConfig.DEBUG) {
+                                navController.navigate("debug-settings")
+                            }
+                        }
                     )
                 }
-                .pointerInput(settingsState) {
+                .pointerInput(Unit) {
                     // Only handle swipe gestures when settings overlay is not visible
-                    if (settingsState is SettingsState.MatrixScreen) {
+                    // if (settingsState is SettingsState.MatrixScreen) {
                         detectDragGestures(
                             onDragEnd = { },
                             onDrag = { _, dragAmount ->
@@ -245,12 +229,30 @@ fun MatrixScreen(
                                 }
                             }
                         )
-                    }
+                    // }
                 }
         )
         
-        // Settings are now handled by the new navigation system
-        // No overlay needed - settings are in separate screens
+        // TODO: ModernSettingsOverlay needs to be updated to use domain model
+        // Temporarily disabled during domain model migration
+        // ModernSettingsOverlay(
+        //     settingsState = settingsState,
+        //     currentSettings = legacySettings,
+        //     livePreviewSettings = null,
+        //     onConfirm = { settingsViewModel.commit() },
+        //     onCancel = { settingsViewModel.revert() },
+        //     onBack = { /* No back action needed */ },
+        //     onNavigateUp = { /* No navigation needed */ },
+        //     onNavigateDown = { /* No navigation needed */ },
+        //     onUpdateLivePreview = { _, _ -> /* No live preview in new system */ },
+        //     onStartEditing = { /* No editing needed */ },
+        //     onPersistSetting = { _, _ -> /* No persistence needed */ },
+        //     onSwipeUp = onSettingsClick,
+        //     onSwipeDown = { /* No action needed */ },
+        //     onNavigateToCustomSets = { /* No custom sets needed */ },
+        //     viewModel = settingsViewModel,
+        //     navController = navController
+        // )
     }
 }
 
@@ -296,7 +298,7 @@ fun SetupImmersiveMode() {
  */
 @Composable
 private fun MatrixGrainOverlay(
-    settings: MatrixSettings,
+    settings: com.example.matrixscreen.data.model.MatrixSettings,
     modifier: Modifier = Modifier
 ) {
     if (settings.grainOpacity <= 0f || settings.grainDensity <= 0) return
@@ -439,7 +441,7 @@ data class MatrixColumn(
 
 @Composable
 fun MatrixDigitalRain(
-    settings: MatrixSettings = MatrixSettings()
+    settings: com.example.matrixscreen.data.model.MatrixSettings = com.example.matrixscreen.data.model.MatrixSettings()
 ) {
     val density = LocalDensity.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -460,39 +462,39 @@ fun MatrixDigitalRain(
     val configuration = LocalConfiguration.current
     val reactiveAnimationConfig = remember(settings) {
         val fontSize = with(density) { settings.fontSize.dp.toPx() }
-        val rowHeight = fontSize * settings.rowHeightMultiplier
+        val rowHeight = fontSize * settings.getRowHeightMultiplier()
         val screenHeight = with(density) { configuration.screenHeightDp.dp.toPx() }
         MatrixAnimationConfig(
             fontSize = fontSize,
             columnCount = settings.columnCount,
             rowHeight = rowHeight,
             screenRows = (screenHeight / rowHeight).toInt() + 50,
-            targetFps = settings.targetFps,
+            targetFps = settings.targetFps.toFloat(),
             printSpeedMultiplier = settings.fallSpeed,
-            matrixColor = settings.colorTint,
+            matrixColor = settings.getColorTint(),
             maxTrailLength = settings.maxTrailLength,
             maxBrightTrailLength = settings.maxBrightTrailLength,
             glowIntensity = settings.glowIntensity,
             jitterAmount = settings.jitterAmount,
-            flickerRate = settings.flickerRate,
+            flickerRate = settings.flickerAmount,
             mutationRate = settings.mutationRate,
             columnStartDelay = settings.columnStartDelay,
             columnRestartDelay = settings.columnRestartDelay,
-            initialActivePercentage = settings.initialActivePercentage,
-            speedVariationRate = settings.speedVariationRate,
+            initialActivePercentage = settings.activePercentage,
+            speedVariationRate = settings.speedVariance,
             grainDensity = settings.grainDensity,
             grainOpacity = settings.grainOpacity
         )
     }
     
     // OPTIMIZATION: Update character set based on settings (use passed-in settings for live preview)
-    val matrixChars = remember(settings.symbolSet, settings.savedCustomSets, settings.activeCustomSetId) {
-        settings.symbolSet.effectiveCharacters(settings).toCharArray()
+    val matrixChars = remember(settings.getSymbolSet(), settings.getSavedCustomSets(), settings.getActiveCustomSetId()) {
+        settings.getSymbolSet().effectiveCharacters(settings).toCharArray()
     }
     
     // PER-COLUMN CHARACTER POOLS: Parse comma-separated character groups (use passed-in settings for live preview)
-    val characterPools = remember(settings.symbolSet, settings.savedCustomSets, settings.activeCustomSetId) {
-        val characters = settings.symbolSet.effectiveCharacters(settings)
+    val characterPools = remember(settings.getSymbolSet(), settings.getSavedCustomSets(), settings.getActiveCustomSetId()) {
+        val characters = settings.getSymbolSet().effectiveCharacters(settings)
         parseCharacterPools(characters)
     }
     
@@ -510,8 +512,8 @@ fun MatrixDigitalRain(
         reactiveAnimationConfig.columnCount,
         matrixChars,
         characterPools,
-        settings.symbolSet,
-        settings.activeCustomSetId // Include activeCustomSetId to force column rebuild when switching custom sets
+        settings.getSymbolSet(),
+        settings.getActiveCustomSetId() // Include activeCustomSetId to force column rebuild when switching custom sets
     ) {
         createMatrixColumns(reactiveAnimationConfig, matrixChars, characterPools)
     }
@@ -1008,10 +1010,10 @@ private fun DrawScope.drawMatrixColumn(
             val finalXPos = adjustedXPos + glyph.jitterX
             
             // Get character-specific typeface
-            val charTypeface = if (settings.symbolSet == com.example.matrixscreen.data.SymbolSet.CUSTOM && 
-                settings.activeCustomSetId != null) {
+            val charTypeface = if (settings.getSymbolSet() == com.example.matrixscreen.data.SymbolSet.CUSTOM && 
+                settings.getActiveCustomSetId() != null) {
                 // Use custom font for custom symbol sets
-                val customSet = settings.savedCustomSets.find { it.id == settings.activeCustomSetId }
+                val customSet = settings.getSavedCustomSets().find { it.id == settings.getActiveCustomSetId()?.toString() }
                 customSet?.let { 
                     paintCache.fontManager.getTypefaceForCustomSet(it.fontFileName)
                 } ?: paintCache.fontManager.getTypefaceForCharacter(glyph.char)
@@ -1023,8 +1025,8 @@ private fun DrawScope.drawMatrixColumn(
             // AUTHENTIC MATRIX: Enhanced stepped brightness levels with advanced color support
             when (glyph.brightness) {
                 4 -> { // Lead character - use rain head color
-                    val headColor = if (settings.advancedColorsEnabled) {
-                        settings.rainHeadColor.toInt()
+                    val headColor = if (settings.getAdvancedColorsEnabled()) {
+                        settings.getRainHeadColor().toInt()
                     } else {
                         // Use traditional color scheme logic for basic mode
                         val lightRed = (red + (255 - red) * 0.5f).toInt().coerceAtMost(255)
@@ -1054,8 +1056,8 @@ private fun DrawScope.drawMatrixColumn(
                     canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.brightPaint)
                 }
                 3 -> { // Bright trail - use rain bright trail color
-                    val brightTrailColor = if (settings.advancedColorsEnabled) {
-                        settings.rainBrightTrailColor.toInt()
+                    val brightTrailColor = if (settings.getAdvancedColorsEnabled()) {
+                        settings.getRainBrightTrailColor().toInt()
                     } else {
                         // Use traditional color scheme logic for basic mode
                         val brightRed = (red + (255 - red) * 0.15f).toInt().coerceAtMost(255)
@@ -1085,8 +1087,8 @@ private fun DrawScope.drawMatrixColumn(
                     canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
                 }
                 2 -> { // Regular trail - use rain trail color
-                    val trailColor = if (settings.advancedColorsEnabled) {
-                        settings.rainTrailColor.toInt()
+                    val trailColor = if (settings.getAdvancedColorsEnabled()) {
+                        settings.getRainTrailColor().toInt()
                     } else {
                         // Use traditional color scheme logic for basic mode
                         android.graphics.Color.argb(160, (red * 0.7f).toInt(), (green * 0.8f).toInt(), (blue * 0.7f).toInt())
@@ -1102,8 +1104,8 @@ private fun DrawScope.drawMatrixColumn(
                     canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
                 }
                 1 -> { // Dim trail - use rain dim trail color
-                    val dimTrailColor = if (settings.advancedColorsEnabled) {
-                        settings.rainDimTrailColor.toInt()
+                    val dimTrailColor = if (settings.getAdvancedColorsEnabled()) {
+                        settings.getRainDimTrailColor().toInt()
                     } else {
                         // Use traditional color scheme logic for basic mode
                         android.graphics.Color.argb(120, (red * 0.5f).toInt(), (green * 0.7f).toInt(), (blue * 0.5f).toInt())

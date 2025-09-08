@@ -16,17 +16,20 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matrixscreen.data.CustomSymbolSet
+import com.example.matrixscreen.data.custom.CustomSymbolSet
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.components.*
 
@@ -36,14 +39,14 @@ import com.example.matrixscreen.ui.components.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomSymbolSetsScreen(
+    viewModel: CustomSymbolSetViewModel,
     onBackPressed: () -> Unit,
     onNavigateToCreate: () -> Unit,
-    onNavigateToEdit: (String) -> Unit,
-    savedCustomSets: List<CustomSymbolSet>,
-    activeCustomSetId: String?,
-    onSelectCustomSet: (String) -> Unit,
-    onDeleteCustomSet: (String) -> Unit
+    onNavigateToEdit: (String) -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val fileManager = remember { SymbolSetFileManager(context) }
     val scrollState = rememberScrollState()
     
     // Cyberpunk color scheme
@@ -75,8 +78,59 @@ fun CustomSymbolSetsScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
+            // Import/Export section
+            CyberpunkSection(title = "IMPORT / EXPORT") {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = { viewModel.exportCustomSets() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1A1A1A),
+                            contentColor = Color(0xFF00FF00)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.CloudDownload,
+                            contentDescription = "Export",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Export",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp
+                        )
+                    }
+                    
+                    Button(
+                        onClick = { /* TODO: Implement import */ },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1A1A1A),
+                            contentColor = Color(0xFF00FF00)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.CloudUpload,
+                            contentDescription = "Import",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Import",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
             // Custom sets list
-            if (savedCustomSets.isEmpty()) {
+            if (uiState.customSets.isEmpty()) {
                 // Empty state
                 CyberpunkSection(title = "NO CUSTOM SETS") {
                     Column(
@@ -106,13 +160,13 @@ fun CustomSymbolSetsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.height(400.dp)
                     ) {
-                        items(savedCustomSets) { customSet ->
+                        items(uiState.customSets) { customSet ->
                             CustomSetItem(
                                 customSet = customSet,
-                                isSelected = customSet.id == activeCustomSetId,
-                                onSelect = { onSelectCustomSet(customSet.id) },
+                                isSelected = customSet.id == uiState.activeCustomSetId,
+                                onSelect = { viewModel.setActiveCustomSet(customSet.id) },
                                 onEdit = { onNavigateToEdit(customSet.id) },
-                                onDelete = { onDeleteCustomSet(customSet.id) }
+                                onDelete = { viewModel.deleteCustomSet(customSet.id) }
                             )
                         }
                     }

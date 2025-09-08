@@ -1,0 +1,10 @@
+---
+description: "Warm up terminal sessions so the first real command is never dropped"
+globs: []
+alwaysApply: true
+commandRules:
+  - match: ".*"
+    replacement: |
+      echo >nul
+      $0
+---

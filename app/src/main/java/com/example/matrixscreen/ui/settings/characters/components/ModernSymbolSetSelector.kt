@@ -17,7 +17,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.matrixscreen.data.MatrixSettings
+import com.example.matrixscreen.data.model.MatrixSettings
+import com.example.matrixscreen.data.registry.toSymbolEngineConfig
+import com.example.matrixscreen.data.custom.CustomSymbolSet
+import com.example.matrixscreen.data.model.getActiveCustomSetId
+import com.example.matrixscreen.data.model.getSavedCustomSets
 import com.example.matrixscreen.data.SymbolSet
 import com.example.matrixscreen.ui.theme.FontUtils
 import com.example.matrixscreen.ui.theme.MatrixUIColorScheme
@@ -72,8 +76,8 @@ fun ModernSymbolSetSelector(
                 currentSet = currentSet,
                 onToggle = { checked ->
                     if (checked) {
-                        val hasValidCustomSet = currentSettings?.activeCustomSetId != null &&
-                            currentSettings.savedCustomSets.any { it.id == currentSettings.activeCustomSetId }
+                        val hasValidCustomSet = currentSettings?.getActiveCustomSetId() != null &&
+                            currentSettings.getSavedCustomSets().any { it.id == currentSettings.getActiveCustomSetId()?.toString() }
                         
                         if (hasValidCustomSet) {
                             onSetChanged(SymbolSet.CUSTOM)
@@ -152,7 +156,8 @@ private fun ModernSymbolSetCard(
             )
             
             // Live preview of characters
-            val previewCharacters = symbolSet.effectiveCharacters(currentSettings ?: MatrixSettings())
+            val config = (currentSettings ?: MatrixSettings()).toSymbolEngineConfig()
+            val previewCharacters = symbolSet.effectiveCharacters(config)
             ModernSymbolPreview(
                 characters = previewCharacters,
                 colorScheme = colorScheme,
@@ -199,8 +204,8 @@ private fun ModernCustomSetToggle(
                 
                 // Show active custom set name if available
                 currentSettings?.let { settings ->
-                    if (isCustomSelected && settings.activeCustomSetId != null) {
-                        val activeSet = settings.savedCustomSets.find { it.id == settings.activeCustomSetId }
+                    if (isCustomSelected && settings.getActiveCustomSetId() != null) {
+                        val activeSet = settings.getSavedCustomSets().find { it.id == settings.getActiveCustomSetId()?.toString() }
                         activeSet?.let { set ->
                             ModernHelperText(
                                 text = "Active: ${set.name}",

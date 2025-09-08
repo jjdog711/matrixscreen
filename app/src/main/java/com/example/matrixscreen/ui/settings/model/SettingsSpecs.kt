@@ -12,56 +12,59 @@ object SettingsSpecs {
      * Theme settings - colors, presets, and visual themes
      */
     val THEME_SPECS = listOf(
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "colorTint",
+        //     label = "Color Theme",
+        //     type = ControlType.Select,
+        //     options = MatrixColor.values().map { it.name },
+        //     help = "Choose from predefined color themes",
+        //     category = SettingCategory.THEME
+        // ),
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "advancedColorsEnabled",
+        //     label = "Advanced Colors",
+        //     type = ControlType.Toggle,
+        //     help = "Enable per-channel color control",
+        //     category = SettingCategory.THEME
+        // ),
         SettingSpec(
-            key = "colorTint",
-            label = "Color Theme",
-            type = ControlType.Select,
-            options = MatrixColor.values().map { it.name },
-            help = "Choose from predefined color themes",
-            category = SettingCategory.THEME
-        ),
-        SettingSpec(
-            key = "advancedColorsEnabled",
-            label = "Advanced Colors",
-            type = ControlType.Toggle,
-            help = "Enable per-channel color control",
-            category = SettingCategory.THEME
-        ),
-        SettingSpec(
-            key = "rainHeadColor",
+            key = "headColor",
             label = "Head Color",
             type = ControlType.Color,
             help = "Color of the leading character in each column",
             category = SettingCategory.THEME
         ),
         SettingSpec(
-            key = "rainBrightTrailColor",
+            key = "brightTrailColor",
             label = "Bright Trail",
             type = ControlType.Color,
             help = "Color of the bright trail characters",
             category = SettingCategory.THEME
         ),
         SettingSpec(
-            key = "rainTrailColor",
+            key = "trailColor",
             label = "Trail Color",
             type = ControlType.Color,
             help = "Color of the regular trail characters",
             category = SettingCategory.THEME
         ),
         SettingSpec(
-            key = "rainDimTrailColor",
+            key = "dimColor",
             label = "Dim Trail",
             type = ControlType.Color,
             help = "Color of the dim trail characters",
             category = SettingCategory.THEME
         ),
-        SettingSpec(
-            key = "uiColor",
-            label = "UI Color",
-            type = ControlType.Color,
-            help = "Color for UI elements and text",
-            category = SettingCategory.THEME
-        ),
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "uiColor",
+        //     label = "UI Color",
+        //     type = ControlType.Color,
+        //     help = "Color for UI elements and text",
+        //     category = SettingCategory.THEME
+        // ),
         SettingSpec(
             key = "backgroundColor",
             label = "Background",
@@ -75,14 +78,15 @@ object SettingsSpecs {
      * Character settings - symbols, fonts, and text appearance
      */
     val CHARACTERS_SPECS = listOf(
-        SettingSpec(
-            key = "symbolSet",
-            label = "Symbol Set",
-            type = ControlType.Select,
-            options = SymbolSet.values().map { it.displayName },
-            help = "Choose the character set for the rain",
-            category = SettingCategory.CHARACTERS
-        ),
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "symbolSet",
+        //     label = "Symbol Set",
+        //     type = ControlType.Select,
+        //     options = SymbolSet.values().map { it.displayName },
+        //     help = "Choose the character set for the rain",
+        //     category = SettingCategory.CHARACTERS
+        // ),
         SettingSpec(
             key = "fontSize",
             label = "Size",
@@ -119,7 +123,7 @@ object SettingsSpecs {
             category = SettingCategory.MOTION
         ),
         SettingSpec(
-            key = "rowHeightMultiplier",
+            key = "lineSpacing",
             label = "Line Spacing",
             type = ControlType.Slider,
             range = 0.7f..1.2f,
@@ -128,7 +132,7 @@ object SettingsSpecs {
             category = SettingCategory.MOTION
         ),
         SettingSpec(
-            key = "initialActivePercentage",
+            key = "activePercentage",
             label = "Active Columns",
             type = ControlType.Slider,
             range = 0.1f..0.9f,
@@ -138,7 +142,7 @@ object SettingsSpecs {
             category = SettingCategory.MOTION
         ),
         SettingSpec(
-            key = "speedVariationRate",
+            key = "speedVariance",
             label = "Speed Variance",
             type = ControlType.Slider,
             range = 0.0f..0.2f,
@@ -173,7 +177,7 @@ object SettingsSpecs {
             category = SettingCategory.EFFECTS
         ),
         SettingSpec(
-            key = "flickerRate",
+            key = "flickerAmount",
             label = "Flicker",
             type = ControlType.Slider,
             range = 0.0f..1.0f,
@@ -190,51 +194,55 @@ object SettingsSpecs {
             help = "Rate at which characters change during animation",
             category = SettingCategory.EFFECTS
         ),
-        SettingSpec(
-            key = "maxTrailLength",
-            label = "Max Trail Length",
-            type = ControlType.Slider,
-            range = 20f..120f,
-            step = 1f,
-            help = "Maximum length of character trails",
-            performanceImpact = true,
-            category = SettingCategory.EFFECTS
-        ),
-        SettingSpec(
-            key = "maxBrightTrailLength",
-            label = "Bright Trail Length",
-            type = ControlType.Slider,
-            range = 2f..20f,
-            step = 1f,
-            help = "Length of the bright trail behind each character",
-            category = SettingCategory.EFFECTS
-        )
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "maxTrailLength",
+        //     label = "Max Trail Length",
+        //     type = ControlType.Slider,
+        //     range = 20f..120f,
+        //     step = 1f,
+        //     help = "Maximum length of character trails",
+        //     performanceImpact = true,
+        //     category = SettingCategory.EFFECTS
+        // ),
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "maxBrightTrailLength",
+        //     label = "Bright Trail Length",
+        //     type = ControlType.Slider,
+        //     range = 2f..20f,
+        //     step = 1f,
+        //     help = "Length of the bright trail behind each character",
+        //     category = SettingCategory.EFFECTS
+        // )
     )
     
     /**
      * Timing settings - spawn delays and timing control
      */
-    val TIMING_SPECS = listOf(
-        SettingSpec(
-            key = "columnStartDelay",
-            label = "Spawn Delay",
-            type = ControlType.Slider,
-            range = 0.0f..0.5f,
-            step = 0.01f,
-            unit = "s",
-            help = "Delay before new columns start falling",
-            category = SettingCategory.TIMING
-        ),
-        SettingSpec(
-            key = "columnRestartDelay",
-            label = "Respawn Delay",
-            type = ControlType.Slider,
-            range = 0.0f..0.5f,
-            step = 0.01f,
-            unit = "s",
-            help = "Delay before columns restart after finishing",
-            category = SettingCategory.TIMING
-        )
+    val TIMING_SPECS: List<SettingSpec> = listOf(
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "columnStartDelay",
+        //     label = "Spawn Delay",
+        //     type = ControlType.Slider,
+        //     range = 0.0f..0.5f,
+        //     step = 0.01f,
+        //     unit = "s",
+        //     help = "Delay before new columns start falling",
+        //     category = SettingCategory.TIMING
+        // ),
+        // TODO(Phase X): add field + id, then restore this spec
+        // SettingSpec(
+        //     key = "columnRestartDelay",
+        //     label = "Respawn Delay",
+        //     type = ControlType.Slider,
+        //     range = 0.0f..0.5f,
+        //     step = 0.01f,
+        //     unit = "s",
+        //     help = "Delay before columns restart after finishing",
+        //     category = SettingCategory.TIMING
+        // )
     )
     
     /**
@@ -264,7 +272,7 @@ object SettingsSpecs {
             key = "targetFps",
             label = "Frame Rate",
             type = ControlType.Select,
-            options = listOf("15", "30", "45", "60"),
+            options = listOf("15", "30", "45", "60", "90", "120"),
             help = "Target frames per second for the animation",
             category = SettingCategory.BACKGROUND
         )
@@ -288,8 +296,14 @@ object SettingsSpecs {
      * Get all specs as a flat list
      */
     fun getAllSpecs(): List<SettingSpec> {
-        return THEME_SPECS + CHARACTERS_SPECS + MOTION_SPECS + 
-               EFFECTS_SPECS + TIMING_SPECS + BACKGROUND_SPECS
+        return listOf(
+            *THEME_SPECS.toTypedArray(),
+            *CHARACTERS_SPECS.toTypedArray(),
+            *MOTION_SPECS.toTypedArray(),
+            *EFFECTS_SPECS.toTypedArray(),
+            *TIMING_SPECS.toTypedArray(),
+            *BACKGROUND_SPECS.toTypedArray()
+        )
     }
     
     /**
