@@ -43,22 +43,32 @@ fun rememberColorScheme(settings: MatrixSettings?): MatrixUIColorScheme {
             val effectiveGlowIntensity = settings.glowIntensity.coerceIn(0f, 2f)
             
             MatrixUIColorScheme(
-                primary = baseColor,
-                primaryDim = baseColor.copy(alpha = 0.7f),
-                primaryBright = baseColor.copy(alpha = 1.0f),
-                background = bgColor,
-                backgroundSecondary = bgColor.copy(alpha = 0.8f),
-                overlayBackground = Color(settings.uiOverlayBg),
-                border = baseColor,
-                borderDim = baseColor.copy(alpha = 0.3f),
+                // Text colors
                 textPrimary = Color(0xFFCCCCCC),
                 textSecondary = Color(0xFF666666),
                 textAccent = baseColor,
-                buttonConfirm = baseColor.copy(alpha = 0.2f),
-                buttonCancel = Color(0xFF330000),
-                buttonCancelText = Color(0xFFFF6666),
+                
+                // Background colors
+                backgroundPrimary = bgColor,
+                backgroundSecondary = bgColor.copy(alpha = 0.8f),
+                overlayBackground = Color(settings.uiOverlayBg).copy(alpha = 0.85f),
+                
+                // Slider colors
                 sliderActive = baseColor,
                 sliderInactive = baseColor.copy(alpha = 0.3f),
+                
+                // Primary colors
+                primary = baseColor,
+                borderDim = baseColor.copy(alpha = 0.3f),
+                buttonCancelText = Color(0xFFFF6666),
+                
+                // Legacy compatibility
+                primaryDim = baseColor.copy(alpha = 0.7f),
+                primaryBright = baseColor.copy(alpha = 1.0f),
+                background = bgColor,
+                border = baseColor,
+                buttonConfirm = baseColor.copy(alpha = 0.2f),
+                buttonCancel = Color(0xFF330000),
                 selectionBackground = Color(settings.uiSelectionBg),
                 textGlow = baseColor.copy(alpha = (effectiveGlowIntensity * 0.3f).coerceIn(0f, 0.6f)),
                 buttonGlow = baseColor.copy(alpha = (effectiveGlowIntensity * 0.2f).coerceIn(0f, 0.4f))
@@ -69,22 +79,32 @@ fun rememberColorScheme(settings: MatrixSettings?): MatrixUIColorScheme {
             val fallbackBackground = Color(0xFF121212)
             
             MatrixUIColorScheme(
-                primary = fallbackGreen,
-                primaryDim = fallbackGreen.copy(alpha = 0.7f),
-                primaryBright = fallbackGreen.copy(alpha = 1.0f),
-                background = fallbackBackground,
-                backgroundSecondary = fallbackBackground.copy(alpha = 0.8f),
-                overlayBackground = fallbackBackground.copy(alpha = 0.85f),
-                border = fallbackGreen,
-                borderDim = fallbackGreen.copy(alpha = 0.3f),
+                // Text colors
                 textPrimary = Color(0xFFCCCCCC),
                 textSecondary = Color(0xFF666666),
                 textAccent = fallbackGreen,
-                buttonConfirm = fallbackGreen.copy(alpha = 0.2f),
-                buttonCancel = Color(0xFF330000),
-                buttonCancelText = Color(0xFFFF6666),
+                
+                // Background colors
+                backgroundPrimary = fallbackBackground,
+                backgroundSecondary = fallbackBackground.copy(alpha = 0.8f),
+                overlayBackground = fallbackBackground.copy(alpha = 0.85f),
+                
+                // Slider colors
                 sliderActive = fallbackGreen,
                 sliderInactive = fallbackGreen.copy(alpha = 0.3f),
+                
+                // Primary colors
+                primary = fallbackGreen,
+                borderDim = fallbackGreen.copy(alpha = 0.3f),
+                buttonCancelText = Color(0xFFFF6666),
+                
+                // Legacy compatibility
+                primaryDim = fallbackGreen.copy(alpha = 0.7f),
+                primaryBright = fallbackGreen.copy(alpha = 1.0f),
+                background = fallbackBackground,
+                border = fallbackGreen,
+                buttonConfirm = fallbackGreen.copy(alpha = 0.2f),
+                buttonCancel = Color(0xFF330000),
                 selectionBackground = fallbackGreen.copy(alpha = 0.2f),
                 textGlow = fallbackGreen.copy(alpha = 0.3f),
                 buttonGlow = fallbackGreen.copy(alpha = 0.2f)
@@ -157,17 +177,7 @@ fun rememberMemoizedColors(
         val backgroundColorCompose = androidx.compose.ui.graphics.Color(backgroundColor)
         
         MatrixUIColorScheme(
-            primary = baseColorCompose,
-            primaryDim = baseColorCompose.copy(alpha = 0.7f),
-            primaryBright = baseColorCompose.copy(alpha = 1.0f),
-            
-            background = backgroundColorCompose,
-            backgroundSecondary = backgroundColorCompose.copy(alpha = 0.8f),
-            overlayBackground = backgroundColorCompose.copy(alpha = 0.85f),
-            
-            border = baseColorCompose,
-            borderDim = baseColorCompose.copy(alpha = 0.3f),
-            
+            // Text colors
             textPrimary = if (isLightBackground(backgroundColor)) {
                 androidx.compose.ui.graphics.Color(0xFF1A1A1A)
             } else {
@@ -176,15 +186,28 @@ fun rememberMemoizedColors(
             textSecondary = androidx.compose.ui.graphics.Color(0xFF666666),
             textAccent = baseColorCompose,
             
-            buttonConfirm = baseColorCompose.copy(alpha = 0.2f),
-            buttonCancel = androidx.compose.ui.graphics.Color(0xFF330000),
-            buttonCancelText = androidx.compose.ui.graphics.Color(0xFFFF6666),
+            // Background colors
+            backgroundPrimary = backgroundColorCompose,
+            backgroundSecondary = backgroundColorCompose.copy(alpha = 0.8f),
+            overlayBackground = backgroundColorCompose.copy(alpha = 0.85f),
             
+            // Slider colors
             sliderActive = baseColorCompose,
             sliderInactive = baseColorCompose.copy(alpha = 0.3f),
             
-            selectionBackground = baseColorCompose.copy(alpha = 0.2f),
+            // Primary colors
+            primary = baseColorCompose,
+            borderDim = baseColorCompose.copy(alpha = 0.3f),
+            buttonCancelText = androidx.compose.ui.graphics.Color(0xFFFF6666),
             
+            // Legacy compatibility
+            primaryDim = baseColorCompose.copy(alpha = 0.7f),
+            primaryBright = baseColorCompose.copy(alpha = 1.0f),
+            background = backgroundColorCompose,
+            border = baseColorCompose,
+            buttonConfirm = baseColorCompose.copy(alpha = 0.2f),
+            buttonCancel = androidx.compose.ui.graphics.Color(0xFF330000),
+            selectionBackground = baseColorCompose.copy(alpha = 0.2f),
             textGlow = baseColorCompose.copy(alpha = (glowIntensity * 0.3f).coerceIn(0f, 0.6f)),
             buttonGlow = baseColorCompose.copy(alpha = (glowIntensity * 0.2f).coerceIn(0f, 0.4f))
         )

@@ -60,20 +60,20 @@ fun SettingsHomeScreen(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .widthIn(max = 400.dp)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.lg, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
                 .wrapContentHeight()
                 .navigationBarsPadding(),
             colors = CardDefaults.cardColors(
                 containerColor = ui.overlayBackground,
                 contentColor = ui.textPrimary
             ),
-            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+            shape = RoundedCornerShape(topStart = com.example.matrixscreen.core.design.DesignTokens.Radius.card, topEnd = com.example.matrixscreen.core.design.DesignTokens.Radius.card)
         ) {
             Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
                     .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
             ) {
                 // Header
                 Row(
@@ -111,8 +111,8 @@ fun SettingsHomeScreen(
                 // Categories Grid
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
+                    verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
                     modifier = Modifier.height(300.dp)
                 ) {
                     items(SettingCategory.values()) { category ->

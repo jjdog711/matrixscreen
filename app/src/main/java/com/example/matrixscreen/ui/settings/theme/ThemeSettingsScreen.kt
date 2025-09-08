@@ -58,7 +58,7 @@ fun ThemeSettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
             // Presets Section
             SettingsSection(
@@ -138,7 +138,7 @@ private fun PresetsRow(
     val themeRegistry = remember { ThemePresetRegistryImpl() }
     
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
     ) {
         BuiltInThemes.ALL_BUILT_IN.forEach { themeId ->
             PresetButton(
@@ -162,7 +162,7 @@ private fun AdvancedColorsToggle(
     optimizedSettings: MatrixSettings
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
     ) {
         // Advanced Colors Toggle
         val advancedColorsSpec = THEME_SPECS.find { it.id == AdvancedColorsEnabled } as BooleanSpec
@@ -200,7 +200,7 @@ private fun ColorControls(
     onColorClick: (String) -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
     ) {
         // Render color specs from THEME_SPECS (excluding boolean specs)
         THEME_SPECS.filterIsInstance<ColorSpec>().forEach { spec ->
@@ -250,12 +250,12 @@ private fun ColorControlRow(
         
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
         ) {
             // Color swatch
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(com.example.matrixscreen.core.design.DesignTokens.Sizing.colorSwatchSize)
                     .clip(CircleShape)
                     .background(Color(currentColor))
                     .border(
@@ -294,15 +294,15 @@ private fun ColorPickerDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg),
             colors = CardDefaults.cardColors(
                 containerColor = Color(0xFF1A1A1A)
             ),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.card)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.xl),
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
             ) {
                 // Title
                 Text(
@@ -324,7 +324,7 @@ private fun ColorPickerDialog(
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
                 ) {
                     Button(
                         onClick = onDismiss,

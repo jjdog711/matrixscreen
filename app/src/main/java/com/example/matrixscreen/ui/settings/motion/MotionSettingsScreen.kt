@@ -44,7 +44,7 @@ fun MotionSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
                 // Description
                 ModernTextWithGlow(
@@ -57,7 +57,7 @@ fun MotionSettingsScreen(
                 // Live Preview Section
                 SettingsSection {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
                     ) {
                         ModernTextWithGlow(
                             text = "Live Preview",

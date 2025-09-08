@@ -15,38 +15,33 @@ import com.example.matrixscreen.data.model.MatrixSettings
  * All colors are dynamically derived from user preferences
  */
 data class MatrixUIColorScheme(
-    // Primary colors from MatrixSettings
-    val primary: Color,
-    val primaryDim: Color,
-    val primaryBright: Color,
-    
-    // Background colors
-    val background: Color,
-    val backgroundSecondary: Color,
-    val overlayBackground: Color, // 85% opacity overlay
-    
-    // Border colors
-    val border: Color,
-    val borderDim: Color,
-    
     // Text colors
     val textPrimary: Color,
     val textSecondary: Color,
     val textAccent: Color,
     
-    // Interactive element colors
-    val buttonConfirm: Color,
-    val buttonCancel: Color,
-    val buttonCancelText: Color,
+    // Background colors
+    val backgroundPrimary: Color,
+    val backgroundSecondary: Color,
+    val overlayBackground: Color, // 85% opacity overlay
     
     // Slider colors
     val sliderActive: Color,
     val sliderInactive: Color,
     
-    // Selection colors
-    val selectionBackground: Color,
+    // Primary colors from MatrixSettings
+    val primary: Color,
+    val borderDim: Color,
+    val buttonCancelText: Color,
     
-    // Glow colors (derived from textGlowIntensity)
+    // Legacy compatibility (keep for existing code)
+    val primaryDim: Color,
+    val primaryBright: Color,
+    val background: Color,
+    val border: Color,
+    val buttonConfirm: Color,
+    val buttonCancel: Color,
+    val selectionBackground: Color,
     val textGlow: Color,
     val buttonGlow: Color
 )
@@ -71,29 +66,6 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
     val buttonGlow = baseColor.copy(alpha = (glowIntensity * 0.2f).coerceIn(0f, 0.4f))
     
     return MatrixUIColorScheme(
-        // Primary colors
-        primary = baseColor,
-        primaryDim = baseColor.copy(alpha = 0.7f),
-        primaryBright = baseColor.copy(alpha = 1.0f),
-        
-        // Background colors - use dynamic background from settings with error handling
-        background = try {
-            Color(settings.backgroundColor)
-        } catch (e: Exception) {
-            android.util.Log.e("ColorScheme", "Error getting background color: ${e.message}")
-            Color(0xFF000000) // Fallback to black
-        },
-        backgroundSecondary = try {
-            Color(settings.backgroundColor).copy(alpha = 0.8f)
-        } catch (e: Exception) {
-            Color(0xFF000000).copy(alpha = 0.8f)
-        },
-        overlayBackground = Color(settings.uiOverlayBg),
-        
-        // Border colors
-        border = baseColor,
-        borderDim = baseColor.copy(alpha = 0.3f),
-        
         // Text colors - adapt to background with error handling
         textPrimary = try {
             if (isLightBackground(settings.backgroundColor)) {
@@ -116,19 +88,41 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         },
         textAccent = baseColor,
         
-        // Interactive element colors
-        buttonConfirm = baseColor.copy(alpha = 0.2f),
-        buttonCancel = Color(0xFF330000),
-        buttonCancelText = Color(0xFFFF6666),
+        // Background colors - use dynamic background from settings with error handling
+        backgroundPrimary = try {
+            Color(settings.backgroundColor)
+        } catch (e: Exception) {
+            android.util.Log.e("ColorScheme", "Error getting background color: ${e.message}")
+            Color(0xFF000000) // Fallback to black
+        },
+        backgroundSecondary = try {
+            Color(settings.backgroundColor).copy(alpha = 0.8f)
+        } catch (e: Exception) {
+            Color(0xFF000000).copy(alpha = 0.8f)
+        },
+        overlayBackground = Color(settings.uiOverlayBg).copy(alpha = 0.85f),
         
         // Slider colors
         sliderActive = baseColor,
         sliderInactive = baseColor.copy(alpha = 0.3f),
         
-        // Selection colors
-        selectionBackground = Color(settings.uiSelectionBg),
+        // Primary colors from MatrixSettings
+        primary = baseColor,
+        borderDim = baseColor.copy(alpha = 0.3f),
+        buttonCancelText = Color(0xFFFF6666),
         
-        // Glow colors
+        // Legacy compatibility (keep for existing code)
+        primaryDim = baseColor.copy(alpha = 0.7f),
+        primaryBright = baseColor.copy(alpha = 1.0f),
+        background = try {
+            Color(settings.backgroundColor)
+        } catch (e: Exception) {
+            Color(0xFF000000)
+        },
+        border = baseColor,
+        buttonConfirm = baseColor.copy(alpha = 0.2f),
+        buttonCancel = Color(0xFF330000),
+        selectionBackground = Color(settings.uiSelectionBg),
         textGlow = textGlow,
         buttonGlow = buttonGlow
     )
@@ -143,30 +137,33 @@ fun getFallbackUIColorScheme(): MatrixUIColorScheme {
     val fallbackBackground = Color(0xFF121212) // Dark background
     
     return MatrixUIColorScheme(
-        primary = fallbackGreen,
-        primaryDim = fallbackGreen.copy(alpha = 0.7f),
-        primaryBright = fallbackGreen.copy(alpha = 1.0f),
-        
-        background = fallbackBackground,
-        backgroundSecondary = fallbackBackground.copy(alpha = 0.8f),
-        overlayBackground = fallbackBackground.copy(alpha = 0.85f),
-        
-        border = fallbackGreen,
-        borderDim = fallbackGreen.copy(alpha = 0.3f),
-        
+        // Text colors
         textPrimary = Color(0xFFCCCCCC),
         textSecondary = Color(0xFF666666),
         textAccent = fallbackGreen,
         
-        buttonConfirm = fallbackGreen.copy(alpha = 0.2f),
-        buttonCancel = Color(0xFF330000),
-        buttonCancelText = Color(0xFFFF6666),
+        // Background colors
+        backgroundPrimary = fallbackBackground,
+        backgroundSecondary = fallbackBackground.copy(alpha = 0.8f),
+        overlayBackground = fallbackBackground.copy(alpha = 0.85f),
         
+        // Slider colors
         sliderActive = fallbackGreen,
         sliderInactive = fallbackGreen.copy(alpha = 0.3f),
         
-        selectionBackground = fallbackGreen.copy(alpha = 0.2f),
+        // Primary colors
+        primary = fallbackGreen,
+        borderDim = fallbackGreen.copy(alpha = 0.3f),
+        buttonCancelText = Color(0xFFFF6666),
         
+        // Legacy compatibility
+        primaryDim = fallbackGreen.copy(alpha = 0.7f),
+        primaryBright = fallbackGreen.copy(alpha = 1.0f),
+        background = fallbackBackground,
+        border = fallbackGreen,
+        buttonConfirm = fallbackGreen.copy(alpha = 0.2f),
+        buttonCancel = Color(0xFF330000),
+        selectionBackground = fallbackGreen.copy(alpha = 0.2f),
         textGlow = fallbackGreen.copy(alpha = 0.3f),
         buttonGlow = fallbackGreen.copy(alpha = 0.2f)
     )

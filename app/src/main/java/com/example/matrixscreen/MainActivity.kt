@@ -135,10 +135,13 @@ fun MatrixApp() {
             )
         }
         
-        // Debug route - only available in debug builds
+        // Debug routes - only available in debug builds
         if (BuildConfig.DEBUG) {
             composable("debug-settings") {
                 DebugSettingsHarness()
+            }
+            composable("ui-style-preview") {
+                com.example.matrixscreen.ui.preview.UIStylePreviewScreen()
             }
         }
         composable("custom-symbol-sets") {

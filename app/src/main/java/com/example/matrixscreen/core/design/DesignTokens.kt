@@ -14,9 +14,9 @@ object DesignTokens {
     object Spacing {
         val xs = 4.dp
         val sm = 8.dp
-        val md = 16.dp
-        val lg = 24.dp
-        val xl = 32.dp
+        val md = 12.dp
+        val lg = 16.dp
+        val xl = 24.dp
         val xxl = 48.dp
         
         // Component-specific spacing
@@ -24,6 +24,10 @@ object DesignTokens {
         val itemSpacing = sm
         val screenPadding = lg
         val overlayPadding = md
+        
+        // New unified spacing
+        val sectionSpacing = md
+        val elementSpacing = sm
     }
     
     // Border radius tokens
@@ -36,10 +40,13 @@ object DesignTokens {
         val full = 999.dp
         
         // Component-specific radii
-        val card = md
-        val button = sm
+        val card = 8.dp
+        val button = 6.dp
         val overlay = lg
         val colorPicker = md
+        
+        // New unified radius
+        val pill = 24.dp
     }
     
     // Elevation tokens
@@ -100,11 +107,15 @@ object DesignTokens {
         val sliderHeight = 40.dp
         val toggleSize = 48.dp
         val colorSwatchSize = 32.dp
+        
+        // New unified sizing
+        val minTouchTarget = 48.dp
+        val buttonHeight = 36.dp
     }
     
     // Grid and layout tokens
     object Layout {
-        val maxContentWidth = 600.dp
+        val maxContentWidth = 340.dp
         val gridColumns = 2
         val settingsColumns = 1
         

@@ -56,7 +56,7 @@ fun BackgroundSettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
             // Film Grain Section
             SettingsSection(
@@ -96,7 +96,7 @@ fun BackgroundSettingsScreen(
                 
                 // FPS Selection with effective FPS display
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -134,7 +134,7 @@ fun BackgroundSettingsScreen(
                     
                     // Frame rate buttons using device-recommended options
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
                     ) {
                         recommendedFpsOptions.forEach { fps ->
                             FrameRateButton(
@@ -183,14 +183,14 @@ private fun FrameRateButton(
             containerColor = if (isSelected) ui.primary else ui.selectionBackground,
             contentColor = if (isSelected) ui.textPrimary else ui.textSecondary
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.button)
     ) {
         ModernTextWithGlow(
             text = "${fps.toInt()}",
             style = AppTypography.labelMedium,
             color = if (isSelected) ui.textPrimary else ui.textSecondary,
             settings = optimizedSettings,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.md, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
         )
     }
 }

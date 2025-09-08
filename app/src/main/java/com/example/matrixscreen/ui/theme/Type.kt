@@ -40,37 +40,66 @@ val Orbitron = FontFamily(
     Font(R.font.orbitron, FontWeight.Normal)
 )
 
-// Slimmer modern scale — smaller than default, but readable
+// Modern HUD typography scale — tighter, more tactile feel
 val AppTypography = Typography(
-    // Screen title / overlay title
+    // Titles & Section Headers - Space Grotesk
+    headlineLarge = androidx.compose.ui.text.TextStyle(
+        fontFamily = SpaceGrotesk,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
+        lineHeight = 24.sp
+    ),
+    headlineMedium = androidx.compose.ui.text.TextStyle(
+        fontFamily = SpaceGrotesk,
+        fontWeight = FontWeight.Medium,
+        fontSize = 18.sp,
+        lineHeight = 22.sp
+    ),
     headlineSmall = androidx.compose.ui.text.TextStyle(
         fontFamily = SpaceGrotesk,
         fontWeight = FontWeight.Medium,
-        fontSize   = 16.sp,   // was 20sp → slimmer
-        letterSpacing = 0.sp
+        fontSize = 16.sp,
+        lineHeight = 20.sp
     ),
-    // Section headers
-    titleSmall = androidx.compose.ui.text.TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.SemiBold,
-        fontSize   = 14.sp
-    ),
-    // Field labels
-    bodyMedium = androidx.compose.ui.text.TextStyle(
+    
+    // Label text (sliders, inputs) - JetBrains Mono
+    bodyLarge = androidx.compose.ui.text.TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Normal,
-        fontSize   = 13.sp
+        fontSize = 14.sp,
+        lineHeight = 18.sp
     ),
-    // Helper / hint text
+    bodyMedium = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Medium,
+        fontSize = 13.sp,
+        lineHeight = 16.sp
+    ),
     bodySmall = androidx.compose.ui.text.TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
-        fontSize   = 12.sp
+        fontSize = 12.sp,
+        lineHeight = 14.sp
     ),
-    // Button text
+    
+    // Value or numeric readouts - JetBrains Mono
+    labelSmall = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp
+    ),
+    
+    // Button text - Space Grotesk
     labelLarge = androidx.compose.ui.text.TextStyle(
         fontFamily = SpaceGrotesk,
         fontWeight = FontWeight.Medium,
-        fontSize   = 14.sp
+        fontSize = 14.sp
+    ),
+    
+    // Section headers - Space Grotesk
+    titleSmall = androidx.compose.ui.text.TextStyle(
+        fontFamily = SpaceGrotesk,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp
     )
 )

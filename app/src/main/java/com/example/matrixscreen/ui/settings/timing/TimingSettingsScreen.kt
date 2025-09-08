@@ -43,7 +43,7 @@ fun TimingSettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
             // Description
             ModernTextWithGlow(
@@ -60,7 +60,7 @@ fun TimingSettingsScreen(
                 optimizedSettings = optimizedSettings,
                 content = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
                 ) {
                     // Spawn Delay
                     val spawnDelaySpec = TIMING_SPECS.specFor(ColumnStartDelay)
