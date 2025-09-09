@@ -1,6 +1,9 @@
 package com.example.matrixscreen.data.model
 
 import com.example.matrixscreen.data.proto.MatrixSettingsProto
+import com.example.matrixscreen.data.custom.CustomSymbolSet
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 /**
  * Mappers for converting between Proto and Domain models.
@@ -51,6 +54,18 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         
         // Character settings with clamping
         fontSize = this.fontSize.coerceIn(8, 32),
+        
+        // Symbol set settings
+        symbolSetId = this.symbolSetId,
+        savedCustomSets = decodeCustomSetsFromJson(this.savedCustomSets),
+        activeCustomSetId = this.activeCustomSetId.takeIf { it.isNotBlank() },
+        
+        // Trail length settings with clamping
+        maxTrailLength = this.maxTrailLength.coerceAtLeast(10), // Minimum 10 for valid random range
+        maxBrightTrailLength = this.maxBrightTrailLength.coerceIn(2, this.maxTrailLength.coerceAtLeast(10)), // Must be 2+ and <= maxTrailLength
+        
+        // Theme preset settings
+        themePresetId = this.themePresetId,
         
         // Timing settings with clamping (MISSING - CRITICAL FIX)
         columnStartDelay = this.columnStartDelay.coerceIn(0.0f, 0.5f),
@@ -105,6 +120,18 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
         // Character settings
         .setFontSize(this.fontSize)
         
+        // Symbol set settings
+        .setSymbolSetId(this.symbolSetId)
+        .setSavedCustomSets(encodeCustomSetsToJson(this.savedCustomSets))
+        .setActiveCustomSetId(this.activeCustomSetId ?: "")
+        
+        // Trail length settings
+        .setMaxTrailLength(this.maxTrailLength)
+        .setMaxBrightTrailLength(this.maxBrightTrailLength)
+        
+        // Theme preset settings
+        .setThemePresetId(this.themePresetId ?: "")
+        
         // Timing settings (MISSING - CRITICAL FIX)
         .setColumnStartDelay(this.columnStartDelay)
         .setColumnRestartDelay(this.columnRestartDelay)
@@ -122,6 +149,46 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
  */
 fun createDefaultProto(): MatrixSettingsProto {
     return MatrixSettings.DEFAULT.toProto()
+}
+
+/**
+ * Decode custom symbol sets from JSON string.
+ * 
+ * @param jsonString The JSON string containing custom sets
+ * @return List of CustomSymbolSet objects, or empty list if invalid
+ */
+private fun decodeCustomSetsFromJson(jsonString: String?): List<CustomSymbolSet> {
+    if (jsonString.isNullOrBlank()) return emptyList()
+    
+    return try {
+        val json = Json { ignoreUnknownKeys = true }
+        val listSerializer = ListSerializer(CustomSymbolSet.serializer())
+        json.decodeFromString(listSerializer, jsonString)
+    } catch (e: Exception) {
+        // Log error and return empty list
+        android.util.Log.w("Mappers", "Failed to decode custom sets: ${e.message}")
+        emptyList()
+    }
+}
+
+/**
+ * Encode custom symbol sets to JSON string.
+ * 
+ * @param customSets The list of CustomSymbolSet objects
+ * @return JSON string representation, or empty string if list is empty
+ */
+private fun encodeCustomSetsToJson(customSets: List<CustomSymbolSet>): String {
+    if (customSets.isEmpty()) return ""
+    
+    return try {
+        val json = Json { ignoreUnknownKeys = true }
+        val listSerializer = ListSerializer(CustomSymbolSet.serializer())
+        json.encodeToString(listSerializer, customSets)
+    } catch (e: Exception) {
+        // Log error and return empty string
+        android.util.Log.w("Mappers", "Failed to encode custom sets: ${e.message}")
+        ""
+    }
 }
 
 /**

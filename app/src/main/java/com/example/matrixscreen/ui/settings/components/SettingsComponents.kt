@@ -251,6 +251,58 @@ fun ResetSectionButton(
 }
 
 /**
+ * Confirm/Cancel buttons for settings changes
+ */
+@Composable
+fun ConfirmCancelButtons(
+    hasChanges: Boolean,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    ui: MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings,
+    modifier: Modifier = Modifier
+) {
+    if (hasChanges) {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Cancel button
+            Button(
+                onClick = onCancel,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ui.selectionBackground,
+                    contentColor = ui.textSecondary
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Cancel",
+                    style = AppTypography.labelMedium,
+                    color = ui.textSecondary
+                )
+            }
+            
+            // Confirm button
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ui.primary,
+                    contentColor = ui.textPrimary
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Apply",
+                    style = AppTypography.labelMedium,
+                    color = ui.textPrimary
+                )
+            }
+        }
+    }
+}
+
+/**
  * Preset button for theme selection with optional color swatches
  */
 @Composable

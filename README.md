@@ -84,25 +84,25 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 
 ## Default Settings
 
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Fall Speed | 200% | 50%-500% | Base speed multiplier |
-| Font Size | 14dp | 8-24dp | Character size |
-| Column Count | 150 | 50-150 | Number of Matrix columns |
-| Target FPS | 60fps | 15-60fps | Animation frame rate |
-| Line Spacing | 90% | 70%-120% | Vertical spacing multiplier |
-| Trail Length | 100 chars | 20-100 chars | Maximum trail length |
-| Bright Trail | 15 chars | 2-15 chars | Bright characters behind head |
-| Glow Intensity | 200% | 0%-200% | Glow effect strength |
-| Jitter Amount | 2px | 0-3px | Horizontal jitter movement |
-| Flicker Rate | 20% | 0%-20% | Character flicker frequency |
-| Mutation Rate | 8% | 0%-10% | Character change frequency |
-| Start Delay | 0.01s | 0-10s | Column start delay |
-| Restart Delay | 0.5s | 0.5-5s | Column restart delay |
-| Active % | 40% | 10%-80% | Initial active columns |
-| Speed Variation | 1% | 0-10% | Runtime speed changes |
-| Grain Density | 200 | 0-500 | Grain texture points |
-| Grain Opacity | 3% | 0%-10% | Grain texture opacity |
+| Setting         | Default   | Range        | Description                   |
+|-----------------|-----------|--------------|-------------------------------|
+| Fall Speed      | 200%      | 50%-500%     | Base speed multiplier         |
+| Font Size       | 14dp      | 8-24dp       | Character size                |
+| Column Count    | 150       | 50-150       | Number of Matrix columns      |
+| Target FPS      | 60fps     | 15-60fps     | Animation frame rate          |
+| Line Spacing    | 90%       | 70%-120%     | Vertical spacing multiplier   |
+| Trail Length    | 100 chars | 20-100 chars | Maximum trail length          |
+| Bright Trail    | 15 chars  | 2-15 chars   | Bright characters behind head |
+| Glow Intensity  | 200%      | 0%-200%      | Glow effect strength          |
+| Jitter Amount   | 2px       | 0-3px        | Horizontal jitter movement    |
+| Flicker Rate    | 20%       | 0%-20%       | Character flicker frequency   |
+| Mutation Rate   | 8%        | 0%-10%       | Character change frequency    |
+| Start Delay     | 0.01s     | 0-10s        | Column start delay            |
+| Restart Delay   | 0.5s      | 0.5-5s       | Column restart delay          |
+| Active %        | 40%       | 10%-80%      | Initial active columns        |
+| Speed Variation | 1%        | 0-10%        | Runtime speed changes         |
+| Grain Density   | 200       | 0-500        | Grain texture points          |
+| Grain Opacity   | 3%        | 0%-10%       | Grain texture opacity         |
 
 ## Requirements
 

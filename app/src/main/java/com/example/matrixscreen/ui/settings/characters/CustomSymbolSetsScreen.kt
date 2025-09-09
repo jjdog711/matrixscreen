@@ -82,7 +82,7 @@ fun CustomSymbolSetsScreen(
     
     // Get UI state for theming
     val settingsUiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = settingsUiState.draft
+    val currentSettings = settingsUiState.saved
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
@@ -301,6 +301,7 @@ fun CustomSymbolSetsScreen(
                                     onSelect = {
                                         viewModel.setActiveCustomSet(customSet.id)
                                         settingsViewModel.updateDraft(SymbolSetId, BuiltInSymbolSets.CUSTOM.value)
+                                        settingsViewModel.commit() // Immediate commit for symbol sets
                                     },
                                     onEdit = { onNavigateToEdit(customSet.id) },
                                     onDuplicate = {

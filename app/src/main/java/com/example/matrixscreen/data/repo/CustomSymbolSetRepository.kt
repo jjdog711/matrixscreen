@@ -80,6 +80,16 @@ class CustomSymbolSetRepository @Inject constructor(
         json.encodeToString(listSerializer, list)
     
     /**
+     * Public method to decode custom sets from JSON string
+     */
+    fun decodeCustomSets(raw: String?): List<CustomSymbolSet> = decodeList(raw)
+    
+    /**
+     * Public method to encode custom sets to JSON string
+     */
+    fun encodeCustomSets(list: List<CustomSymbolSet>): String = encodeList(list)
+    
+    /**
      * Export custom symbol sets to JSON format
      */
     fun exportToJson(customSets: List<CustomSymbolSet>): String {

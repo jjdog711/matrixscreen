@@ -14,9 +14,12 @@ fun MatrixSettings.getSymbolSet(): SymbolSet {
     return when (this.symbolSetId) {
         "MATRIX_AUTHENTIC" -> SymbolSet.MATRIX_AUTHENTIC
         "MATRIX_GLITCH" -> SymbolSet.MATRIX_GLITCH
-        "MATRIX_BINARY" -> SymbolSet.BINARY
-        "MATRIX_HEX" -> SymbolSet.HEX
-        "MATRIX_MIXED" -> SymbolSet.MIXED
+        "BINARY" -> SymbolSet.BINARY
+        "HEX" -> SymbolSet.HEX
+        "MIXED" -> SymbolSet.MIXED
+        "LATIN" -> SymbolSet.LATIN
+        "KATAKANA" -> SymbolSet.KATAKANA
+        "NUMBERS" -> SymbolSet.NUMBERS
         "CUSTOM" -> SymbolSet.CUSTOM
         else -> SymbolSet.MATRIX_AUTHENTIC // Default fallback
     }

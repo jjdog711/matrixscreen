@@ -178,7 +178,7 @@ fun MatrixScreen(
     navController: androidx.navigation.NavController
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft
+    val currentSettings = uiState.draft // Use draft for live preview
     // val settingsState = SettingsState.MatrixScreen // Default state for matrix screen - moved to legacy
     val livePreviewSettings = null // No live preview in new system
     
@@ -472,12 +472,12 @@ fun MatrixDigitalRain(
     }
     
     // OPTIMIZATION: Update character set based on settings (use passed-in settings for live preview)
-    val matrixChars = remember(settings.getSymbolSet(), settings.getSavedCustomSets(), settings.getActiveCustomSetId()) {
+    val matrixChars = remember(settings.symbolSetId, settings.savedCustomSets, settings.activeCustomSetId) {
         settings.getSymbolSet().effectiveCharacters(settings).toCharArray()
     }
     
     // PER-COLUMN CHARACTER POOLS: Parse comma-separated character groups (use passed-in settings for live preview)
-    val characterPools = remember(settings.getSymbolSet(), settings.getSavedCustomSets(), settings.getActiveCustomSetId()) {
+    val characterPools = remember(settings.symbolSetId, settings.savedCustomSets, settings.activeCustomSetId) {
         val characters = settings.getSymbolSet().effectiveCharacters(settings)
         parseCharacterPools(characters)
     }
@@ -496,8 +496,8 @@ fun MatrixDigitalRain(
         reactiveAnimationConfig.columnCount,
         matrixChars,
         characterPools,
-        settings.getSymbolSet(),
-        settings.getActiveCustomSetId() // Include activeCustomSetId to force column rebuild when switching custom sets
+        settings.symbolSetId,
+        settings.activeCustomSetId // Include activeCustomSetId to force column rebuild when switching custom sets
     ) {
         createMatrixColumns(reactiveAnimationConfig, matrixChars, characterPools)
     }
@@ -999,16 +999,16 @@ private fun DrawScope.drawMatrixColumn(
             val finalXPos = adjustedXPos + glyph.jitterX
             
             // Get character-specific typeface
-            val charTypeface = if (settings.getSymbolSet() == com.example.matrixscreen.data.SymbolSet.CUSTOM && 
+            val charTypeface = if (settings.symbolSetId == "CUSTOM" && 
                 settings.getActiveCustomSetId() != null) {
                 // Use custom font for custom symbol sets
                 val customSet = settings.getSavedCustomSets().find { it.id == settings.getActiveCustomSetId()?.toString() }
                 customSet?.let { 
                     paintCache.fontManager.getTypefaceForCustomSet(it.fontFileName)
-                } ?: paintCache.fontManager.getTypefaceForCharacter(glyph.char)
+                } ?: paintCache.fontManager.getTypefaceForCharacter(glyph.char, settings.symbolSetId)
             } else {
-                // Use default font selection for regular symbol sets
-                paintCache.fontManager.getTypefaceForCharacter(glyph.char)
+                // Use symbol-set-aware font selection
+                paintCache.fontManager.getTypefaceForCharacter(glyph.char, settings.symbolSetId)
             }
             
             // AUTHENTIC MATRIX: Enhanced stepped brightness levels with advanced color support

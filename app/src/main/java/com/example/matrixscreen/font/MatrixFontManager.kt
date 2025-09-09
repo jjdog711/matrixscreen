@@ -97,14 +97,46 @@ class MatrixFontManager(private val context: Context) {
     
     /**
      * Get appropriate Typeface for a character
-     * Returns Matrix font if available, otherwise uses hybrid approach
+     * Uses smart character-based selection for proper font rendering
      */
     fun getTypefaceForCharacter(char: Char): Typeface {
-        // If Matrix font is available, use it for all characters
-        matrixTypeface?.let { return it }
-        
-        // Hybrid approach: use different fonts based on character type
+        // Smart character-based selection (no forced Matrix font)
         return when {
+            isKatakana(char) -> katakanaTypeface ?: monospaceTypeface ?: Typeface.MONOSPACE
+            isLatin(char) -> monospaceTypeface ?: Typeface.MONOSPACE
+            else -> monospaceTypeface ?: Typeface.MONOSPACE
+        }
+    }
+    
+    /**
+     * Get appropriate Typeface for a character with symbol set context
+     * Matrix Authentic and Matrix Glitch use Matrix font for authentic look
+     */
+    fun getTypefaceForCharacter(char: Char, symbolSet: com.example.matrixscreen.data.SymbolSet?): Typeface {
+        return when {
+            // Matrix sets use Matrix font for authentic look
+            (symbolSet == com.example.matrixscreen.data.SymbolSet.MATRIX_AUTHENTIC || 
+             symbolSet == com.example.matrixscreen.data.SymbolSet.MATRIX_GLITCH) && matrixTypeface != null -> 
+                matrixTypeface!!
+            
+            // Character-based selection for all other cases
+            isKatakana(char) -> katakanaTypeface ?: monospaceTypeface ?: Typeface.MONOSPACE
+            isLatin(char) -> monospaceTypeface ?: Typeface.MONOSPACE
+            else -> monospaceTypeface ?: Typeface.MONOSPACE
+        }
+    }
+    
+    /**
+     * Get appropriate Typeface for a character with symbol set ID string
+     * Matrix Authentic and Matrix Glitch use Matrix font for authentic look
+     */
+    fun getTypefaceForCharacter(char: Char, symbolSetId: String): Typeface {
+        return when {
+            // Matrix sets use Matrix font for authentic look
+            (symbolSetId == "MATRIX_AUTHENTIC" || symbolSetId == "MATRIX_GLITCH") && matrixTypeface != null -> 
+                matrixTypeface!!
+            
+            // Character-based selection for all other cases
             isKatakana(char) -> katakanaTypeface ?: monospaceTypeface ?: Typeface.MONOSPACE
             isLatin(char) -> monospaceTypeface ?: Typeface.MONOSPACE
             else -> monospaceTypeface ?: Typeface.MONOSPACE

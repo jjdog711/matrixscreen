@@ -35,7 +35,7 @@ fun CharactersSettingsScreen(
     isExpanded: Boolean = false
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft
+    val currentSettings = uiState.saved
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
@@ -75,7 +75,10 @@ fun CharactersSettingsScreen(
                     content = {
                         FontSizeControl(
                             currentSize = currentSettings.get(FontSize),
-                            onSizeChanged = { settingsViewModel.updateDraft(FontSize, it) },
+                            onSizeChanged = { 
+                                settingsViewModel.updateDraft(FontSize, it)
+                                settingsViewModel.commit()
+                            },
                             ui = ui,
                             optimizedSettings = optimizedSettings
                         )
@@ -121,7 +124,10 @@ private fun SymbolSetGrid(
                         SymbolSetTile(
                             id = id,
                             isSelected = currentSettings.symbolSetId == id.value,
-                            onClick = { settingsViewModel.updateDraft(SymbolSetId, id.value) },
+                            onClick = { 
+                                settingsViewModel.updateDraft(SymbolSetId, id.value)
+                                settingsViewModel.commit() // Immediate commit for symbol sets
+                            },
                             ui = ui,
                             optimizedSettings = optimizedSettings,
                             modifier = Modifier.weight(1f)
@@ -266,17 +272,7 @@ private fun FontSizeControl(
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
 ) {
-    // Create the spec directly to avoid import resolution issues
-    val fontSizeSpec = IntSliderSpec(
-        id = FontSize,
-        label = "Font Size",
-        range = 8..32,
-        step = 1,
-        default = 14,
-        unit = "px",
-        affectsPerf = false,
-        help = "Size of the matrix characters"
-    )
+    val fontSizeSpec = CHARACTERS_SPECS.find { it.id == FontSize }!!
     
     RenderSetting(
         spec = fontSizeSpec,

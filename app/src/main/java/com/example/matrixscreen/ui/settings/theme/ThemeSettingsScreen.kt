@@ -379,6 +379,9 @@ private fun applyThemePreset(
     
     // Set the theme preset ID
     settingsViewModel.updateDraft(ThemePresetId, themeId.value)
+    
+    // Commit the theme preset changes immediately
+    settingsViewModel.commit()
 }
 
 /**
