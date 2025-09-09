@@ -19,6 +19,10 @@ import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.settings.model.specFor
+import com.example.matrixscreen.ui.settings.model.GrainD
+import com.example.matrixscreen.ui.settings.model.GrainO
+import com.example.matrixscreen.ui.settings.model.Fps
+import com.example.matrixscreen.ui.settings.model.BACKGROUND_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -115,20 +119,18 @@ fun BackgroundSettingsScreen(
                         Column(
                             horizontalAlignment = Alignment.End
                         ) {
-                            ModernTextWithGlow(
+                            Text(
                                 text = "${currentSettings.targetFps.toInt()} FPS",
                                 style = AppTypography.bodyMedium,
-                                color = ui.textSecondary,
-                                settings = optimizedSettings
+                                color = ui.textSecondary
                             )
                             
                             // Show effective FPS if different from target
                             if (effectiveFps != currentSettings.targetFps) {
-                                ModernTextWithGlow(
+                                Text(
                                     text = "→ ${effectiveFps} FPS (effective)",
                                     style = AppTypography.bodySmall,
-                                    color = ui.textAccent,
-                                    settings = optimizedSettings
+                                    color = ui.textAccent
                                 )
                             }
                         }
@@ -151,11 +153,10 @@ fun BackgroundSettingsScreen(
                     
                     // Show device capabilities info
                     if (supportedRates.size > 1) {
-                        ModernTextWithGlow(
+                        Text(
                             text = "Device supports: ${supportedRates.joinToString(", ")} Hz",
                             style = AppTypography.bodySmall,
-                            color = ui.textSecondary,
-                            settings = optimizedSettings
+                            color = ui.textSecondary
                         )
                     }
                 }

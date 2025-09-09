@@ -152,8 +152,10 @@ class SpecsCatalogTest {
         assertTrue("Should contain uiAccent", themeKeys.contains("uiAccent"))
         assertTrue("Should contain uiOverlayBg", themeKeys.contains("uiOverlayBg"))
         assertTrue("Should contain uiSelectionBg", themeKeys.contains("uiSelectionBg"))
+        assertTrue("Should contain advancedColorsEnabled", themeKeys.contains("advancedColorsEnabled"))
+        assertTrue("Should contain linkUiAndRainColors", themeKeys.contains("linkUiAndRainColors"))
         
-        assertEquals("Should have 8 theme specs", 8, THEME_SPECS.size)
+        assertEquals("Should have 10 theme specs", 10, THEME_SPECS.size)
     }
 
     @Test

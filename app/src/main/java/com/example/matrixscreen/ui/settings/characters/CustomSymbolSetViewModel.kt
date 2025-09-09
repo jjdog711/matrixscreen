@@ -85,7 +85,33 @@ class CustomSymbolSetViewModel @Inject constructor(
             }
         }
     }
-    
+
+    /**
+     * Duplicate a custom symbol set
+     */
+    fun duplicateCustomSet(setId: String) {
+        viewModelScope.launch(dispatcher) {
+            try {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+                // Get the current sets and find the one to duplicate
+                val currentSets = _uiState.value.customSets
+                val originalSet = currentSets.find { customSet -> customSet.id == setId }
+                if (originalSet != null) {
+                    val duplicatedSet = originalSet.copy(
+                        id = java.util.UUID.randomUUID().toString(),
+                        name = "${originalSet.name} (copy)"
+                    )
+                    repository.upsertCustomSet(duplicatedSet)
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Failed to duplicate custom set: ${e.message}"
+                )
+            }
+        }
+    }
+
     /**
      * Delete a custom symbol set
      */

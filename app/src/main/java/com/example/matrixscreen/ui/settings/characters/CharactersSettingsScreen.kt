@@ -1,8 +1,6 @@
 package com.example.matrixscreen.ui.settings.characters
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -12,11 +10,14 @@ import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.SymbolSet
 import com.example.matrixscreen.data.registry.BuiltInSymbolSets
-import com.example.matrixscreen.data.registry.SymbolSetId
+import com.example.matrixscreen.data.registry.SymbolSetId as RegistrySymbolSetId
 import androidx.compose.foundation.clickable
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
+import com.example.matrixscreen.ui.settings.model.CHARACTERS_SPECS
 import com.example.matrixscreen.ui.settings.model.get
+import com.example.matrixscreen.ui.settings.model.FontSize
+import com.example.matrixscreen.ui.settings.model.SymbolSetId
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -45,43 +46,42 @@ fun CharactersSettingsScreen(
         optimizedSettings = optimizedSettings,
         expanded = isExpanded,
         content = {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
-        ) {
-            // Symbol Set Section
-            SettingsSection(
-                title = "Symbol Set",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                SymbolSetGrid(
-                    currentSettings = currentSettings,
-                    settingsViewModel = settingsViewModel,
-                    onNavigateToCustomSets = onNavigateToCustomSets,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
+            ) {
+                // Symbol Set Section
+                SettingsSection(
+                    title = "Symbol Set",
                     ui = ui,
-                    optimizedSettings = optimizedSettings
+                    optimizedSettings = optimizedSettings,
+                    content = {
+                        SymbolSetGrid(
+                            currentSettings = currentSettings,
+                            settingsViewModel = settingsViewModel,
+                            onNavigateToCustomSets = onNavigateToCustomSets,
+                            ui = ui,
+                            optimizedSettings = optimizedSettings
+                        )
+                    }
                 )
-                }
-            )
-            
-            // Font Section
-            SettingsSection(
-                title = "Font & Size",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                FontSizeControl(
-                    currentSize = currentSettings.get(FontSize),
-                    onSizeChanged = { settingsViewModel.updateDraft(FontSize, it) },
+                
+                // Font Section
+                SettingsSection(
+                    title = "Font & Size",
                     ui = ui,
-                    optimizedSettings = optimizedSettings
+                    optimizedSettings = optimizedSettings,
+                    content = {
+                        FontSizeControl(
+                            currentSize = currentSettings.get(FontSize),
+                            onSizeChanged = { settingsViewModel.updateDraft(FontSize, it) },
+                            ui = ui,
+                            optimizedSettings = optimizedSettings
+                        )
+                    }
                 )
-                }
-            )
-        }
+            }
         },
         modifier = modifier
     )
@@ -101,22 +101,37 @@ private fun SymbolSetGrid(
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Built-in sets grid
-        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-            columns = androidx.compose.foundation.lazy.grid.GridCells.Adaptive(minSize = 120.dp),
-            horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm),
-            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm),
-            modifier = Modifier.fillMaxWidth()
+        // Built-in sets grid using Column/Row for better performance
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(com.example.matrixscreen.core.design.DesignTokens.Scrolling.charactersGridHeight),
+            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Scrolling.gridLineSpacing)
         ) {
-            items(BuiltInSymbolSets.ALL_BUILT_IN.size) { index ->
-                val id = BuiltInSymbolSets.ALL_BUILT_IN[index]
-                SymbolSetTile(
-                    id = id,
-                    isSelected = currentSettings.symbolSetId == id.value,
-                    onClick = { settingsViewModel.updateDraft(SymbolSetId, id.value) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
+            // Create rows of symbol set tiles
+            val symbolSets = BuiltInSymbolSets.ALL_BUILT_IN
+            val itemsPerRow = 2 // Design token: 2 columns per row
+            
+            symbolSets.chunked(itemsPerRow).forEach { rowSets ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Scrolling.gridItemSpacing)
+                ) {
+                    rowSets.forEach { id ->
+                        SymbolSetTile(
+                            id = id,
+                            isSelected = currentSettings.symbolSetId == id.value,
+                            onClick = { settingsViewModel.updateDraft(SymbolSetId, id.value) },
+                            ui = ui,
+                            optimizedSettings = optimizedSettings,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    // Fill remaining space if row is not full
+                    repeat(itemsPerRow - rowSets.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
 
@@ -184,7 +199,8 @@ private fun SymbolSetTile(
     isSelected: Boolean,
     onClick: () -> Unit,
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
-    optimizedSettings: MatrixSettings
+    optimizedSettings: MatrixSettings,
+    modifier: Modifier = Modifier
 ) {
     val display = when (id.value) {
         "MATRIX_AUTHENTIC" -> SymbolSet.MATRIX_AUTHENTIC.displayName
@@ -211,7 +227,7 @@ private fun SymbolSetTile(
         else -> SymbolSet.MATRIX_AUTHENTIC.characters
     }.take(18)
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
@@ -250,7 +266,17 @@ private fun FontSizeControl(
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
 ) {
-    val fontSizeSpec = CHARACTERS_SPECS.find { it.id == FontSize }!!
+    // Create the spec directly to avoid import resolution issues
+    val fontSizeSpec = IntSliderSpec(
+        id = FontSize,
+        label = "Font Size",
+        range = 8..32,
+        step = 1,
+        default = 14,
+        unit = "px",
+        affectsPerf = false,
+        help = "Size of the matrix characters"
+    )
     
     RenderSetting(
         spec = fontSizeSpec,

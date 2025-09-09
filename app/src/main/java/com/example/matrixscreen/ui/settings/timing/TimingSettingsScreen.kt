@@ -14,6 +14,9 @@ import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.settings.model.specFor
+import com.example.matrixscreen.ui.settings.model.ColumnStartDelay
+import com.example.matrixscreen.ui.settings.model.ColumnRestartDelay
+import com.example.matrixscreen.ui.settings.model.TIMING_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -48,11 +51,10 @@ fun TimingSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
             // Description
-            ModernTextWithGlow(
+            Text(
                 text = "Control the timing and rhythm of the rain effect.",
                 style = AppTypography.bodyMedium,
-                color = ui.textSecondary,
-                settings = optimizedSettings
+                color = ui.textSecondary
             )
             
             // Timing Controls Section
@@ -105,11 +107,10 @@ fun TimingSettingsScreen(
                 ui = ui,
                 optimizedSettings = optimizedSettings,
                 content = {
-                ModernTextWithGlow(
+                Text(
                     text = "Coming soon: Center-Out and other flow modes",
                     style = AppTypography.bodySmall,
-                    color = ui.textSecondary,
-                    settings = optimizedSettings
+                    color = ui.textSecondary
                 )
                 }
             )

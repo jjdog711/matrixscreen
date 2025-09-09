@@ -31,7 +31,186 @@ import com.example.matrixscreen.ui.theme.FontUtils
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.MatrixTextStyles
 import com.example.matrixscreen.ui.settings.components.*
+import kotlin.random.Random
 import com.example.matrixscreen.ui.components.*
+
+/**
+ * Live preview of character pools
+ */
+@Composable
+private fun PoolsPreview(
+    characters: String,
+    selectedFont: String,
+    cyberpunkGreen: Color
+) {
+    val pools = parsePoolsForPreview(characters)
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(top = 8.dp)
+    ) {
+        Text(
+            text = "POOL PREVIEW",
+            color = cyberpunkGreen,
+            fontSize = 12.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold
+        )
+
+        pools.forEachIndexed { index, pool ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = "Pool ${index + 1}:",
+                    color = Color(0xFFCCCCCC),
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace
+                )
+
+                // Show sample characters from this pool
+                val sample = pool.take(8)
+                androidx.compose.material3.Text(
+                    text = sample,
+                    style = if (selectedFont == "matrix_code_nfi.ttf") {
+                        MatrixTextStyles.MatrixSymbolPreview
+                    } else {
+                        AppTypography.bodyLarge
+                    },
+                    color = cyberpunkGreen,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        if (pools.size > 1) {
+            Text(
+                text = "Columns will cycle through these pools",
+                color = Color(0xFF888888),
+                fontSize = 9.sp,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Parse character pools for preview, similar to renderer's logic
+ */
+private fun parsePoolsForPreview(characters: String): List<String> {
+    if (characters.isEmpty()) return emptyList()
+
+    val pools = characters.split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+    return if (pools.isEmpty()) {
+        listOf(characters)
+    } else {
+        pools
+    }
+}
+
+/**
+ * Cyberpunk header component with optional delete button
+ */
+@Composable
+private fun CyberpunkHeader(
+    title: String,
+    onBackPressed: () -> Unit,
+    onDelete: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onBackPressed,
+            modifier = Modifier
+                .background(
+                    Color(0xFF1A1A1A),
+                    RoundedCornerShape(8.dp)
+                )
+                .border(1.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color(0xFF00FF00)
+            )
+        }
+
+        Text(
+            text = title,
+            color = Color(0xFF00FF00),
+            fontSize = 20.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp
+        )
+
+        if (onDelete != null) {
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .background(
+                        Color(0xFF330000),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .border(1.dp, Color(0xFFFF6666), RoundedCornerShape(8.dp))
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Color(0xFFFF6666)
+                )
+            }
+        } else {
+            // Empty space for balance
+            Spacer(modifier = Modifier.size(48.dp))
+        }
+    }
+}
+
+/**
+ * Cyberpunk section component
+ */
+@Composable
+private fun CyberpunkSection(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Column {
+        Text(
+            text = title,
+            color = Color(0xFF00FF00),
+            fontSize = 14.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Color(0xFF0F0F0F),
+                    RoundedCornerShape(12.dp)
+                )
+                .border(
+                    1.dp,
+                    Color(0xFF333333),
+                    RoundedCornerShape(12.dp)
+                )
+                .padding(16.dp)
+        ) {
+            content()
+        }
+    }
+}
 
 /**
  * Screen for creating or editing a custom symbol set
@@ -54,17 +233,8 @@ fun CreateOrEditSymbolSetScreen(
     var nameError by remember { mutableStateOf("") }
     var charactersError by remember { mutableStateOf("") }
     
-    // Available fonts
-    var availableFonts by remember { mutableStateOf<List<String>>(emptyList()) }
-    
-    // Load available fonts using FontUtils
-    LaunchedEffect(Unit) {
-        try {
-            availableFonts = FontUtils.getAvailableFontFiles()
-        } catch (e: Exception) {
-            availableFonts = listOf("matrix_code_nfi.ttf")
-        }
-    }
+    // Bundled fonts only
+    val bundledFonts = listOf("matrix_code_nfi.ttf", "space_grotesk.ttf", "jetbrains_mono.ttf")
     
     // Character sanitization (preserving repetition for weighting)
     val sanitizedCharacters = remember(characters) {
@@ -74,7 +244,7 @@ fun CreateOrEditSymbolSetScreen(
     }
     
     val characterCount = sanitizedCharacters.length
-    val isValid = name.isNotBlank() && characterCount > 0 && characterCount <= 512
+    val isValid = name.isNotBlank() && characterCount > 0 && characterCount <= 2000
     
     // Cyberpunk color scheme
     val cyberpunkGreen = Color(0xFF00FF00)
@@ -187,15 +357,15 @@ fun CreateOrEditSymbolSetScreen(
                     ) {
                         Text(
                             text = "$characterCount characters",
-                            color = if (characterCount > 0 && characterCount <= 512) 
+                            color = if (characterCount > 0 && characterCount <= 2000)
                                 Color(0xFF00FF00) else Color(0xFFFF6666),
                             fontSize = 12.sp,
                             fontFamily = FontFamily.Monospace
                         )
-                        
-                        if (characterCount > 512) {
+
+                        if (characterCount > 2000) {
                             Text(
-                                text = "MAX 512",
+                                text = "MAX 2000",
                                 color = Color(0xFFFF6666),
                                 fontSize = 10.sp,
                                 fontFamily = FontFamily.Monospace,
@@ -204,6 +374,15 @@ fun CreateOrEditSymbolSetScreen(
                         }
                     }
                     
+                    // Live pools preview
+                    if (sanitizedCharacters.isNotEmpty()) {
+                        PoolsPreview(
+                            characters = sanitizedCharacters,
+                            selectedFont = selectedFont,
+                            cyberpunkGreen = cyberpunkGreen
+                        )
+                    }
+
                     // Character weighting tip
                     Text(
                         text = "💡 Tip: Repeat characters to make them appear more often in the Matrix rain",
@@ -212,7 +391,7 @@ fun CreateOrEditSymbolSetScreen(
                         fontFamily = FontFamily.Monospace,
                         modifier = Modifier.padding(top = 4.dp)
                     )
-                    
+
                     // Per-column character pools tip
                     Text(
                         text = "🎯 Pro Tip: Separate words with commas to make each rain column use a different word or character group (e.g. lol,wtf,smh)",
@@ -239,16 +418,18 @@ fun CreateOrEditSymbolSetScreen(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    if (availableFonts.isNotEmpty()) {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.height(80.dp)
-                        ) {
-                            items(availableFonts) { fontFileName ->
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.height(80.dp)
+                    ) {
+                        items(bundledFonts) { fontFileName ->
                                 val isSelected = fontFileName == selectedFont
-                                val displayName = FontUtils.getFontDisplayName(fontFileName)
-                                val isSpaceGrotesk = fontFileName.contains("space", ignoreCase = true) || 
-                                                    fontFileName.contains("grotesk", ignoreCase = true)
+                                val displayName = when (fontFileName) {
+                                    "matrix_code_nfi.ttf" -> "Matrix"
+                                    "space_grotesk.ttf" -> "Space Grotesk"
+                                    "jetbrains_mono.ttf" -> "JetBrains Mono"
+                                    else -> "Unknown Font"
+                                }
                                 
                                 Card(
                                     onClick = { selectedFont = fontFileName },
@@ -272,7 +453,7 @@ fun CreateOrEditSymbolSetScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
-                                            text = if (isSpaceGrotesk) "Space Grotesk (Modern)" else displayName,
+                                            text = displayName,
                                             color = if (isSelected) cyberpunkGreen else Color(0xFFCCCCCC),
                                             fontSize = 9.sp,
                                             fontFamily = FontFamily.Monospace,
@@ -296,13 +477,6 @@ fun CreateOrEditSymbolSetScreen(
                                 }
                             }
                         }
-                    } else {
-                        Text(
-                            text = "Loading fonts...",
-                            color = Color(0xFF666666),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
                     }
                 }
             }
@@ -395,8 +569,8 @@ fun CreateOrEditSymbolSetScreen(
                     if (characterCount == 0) {
                         charactersError = "At least one character is required"
                         hasError = true
-                    } else if (characterCount > 512) {
-                        charactersError = "Maximum 512 characters allowed"
+                    } else if (characterCount > 2000) {
+                        charactersError = "Maximum 2000 characters allowed"
                         hasError = true
                     }
                     
@@ -431,104 +605,3 @@ fun CreateOrEditSymbolSetScreen(
             Spacer(modifier = Modifier.height(100.dp)) // Bottom padding
         }
     }
-}
-
-/**
- * Cyberpunk header component with optional delete button
- */
-@Composable
-private fun CyberpunkHeader(
-    title: String,
-    onBackPressed: () -> Unit,
-    onDelete: (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBackPressed,
-            modifier = Modifier
-                .background(
-                    Color(0xFF1A1A1A),
-                    RoundedCornerShape(8.dp)
-                )
-                .border(1.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color(0xFF00FF00)
-            )
-        }
-        
-        Text(
-            text = title,
-            color = Color(0xFF00FF00),
-            fontSize = 20.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp
-        )
-        
-        if (onDelete != null) {
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier
-                    .background(
-                        Color(0xFF330000),
-                        RoundedCornerShape(8.dp)
-                    )
-                    .border(1.dp, Color(0xFFFF6666), RoundedCornerShape(8.dp))
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Color(0xFFFF6666)
-                )
-            }
-        } else {
-            // Empty space for balance
-            Spacer(modifier = Modifier.size(48.dp))
-        }
-    }
-}
-
-/**
- * Cyberpunk section component
- */
-@Composable
-private fun CyberpunkSection(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            color = Color(0xFF00FF00),
-            fontSize = 14.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Color(0xFF0F0F0F),
-                    RoundedCornerShape(12.dp)
-                )
-                .border(
-                    1.dp,
-                    Color(0xFF333333),
-                    RoundedCornerShape(12.dp)
-                )
-                .padding(16.dp)
-        ) {
-            content()
-        }
-    }
-}

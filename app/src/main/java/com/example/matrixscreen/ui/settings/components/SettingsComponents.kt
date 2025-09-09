@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,8 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
-import com.example.matrixscreen.ui.settings.model.SettingSpec
-import com.example.matrixscreen.ui.settings.model.BooleanSpec
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.ui.theme.MatrixUIColorScheme
@@ -117,92 +116,7 @@ fun SettingsScreenContainer(
     }
 }
 
-/**
- * Labeled slider component with help icon and performance indicator
- */
-@Composable
-fun LabeledSlider(
-    spec: SettingSpec,
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    ui: MatrixUIColorScheme,
-    optimizedSettings: MatrixSettings,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Label row with help and performance indicators
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                ModernTextWithGlow(
-                    text = spec.label,
-                    style = AppTypography.titleMedium,
-                    color = ui.textPrimary,
-                    settings = optimizedSettings
-                )
-                
-                if (spec.performanceImpact) {
-                    ModernTextWithGlow(
-                        text = "⚡",
-                        style = AppTypography.bodySmall,
-                        color = ui.textSecondary,
-                        settings = optimizedSettings
-                    )
-                }
-            }
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                ModernTextWithGlow(
-                    text = "${value.toInt()}${spec.unit ?: ""}",
-                    style = AppTypography.bodyMedium,
-                    color = ui.textSecondary,
-                    settings = optimizedSettings
-                )
-                
-                if (spec.help != null) {
-                    IconButton(
-                        onClick = { /* TODO: Show help tooltip */ },
-                        modifier = Modifier.size(20.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = "Help",
-                            tint = ui.textSecondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-            }
-        }
-        
-        // Slider
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = spec.range ?: 0f..1f,
-            steps = if (spec.step != null) {
-                ((spec.range?.endInclusive ?: 1f) - (spec.range?.start ?: 0f) / spec.step).toInt() - 1
-            } else 0,
-            colors = SliderDefaults.colors(
-                thumbColor = ui.primary,
-                activeTrackColor = ui.primary,
-                inactiveTrackColor = ui.selectionBackground
-            )
-        )
-    }
-}
+
 
 /**
  * Section card for grouping related settings - matches PreviewSectionCard styling
@@ -223,7 +137,7 @@ fun SettingsSection(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .let { cardModifier ->
-                val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 2f)
+                val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 5f) // Use spec range
                 val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)
 
                 if (glowIntensity > 0.1f) {
@@ -327,59 +241,59 @@ fun ResetSectionButton(
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
-        ModernTextWithGlow(
+        Text(
             text = "Reset",
             style = AppTypography.labelMedium,
             color = ui.textSecondary,
-            settings = optimizedSettings,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         )
     }
 }
 
 /**
- * Labeled switch component for boolean settings
+ * Preset button for theme selection with optional color swatches
  */
 @Composable
-fun LabeledSwitch(
-    spec: BooleanSpec,
-    value: Boolean,
-    onValueChange: (Boolean) -> Unit,
+fun PresetButton(
+    name: String,
+    onClick: () -> Unit,
     ui: MatrixUIColorScheme,
     optimizedSettings: MatrixSettings,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    swatches: List<Long>? = null
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = ui.selectionBackground,
+            contentColor = ui.textPrimary
+        )
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             ModernTextWithGlow(
-                text = spec.label,
-                style = AppTypography.titleMedium,
+                text = name,
+                style = AppTypography.labelMedium,
                 color = ui.textPrimary,
                 settings = optimizedSettings
             )
-            if (spec.help != null) {
-                ModernTextWithGlow(
-                    text = spec.help,
-                    style = AppTypography.bodySmall,
-                    color = ui.textSecondary,
-                    settings = optimizedSettings
-                )
+            if (!swatches.isNullOrEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    swatches.take(6).forEach { c ->
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(Color(c))
+                                .border(1.dp, ui.textSecondary.copy(alpha = 0.25f), CircleShape)
+                        )
+                    }
+                }
             }
         }
-        
-        Switch(
-            checked = value,
-            onCheckedChange = onValueChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = ui.primary,
-                checkedTrackColor = ui.primary.copy(alpha = 0.5f),
-                uncheckedThumbColor = ui.textSecondary,
-                uncheckedTrackColor = ui.textSecondary.copy(alpha = 0.3f)
-            )
-        )
     }
 }

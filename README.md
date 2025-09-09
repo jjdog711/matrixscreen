@@ -52,7 +52,7 @@ An authentic Matrix digital rain effect for Android, built with Kotlin and Jetpa
 - **Save & Reuse**: Create multiple named custom sets and switch between them
 - **Font Picker**: Horizontal scrollable font selection with live preview
 - **Smart Toggle**: Intelligent custom set activation - no unnecessary navigation
-- **Character Validation**: Real-time character count and validation (max 512 characters)
+- **Character Validation**: Real-time character count and validation (max 2000 characters)
 - **Persistent Storage**: All custom sets saved automatically with DataStore
 - **Keyboard Dismissal**: Tap anywhere outside text fields to dismiss keyboard
 - **Intuitive Weighting**: Simply repeat characters in your input string to control their frequency

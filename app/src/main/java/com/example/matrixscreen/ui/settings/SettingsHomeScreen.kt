@@ -3,9 +3,6 @@ package com.example.matrixscreen.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
@@ -116,28 +113,42 @@ fun SettingsHomeScreen(
                     ui = ui,
                     optimizedSettings = optimizedSettings
                 ) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
-                        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
-                        modifier = Modifier.height(300.dp)
+                    Column(
+                        modifier = Modifier.height(300.dp),
+                        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
                     ) {
-                        items(SettingCategory.values()) { category ->
-                            CategoryCard(
-                                category = category,
-                                onClick = {
-                                    when (category) {
-                                        SettingCategory.THEME -> onNavigateToTheme()
-                                        SettingCategory.CHARACTERS -> onNavigateToCharacters()
-                                        SettingCategory.MOTION -> onNavigateToMotion()
-                                        SettingCategory.EFFECTS -> onNavigateToEffects()
-                                        SettingCategory.TIMING -> onNavigateToTiming()
-                                        SettingCategory.BACKGROUND -> onNavigateToBackground()
-                                    }
-                                },
-                                ui = ui,
-                                optimizedSettings = optimizedSettings
-                            )
+                        // Create rows of category cards
+                        val categories = SettingCategory.values().toList()
+                        val itemsPerRow = 2
+                        
+                        categories.chunked(itemsPerRow).forEach { rowCategories: List<SettingCategory> ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
+                            ) {
+                                rowCategories.forEach { category: SettingCategory ->
+                                    CategoryCard(
+                                        category = category,
+                                        onClick = {
+                                            when (category) {
+                                                SettingCategory.THEME -> onNavigateToTheme()
+                                                SettingCategory.CHARACTERS -> onNavigateToCharacters()
+                                                SettingCategory.MOTION -> onNavigateToMotion()
+                                                SettingCategory.EFFECTS -> onNavigateToEffects()
+                                                SettingCategory.TIMING -> onNavigateToTiming()
+                                                SettingCategory.BACKGROUND -> onNavigateToBackground()
+                                            }
+                                        },
+                                        ui = ui,
+                                        optimizedSettings = optimizedSettings,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                // Fill remaining space if row is not full
+                                repeat(itemsPerRow - rowCategories.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }
@@ -233,13 +244,14 @@ private fun CategoryCard(
     category: SettingCategory,
     onClick: () -> Unit,
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
-    optimizedSettings: MatrixSettings
+    optimizedSettings: MatrixSettings,
+    modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)
     val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 2f)
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .let { base ->
                 if (glowIntensity > 0.1f) {

@@ -12,6 +12,11 @@ import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.settings.model.specFor
+import com.example.matrixscreen.ui.settings.model.Glow
+import com.example.matrixscreen.ui.settings.model.Jitter
+import com.example.matrixscreen.ui.settings.model.Flicker
+import com.example.matrixscreen.ui.settings.model.Mutation
+import com.example.matrixscreen.ui.settings.model.EFFECTS_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -49,11 +54,10 @@ fun EffectsSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
                 // Description
-                ModernTextWithGlow(
+                Text(
                     text = "Visual effects and animations for the matrix rain.",
                     style = AppTypography.bodyMedium,
-                    color = ui.textSecondary,
-                    settings = optimizedSettings
+                    color = ui.textSecondary
                 )
                 
                 // Live Preview Section

@@ -169,13 +169,20 @@ fun rememberExportHandler(
 }
 
 /**
+ * Data class to hold import functionality
+ */
+data class ImportHandler(
+    val importFromFile: () -> Unit
+)
+
+/**
  * Composable for import functionality
  */
 @Composable
 fun rememberImportHandler(
     fileManager: SymbolSetFileManager,
     onImportComplete: (String) -> Unit
-) {
+): ImportHandler {
     val coroutineScope = rememberCoroutineScope()
     val importLauncher = rememberImportLauncher { uri ->
         coroutineScope.launch {
@@ -189,9 +196,11 @@ fun rememberImportHandler(
             }
         }
     }
-    
+
     // Function to trigger import
     fun importFromFile() {
         importLauncher.launch("application/json")
     }
+
+    return ImportHandler(::importFromFile)
 }

@@ -12,6 +12,12 @@ import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.settings.model.specFor
+import com.example.matrixscreen.ui.settings.model.Speed
+import com.example.matrixscreen.ui.settings.model.Columns
+import com.example.matrixscreen.ui.settings.model.LineSpace
+import com.example.matrixscreen.ui.settings.model.ActivePct
+import com.example.matrixscreen.ui.settings.model.SpeedVar
+import com.example.matrixscreen.ui.settings.model.MOTION_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -49,11 +55,10 @@ fun MotionSettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
                 // Description
-                ModernTextWithGlow(
+                Text(
                     text = "Controls flow density and pacing.",
                     style = AppTypography.bodyMedium,
-                    color = ui.textSecondary,
-                    settings = optimizedSettings
+                    color = ui.textSecondary
                 )
                 
                 // Live Preview Section

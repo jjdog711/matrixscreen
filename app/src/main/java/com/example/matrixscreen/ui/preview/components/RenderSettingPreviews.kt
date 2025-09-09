@@ -9,6 +9,9 @@ import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.theme.MatrixScreenTheme
+import com.example.matrixscreen.data.model.MatrixSettings
+import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
+import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 
 /**
  * Preview data for RenderSetting demonstrations.
@@ -146,9 +149,21 @@ fun SettingsSectionPreview() {
 @Composable
 fun SettingsScreenContainerPreview() {
     MatrixScreenTheme {
-        SettingsScreenContainer {
+        val defaultSettings = MatrixSettings.DEFAULT
+        val ui = getSafeUIColorScheme(defaultSettings)
+        val optimizedSettings = rememberOptimizedSettings(defaultSettings)
+        
+        SettingsScreenContainer(
+            title = "Preview",
+            onBack = { },
+            ui = ui,
+            optimizedSettings = optimizedSettings,
+            content = {
             // Motion Section
-            SettingsSection {
+            SettingsSection(
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 Text(
                     text = "Motion Settings",
                     style = MaterialTheme.typography.headlineSmall,
@@ -171,7 +186,10 @@ fun SettingsScreenContainerPreview() {
             }
             
             // Effects Section
-            SettingsSection {
+            SettingsSection(
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 Text(
                     text = "Effects Settings",
                     style = MaterialTheme.typography.headlineSmall,
@@ -194,7 +212,10 @@ fun SettingsScreenContainerPreview() {
             }
             
             // Performance Section
-            SettingsSection {
+            SettingsSection(
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 Text(
                     text = "Performance Settings",
                     style = MaterialTheme.typography.headlineSmall,
@@ -209,7 +230,8 @@ fun SettingsScreenContainerPreview() {
                     onValueChange = { }
                 )
             }
-        }
+            }
+        )
     }
 }
 
@@ -226,8 +248,20 @@ fun InteractiveRenderSettingPreview() {
         var colorValue by remember { mutableStateOf(0xFF00FF00L) }
         var selectValue by remember { mutableStateOf(60) }
         
-        SettingsScreenContainer {
-            SettingsSection {
+        val defaultSettings = MatrixSettings.DEFAULT
+        val ui = getSafeUIColorScheme(defaultSettings)
+        val optimizedSettings = rememberOptimizedSettings(defaultSettings)
+        
+        SettingsScreenContainer(
+            title = "Interactive Preview",
+            onBack = { },
+            ui = ui,
+            optimizedSettings = optimizedSettings,
+            content = {
+            SettingsSection(
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 Text(
                     text = "Interactive Settings",
                     style = MaterialTheme.typography.headlineSmall,
@@ -266,6 +300,7 @@ fun InteractiveRenderSettingPreview() {
                     onValueChange = { selectValue = it }
                 )
             }
-        }
+            }
+        )
     }
 }

@@ -57,8 +57,7 @@ import com.example.matrixscreen.ui.MatrixSplashScreen
 // import com.example.matrixscreen.ui.ModernSettingsOverlay // TODO: Update to use domain model
 // import com.example.matrixscreen.ui.SettingsState // Moved to legacy
 // import com.example.matrixscreen.ui.MatrixSettingType // Moved to legacy
-import com.example.matrixscreen.ui.CustomSymbolSetsScreen
-import com.example.matrixscreen.ui.CreateOrEditSymbolSetScreen
+// Removed legacy imports - using proper settings navigation now
 import com.example.matrixscreen.ui.NewSettingsViewModel
 import com.example.matrixscreen.ui.settings.SettingsNavGraph
 import com.example.matrixscreen.data.model.MatrixSettings as LegacyMatrixSettings
@@ -130,33 +129,38 @@ fun MatrixApp() {
         // Debug routes - only available in debug builds
         if (BuildConfig.DEBUG) {
             composable("debug-settings") {
-                DebugSettingsHarness()
+                DebugSettingsHarness(
+                    onBackPressed = {
+                        navController.navigate("matrix") {
+                            popUpTo("matrix") { inclusive = false }
+                        }
+                    }
+                )
             }
             composable("ui-style-preview") {
                 com.example.matrixscreen.ui.preview.UIStylePreviewScreen()
             }
         }
+        // Custom symbol sets navigation - handled by SettingsOverlayHost pager system
+        // These routes redirect to main settings where the full custom sets UI is available
         composable("custom-symbol-sets") {
-            // TODO: Custom symbol sets functionality will be implemented in later phases
             LaunchedEffect(Unit) {
-                navController.navigate("settings") {
-                    popUpTo("settings") { inclusive = false }
+                navController.navigate("matrix") {
+                    popUpTo("matrix") { inclusive = false }
                 }
             }
         }
         composable("create-symbol-set") {
-            // TODO: Custom symbol sets functionality will be implemented in later phases
             LaunchedEffect(Unit) {
-                navController.navigate("settings") {
-                    popUpTo("settings") { inclusive = false }
+                navController.navigate("matrix") {
+                    popUpTo("matrix") { inclusive = false }
                 }
             }
         }
         composable("edit-symbol-set/{setId}") {
-            // TODO: Custom symbol sets functionality will be implemented in later phases
             LaunchedEffect(Unit) {
-                navController.navigate("settings") {
-                    popUpTo("settings") { inclusive = false }
+                navController.navigate("matrix") {
+                    popUpTo("matrix") { inclusive = false }
                 }
             }
         }

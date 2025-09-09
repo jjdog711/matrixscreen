@@ -15,8 +15,32 @@ package com.example.matrixscreen.ui.settings.model
  * 
  * @param id The SettingId to search for
  * @return The matching WidgetSpec with proper type
- * @throws NoSuchElementException if no matching spec is found
+ * @throws IllegalArgumentException if no matching spec is found
  */
 @Suppress("UNCHECKED_CAST")
-fun <T> List<WidgetSpec<*>>.specFor(id: SettingId<T>): WidgetSpec<T> =
-    first { it.id == id } as WidgetSpec<T>
+fun <T> List<WidgetSpec<*>>.specFor(id: SettingId<T>): WidgetSpec<T> {
+    return find { it.id == id }?.let { it as WidgetSpec<T> }
+        ?: throw IllegalArgumentException("No spec found for SettingId: ${id.key}")
+}
+
+/**
+ * Get the default value from a spec by extracting it based on the spec type.
+ */
+fun <T> WidgetSpec<T>.getDefault(): T {
+    @Suppress("UNCHECKED_CAST")
+    return when (this) {
+        is SliderSpec -> default as T
+        is IntSliderSpec -> default as T
+        is ToggleSpec -> default as T
+        is BooleanSpec -> default as T
+        is ColorSpec -> 0L as T // ColorSpec doesn't have a default field
+        is SelectSpec<*> -> default as T
+    }
+}
+
+/**
+ * Get the default value from a spec collection by SettingId.
+ */
+fun <T> List<WidgetSpec<*>>.defaultFor(id: SettingId<T>): T {
+    return specFor(id).getDefault()
+}

@@ -103,3 +103,91 @@ val AppTypography = Typography(
         fontSize = 14.sp
     )
 )
+
+/**
+ * Custom typography styles specific to MatrixScreen components
+ * Consolidated from Typography.kt to maintain single source of truth
+ */
+object MatrixTextStyles {
+    
+    // Header styles
+    val HeaderTitle = androidx.compose.ui.text.TextStyle(
+        fontFamily = SpaceGrotesk,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
+        lineHeight = 24.sp
+    )
+    
+    val SectionLabel = androidx.compose.ui.text.TextStyle(
+        fontFamily = SpaceGrotesk,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    )
+    
+    // Button styles
+    val ButtonText = androidx.compose.ui.text.TextStyle(
+        fontFamily = SpaceGrotesk,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 18.sp
+    )
+    
+    // Technical content styles
+    val SliderLabel = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 18.sp
+    )
+    
+    val SliderValue = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp
+    )
+    
+    val HelperText = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Light,
+        fontSize = 12.sp,
+        lineHeight = 16.sp
+    )
+    
+    val SymbolPreview = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    )
+    
+    val SliderRangeLabel = androidx.compose.ui.text.TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Light,
+        fontSize = 10.sp,
+        lineHeight = 12.sp
+    )
+    
+    // Matrix-specific styles
+    val MatrixRain = androidx.compose.ui.text.TextStyle(
+        fontFamily = MatrixCodeNFI,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    )
+    
+    val MatrixSymbolPreview = androidx.compose.ui.text.TextStyle(
+        fontFamily = MatrixCodeNFI,
+        fontWeight = FontWeight.Normal,
+        fontSize = 18.sp,
+        lineHeight = 22.sp
+    )
+    
+    val MatrixFontPreview = androidx.compose.ui.text.TextStyle(
+        fontFamily = MatrixCodeNFI,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 18.sp
+    )
+}

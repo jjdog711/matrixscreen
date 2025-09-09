@@ -3,6 +3,8 @@ package com.example.matrixscreen.ui.preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +30,8 @@ import com.example.matrixscreen.ui.theme.MatrixScreenTheme
 @Composable
 fun DebugSettingsHarness(
     modifier: Modifier = Modifier,
-    viewModel: NewSettingsViewModel = hiltViewModel()
+    viewModel: NewSettingsViewModel = hiltViewModel(),
+    onBackPressed: () -> Unit = {}
 ) {
     // Only show in debug builds
     if (!BuildConfig.DEBUG) {
@@ -44,11 +47,24 @@ fun DebugSettingsHarness(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header
-        Text(
-            text = "Debug Settings Harness",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        // Header with back button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBackPressed) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back to Matrix Screen"
+                )
+            }
+            Text(
+                text = "Debug Settings Harness",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f)
+            )
+        }
         
         // State display
         Card {

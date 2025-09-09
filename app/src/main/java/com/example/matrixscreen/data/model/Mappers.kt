@@ -19,22 +19,22 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
     return MatrixSettings(
         schemaVersion = this.schemaVersion.coerceAtLeast(1),
         
-        // Motion settings with clamping
-        fallSpeed = this.fallSpeed.coerceIn(0.5f, 5.0f),
-        columnCount = this.columnCount.coerceIn(50, 200),
+        // Motion settings with clamping (FIXED to match MOTION_SPECS)
+        fallSpeed = this.fallSpeed.coerceIn(0.5f, 10.0f),  // Fixed: was 5.0f, now matches spec
+        columnCount = this.columnCount.coerceIn(50, 500),   // Fixed: was 200, now matches spec
         lineSpacing = this.lineSpacing.coerceIn(0.5f, 2.0f),
         activePercentage = this.activePercentage.coerceIn(0.1f, 1.0f),
-        speedVariance = this.speedVariance.coerceIn(0.0f, 0.1f),
+        speedVariance = this.speedVariance.coerceIn(0.0f, 0.5f),  // Fixed: was 0.1f, now matches spec
         
-        // Effects settings with clamping
-        glowIntensity = this.glowIntensity.coerceIn(0.0f, 3.0f),
+        // Effects settings with clamping (FIXED to match EFFECTS_SPECS)
+        glowIntensity = this.glowIntensity.coerceIn(0.0f, 5.0f),  // Fixed: was 3.0f, now matches spec
         jitterAmount = this.jitterAmount.coerceIn(0.0f, 5.0f),
         flickerAmount = this.flickerAmount.coerceIn(0.0f, 1.0f),
-        mutationRate = this.mutationRate.coerceIn(0.0f, 0.2f),
+        mutationRate = this.mutationRate.coerceIn(0.0f, 0.5f),   // Fixed: was 0.2f, now matches spec
         
-        // Background settings with clamping
+        // Background settings with clamping (FIXED to match BACKGROUND_SPECS)
         grainDensity = this.grainDensity.coerceIn(0, 1000),
-        grainOpacity = this.grainOpacity.coerceIn(0.0f, 1.0f),
+        grainOpacity = this.grainOpacity.coerceIn(0.0f, 0.2f),   // Fixed: was 1.0f, now matches spec
         targetFps = this.targetFps.coerceIn(5, 120),
         
         // Color settings with validation
@@ -50,7 +50,15 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         uiSelectionBg = this.uiSelectionBg.coerceIn(0x00000000L, 0xFFFFFFFFL),
         
         // Character settings with clamping
-        fontSize = this.fontSize.coerceIn(8, 32)
+        fontSize = this.fontSize.coerceIn(8, 32),
+        
+        // Timing settings with clamping (MISSING - CRITICAL FIX)
+        columnStartDelay = this.columnStartDelay.coerceIn(0.0f, 0.5f),
+        columnRestartDelay = this.columnRestartDelay.coerceIn(0.0f, 0.5f),
+        
+        // Advanced color system (MISSING - CRITICAL FIX)
+        advancedColorsEnabled = this.advancedColorsEnabled,
+        linkUiAndRainColors = this.linkUiAndRainColors
     )
 }
 
@@ -96,6 +104,14 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
         
         // Character settings
         .setFontSize(this.fontSize)
+        
+        // Timing settings (MISSING - CRITICAL FIX)
+        .setColumnStartDelay(this.columnStartDelay)
+        .setColumnRestartDelay(this.columnRestartDelay)
+        
+        // Advanced color system (MISSING - CRITICAL FIX)
+        .setAdvancedColorsEnabled(this.advancedColorsEnabled)
+        .setLinkUiAndRainColors(this.linkUiAndRainColors)
         .build()
 }
 

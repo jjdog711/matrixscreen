@@ -7,7 +7,7 @@ object QuickPanelSpecs {
         SliderSpec(
             id = Speed,
             label = "Speed",
-            range = 0.5f..5.0f,
+            range = 0.5f..10.0f, // Aligned with main MOTION_SPECS
             step = 0.1f,
             default = 2.0f,
             unit = "×",
@@ -17,7 +17,7 @@ object QuickPanelSpecs {
         IntSliderSpec(
             id = Columns,
             label = "Columns",
-            range = 50..200,
+            range = 50..500, // Aligned with main MOTION_SPECS
             step = 10,
             default = 150,
             unit = "cols",
@@ -27,8 +27,8 @@ object QuickPanelSpecs {
         SliderSpec(
             id = Glow,
             label = "Glow",
-            range = 0.0f..2.5f,
-            step = 0.05f,
+            range = 0.0f..5.0f, // Aligned with main EFFECTS_SPECS
+            step = 0.1f, // Consistent step with main specs
             default = 2.0f,
             affectsPerf = true,
             help = "Intensity of the glow effect around characters"
@@ -36,7 +36,7 @@ object QuickPanelSpecs {
         SliderSpec(
             id = Jitter,
             label = "Jitter",
-            range = 0.0f..3.0f,
+            range = 0.0f..5.0f, // Aligned with main EFFECTS_SPECS
             step = 0.1f,
             default = 2.0f,
             unit = "px",

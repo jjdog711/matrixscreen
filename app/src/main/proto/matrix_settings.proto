@@ -55,4 +55,12 @@ message MatrixSettingsProto {
   
   // Theme preset settings
   string theme_preset_id = 28;
+  
+  // Timing settings (MISSING - CRITICAL FIX)
+  float column_start_delay = 29;
+  float column_restart_delay = 30;
+  
+  // Advanced color system (MISSING - CRITICAL FIX)
+  bool advanced_colors_enabled = 31;
+  bool link_ui_and_rain_colors = 32;
 }

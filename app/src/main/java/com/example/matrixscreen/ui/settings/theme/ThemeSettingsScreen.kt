@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -19,11 +17,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.registry.BuiltInThemes
-import com.example.matrixscreen.data.registry.ThemePresetId
+import com.example.matrixscreen.data.registry.ThemePresetId as RegistryThemePresetId
 import com.example.matrixscreen.data.registry.ThemePresetRegistryImpl
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
-import com.example.matrixscreen.ui.settings.theme.components.*
+import com.example.matrixscreen.ui.settings.model.BooleanSpec
+import com.example.matrixscreen.ui.settings.model.ColorSpec
+import com.example.matrixscreen.ui.settings.model.THEME_SPECS
+import com.example.matrixscreen.ui.settings.model.specFor
+import com.example.matrixscreen.ui.settings.model.LinkUiAndRainColors
+import com.example.matrixscreen.ui.settings.model.AdvancedColorsEnabled
+import com.example.matrixscreen.ui.settings.model.BgColor
+import com.example.matrixscreen.ui.settings.model.HeadColor
+import com.example.matrixscreen.ui.settings.model.BrightColor
+import com.example.matrixscreen.ui.settings.model.TrailColor
+import com.example.matrixscreen.ui.settings.model.DimColor
+import com.example.matrixscreen.ui.settings.model.UiAccent
+import com.example.matrixscreen.ui.settings.model.UiOverlay
+import com.example.matrixscreen.ui.settings.model.UiSelectBg
+import com.example.matrixscreen.ui.settings.model.ThemePresetId
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
@@ -56,62 +68,60 @@ fun ThemeSettingsScreen(
         optimizedSettings = optimizedSettings,
         expanded = isExpanded,
         content = {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
-        ) {
-            // Presets Section
-            SettingsSection(
-                title = "Presets",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                PresetsRow(
-                    settingsViewModel = settingsViewModel,
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
-                }
-            )
-            
-            // UI Link Toggle (Link UI & Rain Colors)
-            SettingsSection(
-                title = "UI Color Linking",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                val linkSpec = THEME_SPECS.find { it.id == LinkUiAndRainColors } as BooleanSpec
-                LabeledSwitch(
-                    spec = linkSpec,
-                    value = currentSettings.linkUiAndRainColors,
-                    onValueChange = { settingsViewModel.updateDraft(LinkUiAndRainColors, it) },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
-                }
-            )
-            
-            // Color Controls Section
-            SettingsSection(
-                title = if (currentSettings.advancedColorsEnabled) "Advanced Colors" else "Basic Colors",
-                ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                ColorControls(
-                    settingsViewModel = settingsViewModel,
-                    currentSettings = currentSettings,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
+            ) {
+                // Presets Section
+                SettingsSection(
+                    title = "Presets",
                     ui = ui,
                     optimizedSettings = optimizedSettings,
-                    onColorClick = { type ->
-                        selectedColorType = type
-                        showColorPickerDialog = true
+                    content = {
+                        PresetsRow(
+                            settingsViewModel = settingsViewModel,
+                            ui = ui,
+                            optimizedSettings = optimizedSettings
+                        )
                     }
                 )
-                }
-            )
-        }
+                
+                // UI Link Toggle (Link UI & Rain Colors)
+                SettingsSection(
+                    title = "UI Color Linking",
+                    ui = ui,
+                    optimizedSettings = optimizedSettings,
+                    content = {
+                        val linkSpec = THEME_SPECS.specFor(LinkUiAndRainColors)
+                        LabeledSwitch(
+                            label = linkSpec.label,
+                            checked = currentSettings.linkUiAndRainColors,
+                            onCheckedChange = { settingsViewModel.updateDraft(LinkUiAndRainColors, it) },
+                            help = linkSpec.help
+                        )
+                    }
+                )
+                
+                // Color Controls Section
+                SettingsSection(
+                    title = if (currentSettings.advancedColorsEnabled) "Advanced Colors" else "Basic Colors",
+                    ui = ui,
+                    optimizedSettings = optimizedSettings,
+                    content = {
+                        ColorControls(
+                            settingsViewModel = settingsViewModel,
+                            currentSettings = currentSettings,
+                            ui = ui,
+                            optimizedSettings = optimizedSettings,
+                            onColorClick = { type ->
+                                selectedColorType = type
+                                showColorPickerDialog = true
+                            }
+                        )
+                    }
+                )
+            }
         },
         modifier = modifier
     )
@@ -119,8 +129,8 @@ fun ThemeSettingsScreen(
     // Color picker dialog
     if (showColorPickerDialog) {
         ColorPickerDialog(
-            colorType = selectedColorType,
-            currentColor = getCurrentColor(currentSettings, selectedColorType),
+            isOpen = showColorPickerDialog,
+            initialColor = getCurrentColor(currentSettings, selectedColorType),
             onColorSelected = { color ->
                 updateColor(settingsViewModel, selectedColorType, color)
                 showColorPickerDialog = false
@@ -141,33 +151,45 @@ private fun PresetsRow(
 ) {
     val themeRegistry = remember { ThemePresetRegistryImpl() }
     
-    // Grid layout for better fit and visual balance
-    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-        columns = androidx.compose.foundation.lazy.grid.GridCells.Adaptive(minSize = 120.dp),
-        horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm),
-        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm),
+    // Grid layout using Column/Row for better performance
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 200.dp)
+            .height(com.example.matrixscreen.core.design.DesignTokens.Scrolling.themeGridHeight),
+        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Scrolling.gridLineSpacing)
     ) {
-        items(BuiltInThemes.ALL_BUILT_IN.size) { index ->
-            val themeId = BuiltInThemes.ALL_BUILT_IN[index]
-            val colors = themeRegistry.getColors(themeId)
-            PresetButton(
-                name = themeRegistry.getDisplayName(themeId),
-                onClick = { applyThemePreset(settingsViewModel, themeId, themeRegistry) },
-                ui = ui,
-                optimizedSettings = optimizedSettings,
+        // Create rows of preset buttons
+        val themes = BuiltInThemes.ALL_BUILT_IN
+        val itemsPerRow = 2 // Design token: 2 columns per row
+        
+        themes.chunked(itemsPerRow).forEach { rowThemes ->
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                swatches = listOf(
-                    colors.backgroundColor,
-                    colors.headColor,
-                    colors.brightTrailColor,
-                    colors.trailColor,
-                    colors.dimColor,
-                    colors.uiAccent
-                )
-            )
+                horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Scrolling.gridItemSpacing)
+            ) {
+                rowThemes.forEach { themeId ->
+                    val colors = themeRegistry.getColors(themeId)
+                    PresetButton(
+                        name = themeRegistry.getDisplayName(themeId),
+                        onClick = { applyThemePreset(settingsViewModel, themeId, themeRegistry) },
+                        ui = ui,
+                        optimizedSettings = optimizedSettings,
+                        modifier = Modifier.weight(1f),
+                        swatches = listOf(
+                            colors.backgroundColor,
+                            colors.headColor,
+                            colors.brightTrailColor,
+                            colors.trailColor,
+                            colors.dimColor,
+                            colors.uiAccent
+                        )
+                    )
+                }
+                // Fill remaining space if row is not full
+                repeat(itemsPerRow - rowThemes.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }
@@ -186,24 +208,22 @@ private fun AdvancedColorsToggle(
         verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
     ) {
         // Advanced Colors Toggle
-        val advancedColorsSpec = THEME_SPECS.find { it.id == AdvancedColorsEnabled } as BooleanSpec
+        val advancedColorsSpec = THEME_SPECS.specFor(AdvancedColorsEnabled)
         LabeledSwitch(
-            spec = advancedColorsSpec,
-            value = currentSettings.advancedColorsEnabled,
-            onValueChange = { settingsViewModel.updateDraft(AdvancedColorsEnabled, it) },
-            ui = ui,
-            optimizedSettings = optimizedSettings
+            label = advancedColorsSpec.label,
+            checked = currentSettings.advancedColorsEnabled,
+            onCheckedChange = { settingsViewModel.updateDraft(AdvancedColorsEnabled, it) },
+            help = advancedColorsSpec.help
         )
         
         // Link UI & Rain Colors Toggle (only show when advanced colors are enabled)
         if (currentSettings.advancedColorsEnabled) {
-            val linkColorsSpec = THEME_SPECS.find { it.id == LinkUiAndRainColors } as BooleanSpec
+            val linkColorsSpec = THEME_SPECS.specFor(LinkUiAndRainColors)
             LabeledSwitch(
-                spec = linkColorsSpec,
-                value = currentSettings.linkUiAndRainColors,
-                onValueChange = { settingsViewModel.updateDraft(LinkUiAndRainColors, it) },
-                ui = ui,
-                optimizedSettings = optimizedSettings
+                label = linkColorsSpec.label,
+                checked = currentSettings.linkUiAndRainColors,
+                onCheckedChange = { settingsViewModel.updateDraft(LinkUiAndRainColors, it) },
+                help = linkColorsSpec.help
             )
         }
     }
@@ -260,11 +280,10 @@ private fun ColorControlRow(
                 settings = optimizedSettings
             )
             if (spec.help != null) {
-                ModernTextWithGlow(
+                Text(
                     text = spec.help,
                     style = AppTypography.bodySmall,
-                    color = ui.textSecondary,
-                    settings = optimizedSettings
+                    color = ui.textSecondary
                 )
             }
         }
@@ -288,106 +307,16 @@ private fun ColorControlRow(
             )
             
             // Picker button
-            ModernTextWithGlow(
+            Text(
                 text = "•••",
                 style = AppTypography.bodyMedium,
                 color = ui.textSecondary,
-                settings = optimizedSettings,
                 modifier = Modifier.clickable { onColorClick() }
             )
         }
     }
 }
 
-/**
- * Color picker dialog
- */
-@Composable
-private fun ColorPickerDialog(
-    colorType: String,
-    currentColor: Long,
-    onColorSelected: (Long) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var selectedColor by remember { mutableStateOf(Color(currentColor)) }
-    
-    // Get UI colors for consistent theming
-    val ui = getSafeUIColorScheme(MatrixSettings()) // Use default for dialog
-    val optimizedSettings = rememberOptimizedSettings(MatrixSettings())
-    
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg),
-            colors = CardDefaults.cardColors(
-                containerColor = ui.overlayBackground,
-                contentColor = ui.textPrimary
-            ),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.card)
-        ) {
-            Column(
-                modifier = Modifier.padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.xl),
-                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
-            ) {
-                // Title
-                ModernTextWithGlow(
-                    text = "Select Color",
-                    style = AppTypography.headlineMedium,
-                    color = ui.textAccent,
-                    settings = optimizedSettings
-                )
-                
-                // Color picker
-                ColorPickerRow(
-                    title = "Color",
-                    selectedColor = selectedColor,
-                    onColorSelected = { selectedColor = it },
-                    showCustomColor = true
-                )
-                
-                // Action buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
-                ) {
-                    Button(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ui.selectionBackground,
-                            contentColor = ui.textSecondary
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = "Cancel",
-                            style = AppTypography.labelMedium,
-                            color = ui.textSecondary
-                        )
-                    }
-                    
-                    Button(
-                        onClick = {
-                            onColorSelected(selectedColor.toLongColor())
-                            onDismiss()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ui.textAccent,
-                            contentColor = ui.backgroundPrimary
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = "Select",
-                            style = AppTypography.labelMedium,
-                            color = ui.backgroundPrimary
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 /**
  * Get current color value for a color type
@@ -431,7 +360,7 @@ private fun updateColor(
  */
 private fun applyThemePreset(
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
-    themeId: ThemePresetId,
+    themeId: RegistryThemePresetId,
     themeRegistry: ThemePresetRegistryImpl
 ) {
     val colors = themeRegistry.getColors(themeId)
@@ -499,7 +428,7 @@ private fun AdvancedColorControls(
     onColorClick: (String) -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
     ) {
         // Head Color
         ColorControlRow(
@@ -582,12 +511,12 @@ private fun ColorControlRow(
         
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
         ) {
             // Color swatch
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(com.example.matrixscreen.core.design.DesignTokens.Sizing.colorSwatchSize)
                     .clip(CircleShape)
                     .background(Color(color))
                     .border(
@@ -599,11 +528,10 @@ private fun ColorControlRow(
             )
             
             // Picker button
-            ModernTextWithGlow(
+            Text(
                 text = "•••",
                 style = AppTypography.bodyMedium,
                 color = ui.textSecondary,
-                settings = optimizedSettings,
                 modifier = Modifier.clickable { onColorClick() }
             )
         }

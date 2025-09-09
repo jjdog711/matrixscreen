@@ -126,4 +126,33 @@ object DesignTokens {
         val mediumWidth = 840.dp
         val expandedWidth = 1200.dp
     }
+    
+    // Scrolling and grid behavior tokens
+    object Scrolling {
+        // Grid heights for different content types
+        val themeGridHeight = 200.dp
+        val charactersGridHeight = 300.dp
+        val customSetsListHeight = 400.dp
+        
+        // Grid spacing
+        val gridItemSpacing = Spacing.sm
+        val gridLineSpacing = Spacing.sm
+        
+        // Scroll behavior
+        val enableSmartScrolling = true
+        val scrollAnimationDuration = Animation.normal
+    }
+    
+    // Grid layout configuration
+    object Grid {
+        // Columns per row for different content types
+        val themePresetsPerRow = 2
+        val symbolSetsPerRow = 2
+        val customSetsPerRow = 1
+        
+        // Button and tile sizing
+        val presetButtonMinWidth = 120.dp
+        val symbolSetTileMinWidth = 120.dp
+        val customSetItemHeight = 80.dp
+    }
 }
