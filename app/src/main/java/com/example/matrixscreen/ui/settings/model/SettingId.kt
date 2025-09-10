@@ -150,6 +150,11 @@ object ColumnRestartDelay : SettingId<Float> {
     override val key = "columnRestartDelay" 
 }
 
+// Developer settings
+object AlwaysShowHints : SettingId<Boolean> { 
+    override val key = "alwaysShowHints" 
+}
+
 // Test-only Boolean SettingId for WidgetSpec testing
 object TestBooleanSetting : SettingId<Boolean> {
     override val key = "testBoolean"

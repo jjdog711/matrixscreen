@@ -91,6 +91,11 @@ object DesignTokens {
         val fast = 150 // milliseconds
         val normal = 300 // milliseconds
         val slow = 500 // milliseconds
+        
+        // Sheet animation tokens
+        val sheetTransitionDuration = 300 // milliseconds
+        val springDampingRatio = 0.85f
+        val springStiffness = 400f
     }
     
     // Component sizing tokens
@@ -113,6 +118,11 @@ object DesignTokens {
         // New unified sizing
         val minTouchTarget = 48.dp
         val buttonHeight = 36.dp
+        
+        // Responsive header sizing
+        val headerHeight = 64.dp
+        val headerHeightTablet = 72.dp
+        val headerHeightLandscape = 56.dp
     }
     
     // Grid and layout tokens

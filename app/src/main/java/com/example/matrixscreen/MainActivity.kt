@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import com.example.matrixscreen.core.design.rememberAdaptiveHeaderHeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -63,6 +65,7 @@ import com.example.matrixscreen.ui.settings.SettingsNavGraph
 import com.example.matrixscreen.data.model.MatrixSettings as LegacyMatrixSettings
 import com.example.matrixscreen.ui.theme.MatrixScreenTheme
 import com.example.matrixscreen.ui.preview.DebugSettingsHarness
+import com.example.matrixscreen.ui.components.MatrixSwipeUpHint
 import com.example.matrixscreen.BuildConfig
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.isActive
@@ -183,7 +186,17 @@ fun MatrixScreen(
     // val settingsState = SettingsState.MatrixScreen // Default state for matrix screen - moved to legacy
     val livePreviewSettings = null // No live preview in new system
     
-    var settingsOpen by remember { mutableStateOf(false) }
+    // Note: Swipe hint visibility is now managed internally by MatrixSwipeUpHint
+    
+    // Root-level gesture detection for opening the sheet
+    val openThreshold = with(LocalDensity.current) { 56.dp.toPx() }
+    var cumDrag by remember { mutableStateOf(0f) }
+    
+    // Track sheet offset for hint positioning
+    val screenHeightPx = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.toPx() } // Full screen height
+    val headerHeightPx = with(LocalDensity.current) { rememberAdaptiveHeaderHeight().toPx() } // Adaptive header height
+    var sheetOffsetY by remember { mutableStateOf(screenHeightPx + headerHeightPx) } // Initialize to closed state
+    
     Box(modifier = Modifier.fillMaxSize()) {
         // Matrix animation background with dynamic color support
         Surface(
@@ -205,42 +218,41 @@ fun MatrixScreen(
             }
         }
         
-        // Settings button - tap anywhere on screen or use floating button
+        // Full-screen gesture detection for opening the sheet from anywhere
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = { onSettingsClick() },
-                        onLongPress = { 
-                            // Long press to access debug harness (debug builds only)
-                            if (BuildConfig.DEBUG) {
-                                navController.navigate("debug-settings")
-                            }
-                        }
+                    detectDragGestures(
+                        onDragStart = { 
+                            cumDrag = 0f
+                            // Hint manages its own visibility now 
+                        },
+                        onDrag = { _, drag -> 
+                            cumDrag += drag.y
+                            // Forward gesture to sheet - this will be handled by SettingsOverlayHost
+                        },
+                        onDragEnd = { cumDrag = 0f }
                     )
-                }
-                .pointerInput(Unit) {
-                    // Only handle swipe gestures when settings overlay is not visible
-                        detectDragGestures(
-                            onDragEnd = { },
-                            onDrag = { _, dragAmount ->
-                                // Detect swipe gestures
-                                when {
-                                    dragAmount.y < -50f -> settingsOpen = true // Swipe up - open settings
-                                    dragAmount.y > 50f -> { /* Swipe down - could be used for other actions */ }
-                                }
-                            }
-                        )
                 }
         )
         
-        // New settings overlay host - keeps matrix visible behind
+        // Settings overlay host - self-contained with internal state management
         com.example.matrixscreen.ui.settings.SettingsOverlayHost(
-            isOpen = settingsOpen,
-            onOpenChange = { settingsOpen = it },
-            settingsViewModel = settingsViewModel
+            settingsViewModel = settingsViewModel,
+            onFirstGesture = { /* Hint manages its own visibility now */ },
+            onOffsetChange = { sheetOffsetY = it }
         )
+        
+        // Swipe up hint - self-managed visibility and animations
+        MatrixSwipeUpHint(
+            sheetOffsetY = sheetOffsetY,
+            screenHeightPx = screenHeightPx,
+            headerHeightPx = headerHeightPx,
+            alwaysShowHints = currentSettings.alwaysShowHints,
+            onDismiss = { /* Hint manages its own dismissal */ }
+        )
+        
     }
 }
 

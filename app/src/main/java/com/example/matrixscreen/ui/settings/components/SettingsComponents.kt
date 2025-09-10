@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ fun SettingsScreenHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -59,7 +61,7 @@ fun SettingsScreenHeader(
 }
 
 /**
- * Standard container for settings screens
+ * Standard container for settings screens with proper nested scroll support
  */
 @Composable
 fun SettingsScreenContainer(
@@ -110,7 +112,14 @@ fun SettingsScreenContainer(
                     optimizedSettings = optimizedSettings
                 )
                 
-                content()
+                // Content area with proper scrolling support
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    content()
+                }
             }
         }
     }

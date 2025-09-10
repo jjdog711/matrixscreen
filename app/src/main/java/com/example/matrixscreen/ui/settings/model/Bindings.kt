@@ -76,6 +76,9 @@ fun <T> MatrixSettings.get(id: SettingId<T>): T {
         ColumnStartDelay -> columnStartDelay as T
         ColumnRestartDelay -> columnRestartDelay as T
         
+        // Developer settings
+        AlwaysShowHints -> alwaysShowHints as T
+        
         // Test-only Boolean setting
         TestBooleanSetting -> throw UnsupportedOperationException("TestBooleanSetting is for testing only")
     }
@@ -144,6 +147,9 @@ fun <T> MatrixSettings.with(id: SettingId<T>, value: T): MatrixSettings {
         // Timing settings
         ColumnStartDelay -> copy(columnStartDelay = value as Float)
         ColumnRestartDelay -> copy(columnRestartDelay = value as Float)
+        
+        // Developer settings
+        AlwaysShowHints -> copy(alwaysShowHints = value as Boolean)
         
         // Test-only Boolean setting
         TestBooleanSetting -> throw UnsupportedOperationException("TestBooleanSetting is for testing only")

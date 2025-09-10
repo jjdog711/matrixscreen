@@ -265,6 +265,16 @@ val THEME_SPECS = listOf(
     )
 )
 
+// Developer Settings - Advanced options for developers
+val DEVELOPER_SPECS = listOf(
+    ToggleSpec(
+        id = AlwaysShowHints,
+        label = "Always Show Hints",
+        default = false,
+        help = "Always display swipe-up hints instead of showing them only once"
+    )
+)
+
 /**
  * All available spec categories for easy iteration.
  */
@@ -274,7 +284,8 @@ val ALL_SPEC_CATEGORIES = mapOf(
     "Background" to BACKGROUND_SPECS,
     "Timing" to TIMING_SPECS,
     "Characters" to CHARACTERS_SPECS,
-    "Theme" to THEME_SPECS
+    "Theme" to THEME_SPECS,
+    "Developer" to DEVELOPER_SPECS
 )
 
 /**

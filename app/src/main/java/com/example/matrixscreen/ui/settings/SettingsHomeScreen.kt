@@ -3,6 +3,8 @@ package com.example.matrixscreen.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
@@ -28,6 +30,8 @@ import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.ui.NewSettingsViewModel
 import com.example.matrixscreen.ui.settings.components.SettingsSection
+import com.example.matrixscreen.ui.settings.components.LabeledSwitch
+import com.example.matrixscreen.ui.settings.components.SettingsScreenContainer
 
 
 /**
@@ -45,8 +49,7 @@ fun SettingsHomeScreen(
     onNavigateToBackground: () -> Unit,
     onNavigateToUIPreview: () -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    isExpanded: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     // Get current settings for UI theming
     val uiState by settingsViewModel.uiState.collectAsState()
@@ -54,46 +57,19 @@ fun SettingsHomeScreen(
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Card(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .let { base ->
-                    if (isExpanded) {
-                        base
-                            .padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.md, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
-                            .fillMaxSize()
-                    } else {
-                        base
-                            .widthIn(max = 400.dp)
-                            .padding(horizontal = com.example.matrixscreen.core.design.DesignTokens.Spacing.lg, vertical = com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
-                            .wrapContentHeight()
-                    }
-                }
-                .navigationBarsPadding(),
-            colors = CardDefaults.cardColors(
-                containerColor = ui.overlayBackground,
-                contentColor = ui.textPrimary
-            ),
-            shape = RoundedCornerShape(topStart = com.example.matrixscreen.core.design.DesignTokens.Radius.card, topEnd = com.example.matrixscreen.core.design.DesignTokens.Radius.card)
-        ) {
+    SettingsScreenContainer(
+        title = "SETTINGS",
+        onBack = onBack,
+        ui = ui,
+        optimizedSettings = optimizedSettings,
+        expanded = true, // Always expanded in overlay context
+        content = {
             Column(
                 modifier = Modifier
-                    .padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
-                    .imePadding(),
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
-                // Header
-                com.example.matrixscreen.ui.settings.components.SettingsScreenHeader(
-                    title = "SETTINGS",
-                    onBack = onBack,
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                )
-                
                 // Presets Section (wrapped for preview-style card)
                 SettingsSection(
                     title = "Presets",
@@ -160,6 +136,7 @@ fun SettingsHomeScreen(
                     optimizedSettings = optimizedSettings
                 ) {
                     DeveloperToolsSection(
+                        settingsViewModel = settingsViewModel,
                         onNavigateToUIPreview = onNavigateToUIPreview,
                         ui = ui,
                         optimizedSettings = optimizedSettings
@@ -167,7 +144,7 @@ fun SettingsHomeScreen(
                 }
             }
         }
-    }
+    )
 }
 
 /**
@@ -305,10 +282,11 @@ private fun CategoryCard(
 }
 
 /**
- * Developer Tools section with UI Preview access
+ * Developer Tools section with UI Preview access and developer settings
  */
 @Composable
 private fun DeveloperToolsSection(
+    settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onNavigateToUIPreview: () -> Unit,
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
@@ -316,6 +294,7 @@ private fun DeveloperToolsSection(
     Column(
         verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
     ) {
+        // UI Preview Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -339,6 +318,55 @@ private fun DeveloperToolsSection(
                     color = ui.textPrimary
                 )
             }
+        }
+        
+        // Developer Settings
+        DeveloperSettingsCard(
+            settingsViewModel = settingsViewModel,
+            ui = ui,
+            optimizedSettings = optimizedSettings
+        )
+    }
+}
+
+/**
+ * Developer settings card with toggle for always showing hints
+ */
+@Composable
+private fun DeveloperSettingsCard(
+    settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings
+) {
+    val currentSettings by settingsViewModel.uiState.collectAsState()
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = ui.selectionBackground,
+            contentColor = ui.textPrimary
+        ),
+        shape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.card)
+    ) {
+        Column(
+            modifier = Modifier.padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
+        ) {
+            ModernTextWithGlow(
+                text = "Developer Settings",
+                style = AppTypography.titleMedium,
+                color = ui.textPrimary,
+                settings = optimizedSettings
+            )
+            
+            // Always Show Hints Toggle
+            val alwaysShowHintsSpec = com.example.matrixscreen.ui.settings.model.DEVELOPER_SPECS.first()
+            LabeledSwitch(
+                label = alwaysShowHintsSpec.label,
+                checked = currentSettings.draft.alwaysShowHints,
+                onCheckedChange = { settingsViewModel.updateDraft(com.example.matrixscreen.ui.settings.model.AlwaysShowHints, it) },
+                help = alwaysShowHintsSpec.help
+            )
         }
     }
 }

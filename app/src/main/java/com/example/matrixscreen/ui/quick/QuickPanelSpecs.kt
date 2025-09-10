@@ -2,6 +2,7 @@ package com.example.matrixscreen.ui.quick
 
 import com.example.matrixscreen.ui.settings.model.*
 
+@Deprecated("Not used in production; kept for prototyping")
 object QuickPanelSpecs {
     val SPECS: List<WidgetSpec<*>> = listOf(
         SliderSpec(

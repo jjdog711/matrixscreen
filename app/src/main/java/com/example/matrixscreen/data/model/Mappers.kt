@@ -73,7 +73,10 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         
         // Advanced color system (MISSING - CRITICAL FIX)
         advancedColorsEnabled = this.advancedColorsEnabled,
-        linkUiAndRainColors = this.linkUiAndRainColors
+        linkUiAndRainColors = this.linkUiAndRainColors,
+        
+        // Developer settings
+        alwaysShowHints = this.alwaysShowHints
     )
 }
 
@@ -139,6 +142,9 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
         // Advanced color system (MISSING - CRITICAL FIX)
         .setAdvancedColorsEnabled(this.advancedColorsEnabled)
         .setLinkUiAndRainColors(this.linkUiAndRainColors)
+        
+        // Developer settings
+        .setAlwaysShowHints(this.alwaysShowHints)
         .build()
 }
 

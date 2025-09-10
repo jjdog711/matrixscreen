@@ -63,4 +63,7 @@ message MatrixSettingsProto {
   // Advanced color system (MISSING - CRITICAL FIX)
   bool advanced_colors_enabled = 31;
   bool link_ui_and_rain_colors = 32;
+  
+  // Developer settings
+  bool always_show_hints = 33;
 }

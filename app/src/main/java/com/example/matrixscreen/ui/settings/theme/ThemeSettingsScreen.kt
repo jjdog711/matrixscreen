@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -51,8 +53,7 @@ fun ThemeSettingsScreen(
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onBack: () -> Unit,
     onNavigateToCustomSets: () -> Unit,
-    modifier: Modifier = Modifier,
-    isExpanded: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
     val currentSettings = uiState.draft
@@ -68,11 +69,12 @@ fun ThemeSettingsScreen(
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
-        expanded = isExpanded,
+        expanded = true,
         content = {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
                 // Presets Section

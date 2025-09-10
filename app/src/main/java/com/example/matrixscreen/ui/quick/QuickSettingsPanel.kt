@@ -92,6 +92,7 @@ private fun renderSpecSetting(
     }
 }
 
+@Deprecated("Not used in production; kept for prototyping")
 @Composable
 fun QuickSettingsPanel(
     viewModel: NewSettingsViewModel,

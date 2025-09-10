@@ -68,7 +68,10 @@ data class MatrixSettings(
     
     // Timing settings
     val columnStartDelay: Float = 0.01f,
-    val columnRestartDelay: Float = 0.5f
+    val columnRestartDelay: Float = 0.5f,
+    
+    // Developer settings
+    val alwaysShowHints: Boolean = false
 ) {
     
     /**
@@ -125,6 +128,7 @@ data class MatrixSettings(
                 "fontSize" -> updated.copy(fontSize = value as Int)
                 "columnStartDelay" -> updated.copy(columnStartDelay = value as Float)
                 "columnRestartDelay" -> updated.copy(columnRestartDelay = value as Float)
+                "alwaysShowHints" -> updated.copy(alwaysShowHints = value as Boolean)
                 else -> updated
             }
         }
