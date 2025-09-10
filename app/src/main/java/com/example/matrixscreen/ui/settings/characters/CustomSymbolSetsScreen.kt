@@ -27,7 +27,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.matrixscreen.core.design.DesignTokens
+import com.example.matrixscreen.core.design.scrollableContent
 import com.example.matrixscreen.data.custom.CustomSymbolSet
+import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.registry.BuiltInSymbolSets
 import com.example.matrixscreen.data.registry.SymbolSetId as RegistrySymbolSetId
 import com.example.matrixscreen.ui.settings.components.*
@@ -76,9 +79,6 @@ fun CustomSymbolSetsScreen(
         }
     }
     
-    // Cyberpunk color scheme
-    val cyberpunkGreen = Color(0xFF00FF00)
-    val cyberpunkDark = Color(0xFF0A0A0A)
     
     // Get UI state for theming
     val settingsUiState by settingsViewModel.uiState.collectAsState()
@@ -99,49 +99,53 @@ fun CustomSymbolSetsScreen(
                 verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
                 // Import/Export section
-                CyberpunkSection(title = "IMPORT / EXPORT") {
+                SettingsSection(
+                    title = "Import / Export",
+                    ui = ui,
+                    optimizedSettings = optimizedSettings
+                ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
                             onClick = { viewModel.exportCustomSets() },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1A1A1A),
-                                contentColor = Color(0xFF00FF00)
+                                containerColor = ui.selectionBackground,
+                                contentColor = ui.textPrimary
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
                                 Icons.Default.CloudDownload,
                                 contentDescription = "Export",
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(DesignTokens.Spacing.xs))
                             Text(
                                 text = "Export",
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 12.sp
+                                style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                                color = ui.textPrimary
                             )
                         }
                         
                         Button(
                             onClick = { importHandler.importFromFile() },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1A1A1A),
-                                contentColor = Color(0xFF00FF00)
+                                containerColor = ui.selectionBackground,
+                                contentColor = ui.textPrimary
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
                                 Icons.Default.CloudUpload,
                                 contentDescription = "Import",
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(DesignTokens.Spacing.xs))
                             Text(
                                 text = "Import",
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 12.sp
+                                style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                                color = ui.textPrimary
                             )
                         }
                     }
@@ -149,108 +153,102 @@ fun CustomSymbolSetsScreen(
                     // Import/Export status feedback
                     when (uiState.importExportState) {
                         is ImportExportState.Exporting -> {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
+                            Spacer(modifier = Modifier.height(DesignTokens.Spacing.sm))
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "EXPORTING...",
-                                color = cyberpunkGreen,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
+                                style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                                color = ui.textAccent,
+                                settings = optimizedSettings
                             )
                         }
                         is ImportExportState.Importing -> {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
+                            Spacer(modifier = Modifier.height(DesignTokens.Spacing.sm))
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "IMPORTING...",
-                                color = cyberpunkGreen,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
+                                style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                                color = ui.textAccent,
+                                settings = optimizedSettings
                             )
                         }
                         is ImportExportState.ExportSuccess -> {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(DesignTokens.Spacing.sm))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
+                                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                     text = "EXPORT SUCCESSFUL",
-                                    color = Color(0xFF00FF00),
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold,
+                                    style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                                    color = ui.textAccent,
+                                    settings = optimizedSettings,
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
                                     onClick = { viewModel.clearImportExportState() },
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                                 ) {
                                     Icon(
                                         Icons.Default.Delete,
                                         contentDescription = "Dismiss",
-                                        tint = Color(0xFF00FF00),
-                                        modifier = Modifier.size(12.dp)
+                                        tint = ui.textAccent,
+                                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                                     )
                                 }
                             }
                         }
                         is ImportExportState.ImportSuccess -> {
                             val count = (uiState.importExportState as ImportExportState.ImportSuccess).importedCount
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(DesignTokens.Spacing.sm))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
+                                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                     text = "IMPORTED $count SET${if (count != 1) "S" else ""}",
-                                    color = Color(0xFF00FF00),
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold,
+                                    style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                                    color = ui.textAccent,
+                                    settings = optimizedSettings,
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
                                     onClick = { viewModel.clearImportExportState() },
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                                 ) {
                                     Icon(
                                         Icons.Default.Delete,
                                         contentDescription = "Dismiss",
-                                        tint = Color(0xFF00FF00),
-                                        modifier = Modifier.size(12.dp)
+                                        tint = ui.textAccent,
+                                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                                     )
                                 }
                             }
                         }
                         is ImportExportState.Error -> {
                             val error = (uiState.importExportState as ImportExportState.Error).message
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(DesignTokens.Spacing.sm))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
+                                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                     text = "ERROR: $error",
-                                    color = Color(0xFFFF6666),
-                                    fontSize = 10.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    maxLines = 2,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    style = com.example.matrixscreen.ui.theme.AppTypography.labelSmall,
+                                    color = ui.buttonCancelText,
+                                    settings = optimizedSettings,
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
                                     onClick = { viewModel.clearImportExportState() },
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                                 ) {
                                     Icon(
                                         Icons.Default.Delete,
                                         contentDescription = "Dismiss error",
-                                        tint = Color(0xFFFF6666),
-                                        modifier = Modifier.size(12.dp)
+                                        tint = ui.buttonCancelText,
+                                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                                     )
                                 }
                             }
@@ -264,35 +262,41 @@ fun CustomSymbolSetsScreen(
                 // Custom sets list
                 if (uiState.customSets.isEmpty()) {
                     // Empty state
-                    CyberpunkSection(title = "NO CUSTOM SETS") {
+                    SettingsSection(
+                        title = "No Custom Sets",
+                        ui = ui,
+                        optimizedSettings = optimizedSettings
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.lg)
                         ) {
-                            Text(
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "Create your first custom symbol set",
-                                color = Color(0xFFCCCCCC),
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily.Monospace,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                style = com.example.matrixscreen.ui.theme.AppTypography.bodyMedium,
+                                color = ui.textPrimary,
+                                settings = optimizedSettings,
                             )
                             
-                            Text(
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "Use any characters you want for your Matrix rain effect",
-                                color = Color(0xFF666666),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                style = com.example.matrixscreen.ui.theme.AppTypography.bodySmall,
+                                color = ui.textSecondary,
+                                settings = optimizedSettings,
                             )
                         }
                     }
                 } else {
-                    CyberpunkSection(title = "SAVED SETS") {
+                    SettingsSection(
+                        title = "Saved Sets",
+                        ui = ui,
+                        optimizedSettings = optimizedSettings
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(com.example.matrixscreen.core.design.DesignTokens.Scrolling.customSetsListHeight),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                .scrollableContent(),
+                            verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm)
                         ) {
                             uiState.customSets.forEach { customSet ->
                                 CustomSetItem(
@@ -307,7 +311,9 @@ fun CustomSymbolSetsScreen(
                                     onDuplicate = {
                                         viewModel.duplicateCustomSet(customSet.id)
                                     },
-                                    onDelete = { viewModel.deleteCustomSet(customSet.id) }
+                                    onDelete = { viewModel.deleteCustomSet(customSet.id) },
+                                    ui = ui,
+                                    optimizedSettings = optimizedSettings
                                 )
                             }
                         }
@@ -318,24 +324,24 @@ fun CustomSymbolSetsScreen(
                 Button(
                     onClick = onNavigateToCreate,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = cyberpunkGreen,
-                        contentColor = Color.Black
+                        containerColor = ui.primary,
+                        contentColor = ui.textPrimary
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(DesignTokens.Sizing.touchTarget)
                 ) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Create New Set",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
+                    Spacer(modifier = Modifier.width(DesignTokens.Spacing.sm))
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = "CREATE NEW SET",
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                        color = ui.textPrimary,
+                        settings = optimizedSettings
                     )
                 }
             }
@@ -354,15 +360,18 @@ private fun CustomSetItem(
     onSelect: () -> Unit,
     onEdit: () -> Unit,
     onDuplicate: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings
 ) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) Color(0xFF003300) else Color(0xFF1A1A1A),
+        targetValue = if (isSelected) ui.selectionBackground else ui.overlayBackground,
         animationSpec = tween(200),
         label = "background_color"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) Color(0xFF00FF00) else Color(0xFF333333),
+        targetValue = if (isSelected) ui.textAccent else ui.borderDim,
         animationSpec = tween(200),
         label = "border_color"
     )
@@ -374,10 +383,10 @@ private fun CustomSetItem(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+            .border(DesignTokens.Outline.thin, borderColor, RoundedCornerShape(DesignTokens.Radius.sm))
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(DesignTokens.Spacing.lg)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -385,193 +394,154 @@ private fun CustomSetItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = customSet.name,
-                        color = if (isSelected) Color(0xFF00FF00) else Color(0xFFCCCCCC),
-                        fontSize = 16.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
+                        style = com.example.matrixscreen.ui.theme.AppTypography.titleSmall,
+                        color = if (isSelected) ui.textAccent else ui.textPrimary,
+                        settings = optimizedSettings
                     )
                     
-                    Text(
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = "${customSet.characters.length} characters",
-                        color = Color(0xFF666666),
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(top = 4.dp)
+                        style = com.example.matrixscreen.ui.theme.AppTypography.bodySmall,
+                        color = ui.textSecondary,
+                        settings = optimizedSettings,
+                        modifier = Modifier.padding(top = DesignTokens.Spacing.xs)
                     )
                     
                     // Character preview
-                    Text(
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = customSet.characters.take(20) + if (customSet.characters.length > 20) "..." else "",
-                        color = Color(0xFF888888),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(top = 2.dp)
+                        style = com.example.matrixscreen.ui.theme.AppTypography.labelSmall,
+                        color = ui.textSecondary,
+                        settings = optimizedSettings,
+                        modifier = Modifier.padding(top = DesignTokens.Spacing.xs)
                     )
                 }
                 
                 if (isSelected) {
-                    Text(
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = "ACTIVE",
-                        color = Color(0xFF00FF00),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
+                        style = com.example.matrixscreen.ui.theme.AppTypography.labelSmall,
+                        color = ui.textAccent,
+                        settings = optimizedSettings
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(DesignTokens.Spacing.md))
             
             // Action buttons
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm)
             ) {
                 Button(
                     onClick = onEdit,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1A1A1A),
-                        contentColor = Color(0xFF00FF00)
+                        containerColor = ui.selectionBackground,
+                        contentColor = ui.textPrimary
                     ),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(DesignTokens.Sizing.buttonHeight)
                 ) {
                     Icon(
-                        Icons.Default.Edit,
+                        Icons.Filled.Edit,
                         contentDescription = "Edit",
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Edit",
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp
+                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                     )
                 }
 
                 Button(
                     onClick = onDuplicate,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1A4D1A),
-                        contentColor = Color(0xFF00FF00)
+                        containerColor = ui.selectionBackground,
+                        contentColor = ui.textPrimary
                     ),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(DesignTokens.Sizing.buttonHeight)
                 ) {
                     Icon(
-                        Icons.Default.ContentCopy,
+                        Icons.Filled.ContentCopy,
                         contentDescription = "Duplicate",
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Duplicate",
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp
+                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                     )
                 }
 
                 Button(
-                    onClick = onDelete,
+                    onClick = { showDeleteConfirmation = true },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF330000),
-                        contentColor = Color(0xFFFF6666)
+                        containerColor = ui.selectionBackground,
+                        contentColor = ui.textPrimary
                     ),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(DesignTokens.Sizing.buttonHeight)
                 ) {
                     Icon(
-                        Icons.Default.Delete,
+                        Icons.Filled.Delete,
                         contentDescription = "Delete",
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Delete",
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp
+                        modifier = Modifier.size(DesignTokens.Sizing.smallIconSize)
                     )
                 }
             }
         }
     }
-}
-
-/**
- * Cyberpunk header component
- */
-@Composable
-private fun CyberpunkHeader(
-    title: String,
-    onBackPressed: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBackPressed,
-            modifier = Modifier
-                .background(
-                    Color(0xFF1A1A1A),
-                    RoundedCornerShape(8.dp)
+    
+    // Delete confirmation dialog
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                    text = "Delete Custom Set",
+                    style = com.example.matrixscreen.ui.theme.AppTypography.titleMedium,
+                    color = ui.textPrimary,
+                    settings = optimizedSettings
                 )
-                .border(1.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color(0xFF00FF00)
-            )
-        }
-        
-        Text(
-            text = title,
-            color = Color(0xFF00FF00),
-            fontSize = 20.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp
+            },
+            text = {
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                    text = "Are you sure you want to delete \"${customSet.name}\"? This action cannot be undone.",
+                    style = com.example.matrixscreen.ui.theme.AppTypography.bodyMedium,
+                    color = ui.textSecondary,
+                    settings = optimizedSettings
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        onDelete()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ui.buttonCancelText,
+                        contentColor = ui.textPrimary
+                    )
+                ) {
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                        text = "DELETE",
+                        style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                        color = ui.textPrimary,
+                        settings = optimizedSettings
+                    )
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDeleteConfirmation = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ui.selectionBackground,
+                        contentColor = ui.textPrimary
+                    )
+                ) {
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                        text = "CANCEL",
+                        style = com.example.matrixscreen.ui.theme.AppTypography.labelMedium,
+                        color = ui.textPrimary,
+                        settings = optimizedSettings
+                    )
+                }
+            },
+            containerColor = ui.overlayBackground,
+            titleContentColor = ui.textPrimary,
+            textContentColor = ui.textSecondary
         )
-        
-        // Empty space for balance
-        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
-/**
- * Cyberpunk section component
- */
-@Composable
-private fun CyberpunkSection(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            color = Color(0xFF00FF00),
-            fontSize = 14.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Color(0xFF0F0F0F),
-                    RoundedCornerShape(12.dp)
-                )
-                .border(
-                    1.dp,
-                    Color(0xFF333333),
-                    RoundedCornerShape(12.dp)
-                )
-                .padding(16.dp)
-        ) {
-            content()
-        }
-    }
-}

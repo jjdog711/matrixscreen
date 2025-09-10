@@ -7,6 +7,7 @@ import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.repo.SettingsRepository
 import com.example.matrixscreen.ui.settings.model.SettingId
 import com.example.matrixscreen.ui.settings.model.with
+import com.example.matrixscreen.data.custom.CustomSymbolSet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +53,13 @@ class NewSettingsViewModel @Inject constructor(
      * Current UI state exposed to composables.
      */
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+    
+    /**
+     * Preview override for custom symbol sets - transient field not in saved state.
+     * Used to temporarily override the active symbol set for preview purposes.
+     */
+    private val _previewOverrideSymbolSet = MutableStateFlow<CustomSymbolSet?>(null)
+    val previewOverrideSymbolSet: StateFlow<CustomSymbolSet?> = _previewOverrideSymbolSet.asStateFlow()
     
     init {
         // Load initial settings from repository
@@ -152,5 +160,23 @@ class NewSettingsViewModel @Inject constructor(
      */
     fun hasUnsavedChanges(): Boolean {
         return _uiState.value.dirty
+    }
+    
+    /**
+     * Apply a preview override for custom symbol sets.
+     * This temporarily overrides the active symbol set for preview purposes.
+     * 
+     * @param customSet The custom symbol set to preview, or null to clear preview
+     */
+    fun applyPreviewOverride(customSet: CustomSymbolSet?) {
+        _previewOverrideSymbolSet.value = customSet
+    }
+    
+    /**
+     * Clear the current preview override.
+     * This restores the normal symbol set behavior.
+     */
+    fun clearPreviewOverride() {
+        _previewOverrideSymbolSet.value = null
     }
 }

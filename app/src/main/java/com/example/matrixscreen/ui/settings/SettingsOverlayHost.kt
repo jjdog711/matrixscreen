@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -47,7 +48,7 @@ fun SettingsOverlayHost(
 ) {
     if (!isOpen) return
 
-    val totalPages = 7
+    val totalPages = 10 // 7 main settings + 3 custom symbol sets screens
     val pagerState = rememberPagerState(initialPage = totalPages * 1000 / 2, pageCount = { totalPages * 1000 })
     var isExpanded by remember { mutableStateOf(false) }
 
@@ -118,7 +119,7 @@ private fun SettingsPager(
     modifier: Modifier = Modifier
 ) {
     HorizontalPager(state = pagerState, modifier = modifier) { page ->
-        val mapped = page % 7
+        val mapped = page % 10
         when (mapped) {
             0 -> SettingsHomeScreen(
                 settingsViewModel = settingsViewModel,
@@ -135,13 +136,13 @@ private fun SettingsPager(
             1 -> com.example.matrixscreen.ui.settings.theme.ThemeSettingsScreen(
                 settingsViewModel = settingsViewModel,
                 onBack = onBack,
-                onNavigateToCustomSets = { /* TODO: custom sets route */ },
+                onNavigateToCustomSets = { onNavigateToPage(7) },
                 isExpanded = isExpanded
             )
             2 -> com.example.matrixscreen.ui.settings.characters.CharactersSettingsScreen(
                 settingsViewModel = settingsViewModel,
                 onBack = onBack,
-                onNavigateToCustomSets = { /* TODO */ },
+                onNavigateToCustomSets = { onNavigateToPage(7) },
                 isExpanded = isExpanded
             )
             3 -> com.example.matrixscreen.ui.settings.motion.MotionSettingsScreen(
@@ -164,6 +165,49 @@ private fun SettingsPager(
                 onBack = onBack,
                 isExpanded = isExpanded
             )
+            // Custom Symbol Sets screens
+            7 -> {
+                val customSymbolSetViewModel: com.example.matrixscreen.ui.settings.characters.CustomSymbolSetViewModel = hiltViewModel()
+                com.example.matrixscreen.ui.settings.characters.CustomSymbolSetsScreen(
+                    viewModel = customSymbolSetViewModel,
+                    settingsViewModel = settingsViewModel,
+                    onBackPressed = onBack,
+                    onNavigateToCreate = { onNavigateToPage(8) },
+                    onNavigateToEdit = { setId -> 
+                        // Store the set ID in the ViewModel for the edit screen to retrieve
+                        customSymbolSetViewModel.setEditingSetId(setId)
+                        onNavigateToPage(9) 
+                    }
+                )
+            }
+            8 -> {
+                val customSymbolSetViewModel: com.example.matrixscreen.ui.settings.characters.CustomSymbolSetViewModel = hiltViewModel()
+                com.example.matrixscreen.ui.settings.characters.CreateOrEditSymbolSetScreen(
+                    viewModel = customSymbolSetViewModel,
+                    onBackPressed = { onNavigateToPage(7) },
+                    onDelete = null,
+                    existingSet = null,
+                    settingsViewModel = settingsViewModel
+                )
+            }
+            9 -> {
+                val customSymbolSetViewModel: com.example.matrixscreen.ui.settings.characters.CustomSymbolSetViewModel = hiltViewModel()
+                val editingSet = customSymbolSetViewModel.getEditingSet()
+                com.example.matrixscreen.ui.settings.characters.CreateOrEditSymbolSetScreen(
+                    viewModel = customSymbolSetViewModel,
+                    onBackPressed = { 
+                        customSymbolSetViewModel.setEditingSetId(null) // Clear editing state
+                        onNavigateToPage(7) 
+                    },
+                    onDelete = { 
+                        editingSet?.let { customSymbolSetViewModel.deleteCustomSet(it.id) }
+                        customSymbolSetViewModel.setEditingSetId(null) // Clear editing state
+                        onNavigateToPage(7) 
+                    },
+                    existingSet = editingSet,
+                    settingsViewModel = settingsViewModel
+                )
+            }
         }
     }
 }

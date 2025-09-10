@@ -129,10 +129,10 @@ object DesignTokens {
     
     // Scrolling and grid behavior tokens
     object Scrolling {
-        // Grid heights for different content types
-        val themeGridHeight = 200.dp
-        val charactersGridHeight = 300.dp
-        val customSetsListHeight = 400.dp
+        // Scrollable content tokens
+        val maxContentHeight = 400.dp  // Maximum height before scrolling kicks in
+        val minContentHeight = 100.dp  // Minimum height for content areas
+        val scrollablePadding = Spacing.md  // Consistent padding for scrollable areas
         
         // Grid spacing
         val gridItemSpacing = Spacing.sm

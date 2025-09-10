@@ -50,6 +50,10 @@ class CustomSymbolSetViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CustomSymbolSetUiState())
     val uiState: StateFlow<CustomSymbolSetUiState> = _uiState.asStateFlow()
     
+    // Store the ID of the set being edited
+    private val _editingSetId = MutableStateFlow<String?>(null)
+    val editingSetId: StateFlow<String?> = _editingSetId.asStateFlow()
+    
     init {
         // Combine custom sets and active ID streams
         viewModelScope.launch(dispatcher) {
@@ -215,5 +219,31 @@ class CustomSymbolSetViewModel @Inject constructor(
      */
     fun getCustomSetById(setId: String): CustomSymbolSet? {
         return _uiState.value.customSets.find { it.id == setId }
+    }
+    
+    /**
+     * Set the ID of the custom set being edited
+     */
+    fun setEditingSetId(setId: String?) {
+        _editingSetId.value = setId
+    }
+    
+    /**
+     * Get the custom set being edited
+     */
+    fun getEditingSet(): CustomSymbolSet? {
+        val setId = _editingSetId.value
+        return if (setId != null) {
+            getCustomSetById(setId)
+        } else {
+            null
+        }
+    }
+    
+    /**
+     * Check if a name is unique among custom symbol sets
+     */
+    suspend fun isNameUnique(name: String, excludeId: String? = null): Boolean {
+        return repository.isNameUnique(name, excludeId)
     }
 }

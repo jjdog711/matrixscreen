@@ -179,6 +179,7 @@ fun MatrixScreen(
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
     val currentSettings = uiState.draft // Use draft for live preview
+    val previewOverride by settingsViewModel.previewOverrideSymbolSet.collectAsState()
     // val settingsState = SettingsState.MatrixScreen // Default state for matrix screen - moved to legacy
     val livePreviewSettings = null // No live preview in new system
     
@@ -194,7 +195,10 @@ fun MatrixScreen(
             // Add subtle grain texture overlay
             Box(modifier = Modifier.fillMaxSize()) {
                 // Real matrix rain effect using new domain model
-                MatrixDigitalRain(settings = currentSettings)
+                MatrixDigitalRain(
+                    settings = currentSettings,
+                    previewOverride = previewOverride
+                )
                 
                 // Real grain overlay using new domain model
                 MatrixGrainOverlay(settings = currentSettings)
@@ -425,7 +429,8 @@ data class MatrixColumn(
 
 @Composable
 fun MatrixDigitalRain(
-    settings: com.example.matrixscreen.data.model.MatrixSettings = com.example.matrixscreen.data.model.MatrixSettings()
+    settings: com.example.matrixscreen.data.model.MatrixSettings = com.example.matrixscreen.data.model.MatrixSettings(),
+    previewOverride: com.example.matrixscreen.data.custom.CustomSymbolSet? = null
 ) {
     val density = LocalDensity.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -471,14 +476,24 @@ fun MatrixDigitalRain(
         )
     }
     
-    // OPTIMIZATION: Update character set based on settings (use passed-in settings for live preview)
-    val matrixChars = remember(settings.symbolSetId, settings.savedCustomSets, settings.activeCustomSetId) {
-        settings.getSymbolSet().effectiveCharacters(settings).toCharArray()
+    // OPTIMIZATION: Update character set based on settings or preview override
+    val matrixChars = remember(settings.symbolSetId, settings.savedCustomSets, settings.activeCustomSetId, previewOverride) {
+        // Check for preview override first - this replaces the current symbol set
+        val characters = if (previewOverride != null) {
+            previewOverride.characters
+        } else {
+            settings.getSymbolSet().effectiveCharacters(settings)
+        }
+        characters.toCharArray()
     }
     
-    // PER-COLUMN CHARACTER POOLS: Parse comma-separated character groups (use passed-in settings for live preview)
-    val characterPools = remember(settings.symbolSetId, settings.savedCustomSets, settings.activeCustomSetId) {
-        val characters = settings.getSymbolSet().effectiveCharacters(settings)
+    // PER-COLUMN CHARACTER POOLS: Parse comma-separated character groups
+    val characterPools = remember(settings.symbolSetId, settings.savedCustomSets, settings.activeCustomSetId, previewOverride) {
+        val characters = if (previewOverride != null) {
+            previewOverride.characters
+        } else {
+            settings.getSymbolSet().effectiveCharacters(settings)
+        }
         parseCharacterPools(characters)
     }
     
@@ -497,7 +512,8 @@ fun MatrixDigitalRain(
         matrixChars,
         characterPools,
         settings.symbolSetId,
-        settings.activeCustomSetId // Include activeCustomSetId to force column rebuild when switching custom sets
+        settings.activeCustomSetId, // Include activeCustomSetId to force column rebuild when switching custom sets
+        previewOverride // Include previewOverride to force column rebuild when preview is applied
     ) {
         createMatrixColumns(reactiveAnimationConfig, matrixChars, characterPools)
     }
@@ -520,7 +536,7 @@ fun MatrixDigitalRain(
             while (isActive) {
                 withFrameNanos { frameTimeNanos ->
                     // Use live target FPS; coerce to avoid divide-by-zero
-                    val fps = currentConfig.targetFps.coerceAtLeast(1f)
+                    val fps = reactiveAnimationConfig.targetFps.coerceAtLeast(1f)
                     val targetFrameInterval = (1_000_000_000.0 / fps.toDouble()).toLong()
                     
                     if (frameTimeNanos - lastFrameTime >= targetFrameInterval) {
@@ -998,18 +1014,9 @@ private fun DrawScope.drawMatrixColumn(
             // Apply jitter offset
             val finalXPos = adjustedXPos + glyph.jitterX
             
-            // Get character-specific typeface
-            val charTypeface = if (settings.symbolSetId == "CUSTOM" && 
-                settings.getActiveCustomSetId() != null) {
-                // Use custom font for custom symbol sets
-                val customSet = settings.getSavedCustomSets().find { it.id == settings.getActiveCustomSetId()?.toString() }
-                customSet?.let { 
-                    paintCache.fontManager.getTypefaceForCustomSet(it.fontFileName)
-                } ?: paintCache.fontManager.getTypefaceForCharacter(glyph.char, settings.symbolSetId)
-            } else {
-                // Use symbol-set-aware font selection
-                paintCache.fontManager.getTypefaceForCharacter(glyph.char, settings.symbolSetId)
-            }
+            // Get character-specific typeface using character-based selection for all symbol sets
+            // This allows mixed character sets (Latin, Katakana, etc.) to use appropriate fonts
+            val charTypeface = paintCache.fontManager.getTypefaceForCharacter(glyph.char, settings.symbolSetId)
             
             // AUTHENTIC MATRIX: Enhanced stepped brightness levels with advanced color support
             when (glyph.brightness) {

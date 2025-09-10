@@ -1,36 +1,31 @@
 package com.example.matrixscreen.ui.settings.characters
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.matrixscreen.data.custom.CustomSymbolSet
+import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.ui.theme.FontUtils
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.MatrixTextStyles
 import com.example.matrixscreen.ui.settings.components.*
+import com.example.matrixscreen.core.design.DesignTokens
 import kotlin.random.Random
 import com.example.matrixscreen.ui.components.*
 
@@ -41,55 +36,55 @@ import com.example.matrixscreen.ui.components.*
 private fun PoolsPreview(
     characters: String,
     selectedFont: String,
-    cyberpunkGreen: Color
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
+    optimizedSettings: MatrixSettings
 ) {
     val pools = parsePoolsForPreview(characters)
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(top = 8.dp)
+        verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm),
+        modifier = Modifier.padding(top = DesignTokens.Spacing.sm)
     ) {
-        Text(
+        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
             text = "POOL PREVIEW",
-            color = cyberpunkGreen,
-            fontSize = 12.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold
+            style = AppTypography.labelMedium,
+            color = ui.textAccent,
+            settings = optimizedSettings
         )
 
         pools.forEachIndexed { index, pool ->
             Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)
             ) {
-                Text(
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                     text = "Pool ${index + 1}:",
-                    color = Color(0xFFCCCCCC),
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace
+                    style = AppTypography.labelSmall,
+                    color = ui.textPrimary,
+                    settings = optimizedSettings
                 )
 
                 // Show sample characters from this pool
                 val sample = pool.take(8)
-                androidx.compose.material3.Text(
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                     text = sample,
                     style = if (selectedFont == "matrix_code_nfi.ttf") {
                         MatrixTextStyles.MatrixSymbolPreview
                     } else {
                         AppTypography.bodyLarge
                     },
-                    color = cyberpunkGreen,
-                    fontSize = 14.sp
+                    color = ui.textAccent,
+                    settings = optimizedSettings
                 )
             }
         }
 
         if (pools.size > 1) {
-            Text(
+            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                 text = "Columns will cycle through these pools",
-                color = Color(0xFF888888),
-                fontSize = 9.sp,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier.padding(top = 4.dp)
+                style = AppTypography.labelSmall,
+                color = ui.textSecondary,
+                settings = optimizedSettings,
+                modifier = Modifier.padding(top = DesignTokens.Spacing.xs)
             )
         }
     }
@@ -112,105 +107,6 @@ private fun parsePoolsForPreview(characters: String): List<String> {
     }
 }
 
-/**
- * Cyberpunk header component with optional delete button
- */
-@Composable
-private fun CyberpunkHeader(
-    title: String,
-    onBackPressed: () -> Unit,
-    onDelete: (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBackPressed,
-            modifier = Modifier
-                .background(
-                    Color(0xFF1A1A1A),
-                    RoundedCornerShape(8.dp)
-                )
-                .border(1.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color(0xFF00FF00)
-            )
-        }
-
-        Text(
-            text = title,
-            color = Color(0xFF00FF00),
-            fontSize = 20.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp
-        )
-
-        if (onDelete != null) {
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier
-                    .background(
-                        Color(0xFF330000),
-                        RoundedCornerShape(8.dp)
-                    )
-                    .border(1.dp, Color(0xFFFF6666), RoundedCornerShape(8.dp))
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Color(0xFFFF6666)
-                )
-            }
-        } else {
-            // Empty space for balance
-            Spacer(modifier = Modifier.size(48.dp))
-        }
-    }
-}
-
-/**
- * Cyberpunk section component
- */
-@Composable
-private fun CyberpunkSection(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            color = Color(0xFF00FF00),
-            fontSize = 14.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Color(0xFF0F0F0F),
-                    RoundedCornerShape(12.dp)
-                )
-                .border(
-                    1.dp,
-                    Color(0xFF333333),
-                    RoundedCornerShape(12.dp)
-                )
-                .padding(16.dp)
-        ) {
-            content()
-        }
-    }
-}
 
 /**
  * Screen for creating or editing a custom symbol set
@@ -221,7 +117,8 @@ fun CreateOrEditSymbolSetScreen(
     viewModel: CustomSymbolSetViewModel,
     onBackPressed: () -> Unit,
     onDelete: (() -> Unit)? = null,
-    existingSet: CustomSymbolSet? = null
+    existingSet: CustomSymbolSet? = null,
+    settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel? = null
 ) {
     val scrollState = rememberScrollState()
     val isEditing = existingSet != null
@@ -232,6 +129,30 @@ fun CreateOrEditSymbolSetScreen(
     var selectedFont by remember { mutableStateOf(existingSet?.fontFileName ?: "matrix_code_nfi.ttf") }
     var nameError by remember { mutableStateOf("") }
     var charactersError by remember { mutableStateOf("") }
+    
+    // Get UI state for theming
+    val settingsUiState by (settingsViewModel?.uiState?.collectAsState() ?: remember { mutableStateOf(com.example.matrixscreen.ui.SettingsUiState(
+        saved = com.example.matrixscreen.data.model.MatrixSettings.DEFAULT,
+        draft = com.example.matrixscreen.data.model.MatrixSettings.DEFAULT,
+        dirty = false
+    )) })
+    val currentSettings = settingsUiState.saved
+    val ui = com.example.matrixscreen.ui.theme.getSafeUIColorScheme(currentSettings)
+    val optimizedSettings = com.example.matrixscreen.ui.theme.rememberOptimizedSettings(currentSettings)
+    
+    // Clear preview override and editing state when leaving the screen
+    DisposableEffect(Unit) {
+        onDispose {
+            settingsViewModel?.clearPreviewOverride()
+            viewModel.setEditingSetId(null)
+        }
+    }
+    
+    // Coroutine scope for async operations
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Focus manager for keyboard dismissal
+    val focusManager = LocalFocusManager.current
     
     // Bundled fonts only
     val bundledFonts = listOf("matrix_code_nfi.ttf", "space_grotesk.ttf", "jetbrains_mono.ttf")
@@ -246,39 +167,27 @@ fun CreateOrEditSymbolSetScreen(
     val characterCount = sanitizedCharacters.length
     val isValid = name.isNotBlank() && characterCount > 0 && characterCount <= 2000
     
-    // Cyberpunk color scheme
-    val cyberpunkGreen = Color(0xFF00FF00)
-    val cyberpunkDark = Color(0xFF0A0A0A)
-    val cyberpunkBorder = Color(0xFF333333)
-    
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(cyberpunkDark, Color.Black),
-                    startY = 0f,
-                    endY = Float.POSITIVE_INFINITY
-                )
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(16.dp)
-        ) {
-            // Header with back button
-            CyberpunkHeader(
-                title = if (isEditing) "EDIT SYMBOL SET" else "CREATE SYMBOL SET",
-                onBackPressed = onBackPressed,
-                onDelete = if (isEditing) onDelete else null
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
+    SettingsScreenContainer(
+        title = if (isEditing) "EDIT SYMBOL SET" else "CREATE SYMBOL SET",
+        onBack = onBackPressed,
+        ui = ui,
+        optimizedSettings = optimizedSettings,
+        expanded = true, // Always expanded for editing
+        content = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .clickable { focusManager.clearFocus() },
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sectionSpacing)
+            ) {
             
             // Name input
-            CyberpunkSection(title = "SET NAME") {
+            SettingsSection(
+                title = "Set Name",
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { 
@@ -286,34 +195,47 @@ fun CreateOrEditSymbolSetScreen(
                         nameError = ""
                     },
                     label = { 
-                        Text(
-                            "Name",
-                            color = Color(0xFFCCCCCC),
-                            fontFamily = FontFamily.Monospace
+                        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                            text = "Name",
+                            style = AppTypography.labelMedium,
+                            color = ui.textSecondary,
+                            settings = optimizedSettings
                         )
                     },
                     isError = nameError.isNotEmpty(),
                     supportingText = if (nameError.isNotEmpty()) {
-                        { Text(nameError, color = Color(0xFFFF6666)) }
+                        { 
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                                text = nameError,
+                                style = AppTypography.labelSmall,
+                                color = ui.buttonCancelText,
+                                settings = optimizedSettings
+                            )
+                        }
                     } else null,
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = cyberpunkGreen,
-                        unfocusedBorderColor = cyberpunkBorder,
-                        focusedTextColor = Color(0xFFCCCCCC),
-                        unfocusedTextColor = Color(0xFFCCCCCC),
-                        focusedLabelColor = cyberpunkGreen,
-                        unfocusedLabelColor = Color(0xFF666666)
+                        focusedBorderColor = ui.textAccent,
+                        unfocusedBorderColor = ui.borderDim,
+                        focusedTextColor = ui.textPrimary,
+                        unfocusedTextColor = ui.textPrimary,
+                        focusedLabelColor = ui.textAccent,
+                        unfocusedLabelColor = ui.textSecondary
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
             // Characters input
-            CyberpunkSection(title = "CHARACTERS") {
+            SettingsSection(
+                title = "Characters",
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.md)
                 ) {
                     OutlinedTextField(
                         value = characters,
@@ -322,23 +244,31 @@ fun CreateOrEditSymbolSetScreen(
                             charactersError = ""
                         },
                         label = { 
-                            Text(
-                                "Characters",
-                                color = Color(0xFFCCCCCC),
-                                fontFamily = FontFamily.Monospace
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                                text = "Characters",
+                                style = AppTypography.labelMedium,
+                                color = ui.textSecondary,
+                                settings = optimizedSettings
                             )
-                            },
+                        },
                         isError = charactersError.isNotEmpty(),
                         supportingText = if (charactersError.isNotEmpty()) {
-                            { Text(charactersError, color = Color(0xFFFF6666)) }
+                            { 
+                                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                                    text = charactersError,
+                                    style = AppTypography.labelSmall,
+                                    color = ui.buttonCancelText,
+                                    settings = optimizedSettings
+                                )
+                            }
                         } else null,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = cyberpunkGreen,
-                            unfocusedBorderColor = cyberpunkBorder,
-                            focusedTextColor = Color(0xFFCCCCCC),
-                            unfocusedTextColor = Color(0xFFCCCCCC),
-                            focusedLabelColor = cyberpunkGreen,
-                            unfocusedLabelColor = Color(0xFF666666)
+                            focusedBorderColor = ui.textAccent,
+                            unfocusedBorderColor = ui.borderDim,
+                            focusedTextColor = ui.textPrimary,
+                            unfocusedTextColor = ui.textPrimary,
+                            focusedLabelColor = ui.textAccent,
+                            unfocusedLabelColor = ui.textSecondary
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
@@ -346,6 +276,9 @@ fun CreateOrEditSymbolSetScreen(
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.None,
                             keyboardType = KeyboardType.Text
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
                         )
                     )
                     
@@ -355,21 +288,20 @@ fun CreateOrEditSymbolSetScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
+                        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                             text = "$characterCount characters",
+                            style = AppTypography.labelMedium,
                             color = if (characterCount > 0 && characterCount <= 2000)
-                                Color(0xFF00FF00) else Color(0xFFFF6666),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace
+                                ui.textAccent else ui.buttonCancelText,
+                            settings = optimizedSettings
                         )
 
                         if (characterCount > 2000) {
-                            Text(
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "MAX 2000",
-                                color = Color(0xFFFF6666),
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
+                                style = AppTypography.labelSmall,
+                                color = ui.buttonCancelText,
+                                settings = optimizedSettings
                             )
                         }
                     }
@@ -379,181 +311,150 @@ fun CreateOrEditSymbolSetScreen(
                         PoolsPreview(
                             characters = sanitizedCharacters,
                             selectedFont = selectedFont,
-                            cyberpunkGreen = cyberpunkGreen
+                            ui = ui,
+                            optimizedSettings = optimizedSettings
                         )
                     }
 
                     // Character weighting tip
-                    Text(
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = "💡 Tip: Repeat characters to make them appear more often in the Matrix rain",
-                        color = Color(0xFF888888),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(top = 4.dp)
+                        style = AppTypography.labelSmall,
+                        color = ui.textSecondary,
+                        settings = optimizedSettings,
+                        modifier = Modifier.padding(top = DesignTokens.Spacing.xs)
                     )
 
                     // Per-column character pools tip
-                    Text(
+                    com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                         text = "🎯 Pro Tip: Separate words with commas to make each rain column use a different word or character group (e.g. lol,wtf,smh)",
-                        color = Color(0xFF888888),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(top = 2.dp)
+                        style = AppTypography.labelSmall,
+                        color = ui.textSecondary,
+                        settings = optimizedSettings,
+                        modifier = Modifier.padding(top = DesignTokens.Spacing.xs)
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Font picker
-            CyberpunkSection(title = "FONT SELECTION") {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Choose Font",
-                        color = Color(0xFFCCCCCC),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.height(80.dp)
-                    ) {
-                        items(bundledFonts) { fontFileName ->
-                                val isSelected = fontFileName == selectedFont
-                                val displayName = when (fontFileName) {
-                                    "matrix_code_nfi.ttf" -> "Matrix"
-                                    "space_grotesk.ttf" -> "Space Grotesk"
-                                    "jetbrains_mono.ttf" -> "JetBrains Mono"
-                                    else -> "Unknown Font"
-                                }
-                                
-                                Card(
-                                    onClick = { selectedFont = fontFileName },
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) Color(0xFF003300) else Color(0xFF1A1A1A)
-                                    ),
-                                    modifier = Modifier
-                                        .width(140.dp)
-                                        .height(70.dp)
-                                        .border(
-                                            1.dp, 
-                                            if (isSelected) cyberpunkGreen else Color(0xFF333333), 
-                                            RoundedCornerShape(8.dp)
-                                        )
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(8.dp),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = displayName,
-                                            color = if (isSelected) cyberpunkGreen else Color(0xFFCCCCCC),
-                                            fontSize = 9.sp,
-                                            fontFamily = FontFamily.Monospace,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                            maxLines = 2,
-                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                        )
-                                        
-                                        // Inline preview using Typography system
-                                        Text(
-                                            text = "A9$@",
-                                            style = if (fontFileName == "matrix_code_nfi.ttf") {
-                                                MatrixTextStyles.MatrixFontPreview
-                                            } else {
-                                                AppTypography.bodyMedium
-                                            },
-                                            color = if (isSelected) cyberpunkGreen else Color(0xFF888888),
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
             
             // Character preview with dual samples
-            CyberpunkSection(title = "PREVIEW") {
+            SettingsSection(
+                title = "Preview",
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.md)
                 ) {
                     // Fixed sample row (stable preview)
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)
                     ) {
-                        Text(
-                            text = "Fixed Sample (Space Grotesk)",
-                            color = Color(0xFF00FF00),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
+                        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                            text = "Fixed Sample",
+                            style = AppTypography.labelMedium,
+                            color = ui.textAccent,
+                            settings = optimizedSettings
                         )
                         
                         val fixedSample = "A B C 1 2 3 $ @ # ? ! % * { }"
-                        Text(
+                        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                             text = fixedSample,
-                            style = if (selectedFont == "matrix_code_nfi.ttf") {
-                                MatrixTextStyles.MatrixSymbolPreview
-                            } else {
-                                AppTypography.bodyLarge
-                            },
-                            color = cyberpunkGreen
+                            style = AppTypography.bodyLarge,
+                            color = ui.textAccent,
+                            settings = optimizedSettings
                         )
                     }
                     
                     // User sample row (dynamic preview)
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)
                     ) {
-                        Text(
+                        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                             text = "Your Characters",
-                            color = Color(0xFF00FF00),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
+                            style = AppTypography.labelMedium,
+                            color = ui.textAccent,
+                            settings = optimizedSettings
                         )
                         
                         if (sanitizedCharacters.isNotEmpty()) {
-                            Text(
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = sanitizedCharacters.take(64) + if (sanitizedCharacters.length > 64) "..." else "",
-                                style = if (selectedFont == "matrix_code_nfi.ttf") {
-                                    MatrixTextStyles.MatrixSymbolPreview
-                                } else {
-                                    AppTypography.bodyLarge
-                                },
-                                color = cyberpunkGreen
+                                style = AppTypography.bodyLarge,
+                                color = ui.textAccent,
+                                settings = optimizedSettings
                             )
                             
-                            Text(
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "These characters will be used in your Matrix rain effect",
-                                color = Color(0xFF666666),
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace
+                                style = AppTypography.labelSmall,
+                                color = ui.textSecondary,
+                                settings = optimizedSettings
                             )
                         } else {
-                            Text(
+                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                                 text = "Enter characters above to see preview",
-                                color = Color(0xFF666666),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace
+                                style = AppTypography.bodyMedium,
+                                color = ui.textSecondary,
+                                settings = optimizedSettings
                             )
                         }
                     }
                 }
             }
             
-            Spacer(modifier = Modifier.height(32.dp))
+            // Preview button
+            Button(
+                onClick = {
+                    if (sanitizedCharacters.isNotEmpty()) {
+                        val previewSet = CustomSymbolSet(
+                            id = "preview-${System.currentTimeMillis()}",
+                            name = "Preview",
+                            characters = sanitizedCharacters,
+                            fontFileName = selectedFont
+                        )
+                        settingsViewModel?.applyPreviewOverride(previewSet)
+                    }
+                },
+                enabled = sanitizedCharacters.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ui.textSecondary,
+                    contentColor = ui.textPrimary
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(DesignTokens.Sizing.touchTarget)
+            ) {
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                    text = "PREVIEW IN MATRIX",
+                    style = AppTypography.labelMedium,
+                    color = ui.textPrimary,
+                    settings = optimizedSettings
+                )
+            }
+            
+            // Cancel button
+            Button(
+                onClick = {
+                    settingsViewModel?.clearPreviewOverride()
+                    viewModel.setEditingSetId(null)
+                    onBackPressed()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ui.selectionBackground,
+                    contentColor = ui.buttonCancelText
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(DesignTokens.Sizing.touchTarget)
+            ) {
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                    text = "CANCEL",
+                    style = AppTypography.labelMedium,
+                    color = ui.buttonCancelText,
+                    settings = optimizedSettings
+                )
+            }
             
             // Save button
             Button(
@@ -575,33 +476,41 @@ fun CreateOrEditSymbolSetScreen(
                     }
                     
                     if (!hasError) {
-                        val customSet = CustomSymbolSet(
-                            id = existingSet?.id ?: java.util.UUID.randomUUID().toString(),
-                            name = name.trim(),
-                            characters = sanitizedCharacters,
-                            fontFileName = selectedFont
-                        )
-                        viewModel.saveCustomSet(customSet)
-                        onBackPressed()
+                        // Check name uniqueness asynchronously
+                        coroutineScope.launch {
+                            val isUnique = viewModel.isNameUnique(name.trim(), existingSet?.id)
+                            if (!isUnique) {
+                                nameError = "Name already exists"
+                            } else {
+                                val customSet = CustomSymbolSet(
+                                    id = existingSet?.id ?: java.util.UUID.randomUUID().toString(),
+                                    name = name.trim(),
+                                    characters = sanitizedCharacters,
+                                    fontFileName = selectedFont
+                                )
+                                viewModel.saveCustomSet(customSet)
+                                onBackPressed()
+                            }
+                        }
                     }
                 },
                 enabled = isValid,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isValid) cyberpunkGreen else Color(0xFF333333),
-                    contentColor = if (isValid) Color.Black else Color(0xFF666666)
+                    containerColor = if (isValid) ui.primary else ui.selectionBackground,
+                    contentColor = if (isValid) ui.textPrimary else ui.textSecondary
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(DesignTokens.Sizing.touchTarget)
             ) {
-                Text(
+                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
                     text = if (isEditing) "SAVE CHANGES" else "CREATE SET",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    style = AppTypography.labelMedium,
+                    color = if (isValid) ui.textPrimary else ui.textSecondary,
+                    settings = optimizedSettings
                 )
             }
-            
-            Spacer(modifier = Modifier.height(100.dp)) // Bottom padding
+            }
         }
-    }
+    )
+}

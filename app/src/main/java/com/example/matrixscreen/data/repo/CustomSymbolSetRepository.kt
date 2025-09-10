@@ -169,6 +169,14 @@ class CustomSymbolSetRepository @Inject constructor(
         
         return merged
     }
+    
+    /**
+     * Check if a name is unique among custom symbol sets
+     */
+    suspend fun isNameUnique(name: String, excludeId: String? = null): Boolean {
+        val currentSets = settingsStore.data.map { proto -> decodeList(proto.savedCustomSets) }.first()
+        return currentSets.none { it.name.equals(name.trim(), ignoreCase = true) && it.id != excludeId }
+    }
 }
 
 /**

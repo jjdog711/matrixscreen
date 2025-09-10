@@ -40,6 +40,8 @@ import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
+import com.example.matrixscreen.core.design.DesignTokens
+import com.example.matrixscreen.core.design.scrollableContent
 
 /**
  * Theme settings screen with presets, color mode toggle, and advanced color controls
@@ -155,8 +157,8 @@ private fun PresetsRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(com.example.matrixscreen.core.design.DesignTokens.Scrolling.themeGridHeight),
-        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Scrolling.gridLineSpacing)
+            .scrollableContent(),
+        verticalArrangement = Arrangement.spacedBy(DesignTokens.Scrolling.gridLineSpacing)
     ) {
         // Create rows of preset buttons
         val themes = BuiltInThemes.ALL_BUILT_IN
