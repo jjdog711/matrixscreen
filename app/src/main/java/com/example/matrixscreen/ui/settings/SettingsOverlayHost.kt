@@ -1,57 +1,37 @@
 package com.example.matrixscreen.ui.settings
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectDragGestures
-import kotlin.math.abs
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.offset
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.matrixscreen.core.design.rememberAdaptiveHeaderHeight
 import kotlinx.coroutines.launch
 import kotlin.math.abs
-import kotlin.math.atan2
 import kotlin.math.roundToInt
-import androidx.compose.ui.platform.LocalConfiguration
-import com.example.matrixscreen.core.design.rememberAdaptiveHeaderHeight
-import com.example.matrixscreen.core.design.DesignTokens
 
 /**
  * Helper function to determine if a horizontal swipe should trigger page navigation
@@ -66,8 +46,8 @@ fun shouldTriggerHorizontalSwipe(dx: Float, dy: Float, density: androidx.compose
  * Google Maps-style bottom sheet with continuous finger tracking
  * - Sheet offset from bottom: 0f = fully open (header at top), screenHeightPx = fully closed
  * - Tracks finger exactly with no snapping during drag
- * - Stays where user leaves it (even halfway up)
- * - Light spring settle only on release
+ * - Stays where user leaves it (even halfway up) unless near anchors or strong fling
+ * - Smart settle: snaps to anchors when close, stays put otherwise, flings override
  * - Phase 2: content scroll only when header is pinned to top
  * - Self-contained: handles initial swipe detection internally
  */
@@ -108,6 +88,39 @@ fun SettingsOverlayHost(
     // The sheet manages its own visibility based on user interaction
 
     // Gesture handling is now done directly in detectDragGestures for better control
+    
+    // Add near other local vals (reuse existing density/scope/screenHeightPx/headerHeightPx/offsetY)
+    val stickPx = with(density) { 40.dp.toPx() }     // "close enough" snap band
+    val flingPx = with(density) { 120.dp.toPx() }    // velocity threshold for flings
+    val open = 0f
+    val closed = screenHeightPx + headerHeightPx
+
+    suspend fun settleSheet(velocityY: Float) {
+        val current = offsetY.value
+        var target = current
+
+        // Strong fling decides outcome
+        target = when {
+            velocityY < -flingPx -> open
+            velocityY >  flingPx -> closed
+            else -> current
+        }
+
+        // If no strong fling, snap only when near anchors; otherwise keep partial position
+        if (target == current) {
+            target = when {
+                current <= stickPx -> open
+                (closed - current) <= stickPx -> closed
+                else -> current  // remain where released
+            }
+        }
+
+        offsetY.animateTo(
+            target,
+            spring(dampingRatio = 0.85f, stiffness = 400f)
+        )
+        onOffsetChange(target)
+    }
 
     // Nested scroll: Phase 1 = move sheet until header hits top; Phase 2 = content scroll
     val nested = remember {
@@ -169,20 +182,8 @@ fun SettingsOverlayHost(
                                 }
                             }
                         },
-                        onDragEnd = { 
-                            // Handle drag end with spring animation
-                            val currentOffset = offsetY.value
-                            val openThreshold = screenHeightPx * 0.25f // 25% threshold for more responsive UX
-                            
-                            scope.launch {
-                                val target = when {
-                                    currentOffset < openThreshold -> screenHeightPx // Snap to closed
-                                    else -> currentOffset // Stay where dragged (no snapping)
-                                }
-                                
-                                offsetY.animateTo(target, spring(dampingRatio = 0.85f, stiffness = 400f))
-                                onOffsetChange(target)
-                            }
+                        onDragEnd = {
+                            scope.launch { settleSheet(velocityY = 0f) } // treat as no-fling release
                         }
                     )
                 }
@@ -197,7 +198,7 @@ fun SettingsOverlayHost(
                     // When offsetY = 0f (open): header at very top of screen
                     // Calculate offset to ensure complete invisibility when closed, top alignment when open
                     val clampedOffset = offsetY.value.coerceIn(0f, screenHeightPx + headerHeightPx)
-                    IntOffset(0, kotlin.math.round(clampedOffset).toInt()) 
+                    IntOffset(0, clampedOffset.roundToInt()) 
                 }
                 .size(
                     width = screenWidthPx.dp,
