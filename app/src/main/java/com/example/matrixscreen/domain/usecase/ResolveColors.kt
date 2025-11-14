@@ -4,6 +4,7 @@ import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.registry.ThemePresetId
 import com.example.matrixscreen.data.registry.ThemePresetRegistryImpl
 import com.example.matrixscreen.data.registry.ThemeColorConfig
+import com.example.matrixscreen.core.util.applyColorLinking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -60,9 +61,25 @@ class ResolveColors @Inject constructor() {
             resolvedColors = applyAdvancedColorLogic(resolvedColors, settings)
         }
         
-        // Step 4: Apply UI/Rain color linking if enabled
+        // Step 4: Apply UI/Rain color linking if enabled using the resolved colors as source
         if (settings.linkUiAndRainColors) {
-            resolvedColors = applyUiRainColorLinking(resolvedColors)
+            val settingsForLinking = settings.copy(
+                backgroundColor = resolvedColors.backgroundColor,
+                headColor = resolvedColors.headColor,
+                brightTrailColor = resolvedColors.brightTrailColor,
+                trailColor = resolvedColors.trailColor,
+                dimColor = resolvedColors.dimColor,
+                uiAccent = resolvedColors.uiAccent,
+                uiOverlayBg = resolvedColors.uiOverlayBg,
+                uiSelectionBg = resolvedColors.uiSelectionBg
+            )
+
+            val linkedSettings = applyColorLinking(settingsForLinking)
+            resolvedColors = resolvedColors.copy(
+                uiAccent = linkedSettings.uiAccent,
+                uiOverlayBg = linkedSettings.uiOverlayBg,
+                uiSelectionBg = linkedSettings.uiSelectionBg
+            )
         }
         
         return resolvedColors
@@ -75,17 +92,6 @@ class ResolveColors @Inject constructor() {
         // For now, just return colors as-is
         // Future: Could apply color temperature, saturation, brightness adjustments, etc.
         return colors
-    }
-    
-    /**
-     * Apply UI/Rain color linking logic.
-     */
-    private fun applyUiRainColorLinking(colors: ThemeColorConfig): ThemeColorConfig {
-        // Link UI accent color to the brightest rain color (headColor)
-        return colors.copy(
-            uiAccent = colors.headColor,
-            uiSelectionBg = (colors.headColor and 0x40FFFFFFL) // 25% opacity of head color
-        )
     }
 }
 

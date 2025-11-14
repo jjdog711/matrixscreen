@@ -1,14 +1,17 @@
 package com.example.matrixscreen.ui.settings.characters
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -45,6 +48,8 @@ private fun PoolsPreview(
         verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm),
         modifier = Modifier.padding(top = DesignTokens.Spacing.sm)
     ) {
+        val previewFontFamily = FontUtils.getFontFamily(selectedFont)
+
         com.example.matrixscreen.ui.theme.ModernTextWithGlow(
             text = "POOL PREVIEW",
             style = AppTypography.labelMedium,
@@ -65,15 +70,15 @@ private fun PoolsPreview(
 
                 // Show sample characters from this pool
                 val sample = pool.take(8)
-                com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                val previewStyle = if (selectedFont == "matrix_code_nfi.ttf") {
+                    MatrixTextStyles.MatrixSymbolPreview
+                } else {
+                    AppTypography.bodyLarge.copy(fontFamily = previewFontFamily)
+                }
+                Text(
                     text = sample,
-                    style = if (selectedFont == "matrix_code_nfi.ttf") {
-                        MatrixTextStyles.MatrixSymbolPreview
-                    } else {
-                        AppTypography.bodyLarge
-                    },
-                    color = ui.textAccent,
-                    settings = optimizedSettings
+                    style = previewStyle,
+                    color = ui.textAccent
                 )
             }
         }
@@ -111,7 +116,7 @@ private fun parsePoolsForPreview(characters: String): List<String> {
 /**
  * Screen for creating or editing a custom symbol set
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateOrEditSymbolSetScreen(
     viewModel: CustomSymbolSetViewModel,
@@ -120,7 +125,6 @@ fun CreateOrEditSymbolSetScreen(
     existingSet: CustomSymbolSet? = null,
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel? = null
 ) {
-    val scrollState = rememberScrollState()
     val isEditing = existingSet != null
     
     // Form state
@@ -131,12 +135,14 @@ fun CreateOrEditSymbolSetScreen(
     var charactersError by remember { mutableStateOf("") }
     
     // Get UI state for theming
-    val settingsUiState by (settingsViewModel?.uiState?.collectAsState() ?: remember { mutableStateOf(com.example.matrixscreen.ui.SettingsUiState(
+    val settingsUiState by (settingsViewModel?.uiState?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(com.example.matrixscreen.ui.SettingsUiState(
         saved = com.example.matrixscreen.data.model.MatrixSettings.DEFAULT,
         draft = com.example.matrixscreen.data.model.MatrixSettings.DEFAULT,
         dirty = false
     )) })
-    val currentSettings = settingsUiState.saved
+    val currentSettings by remember {
+        derivedStateOf { settingsUiState.saved }
+    }
     val ui = com.example.matrixscreen.ui.theme.getSafeUIColorScheme(currentSettings)
     val optimizedSettings = com.example.matrixscreen.ui.theme.rememberOptimizedSettings(currentSettings)
     
@@ -155,7 +161,14 @@ fun CreateOrEditSymbolSetScreen(
     val focusManager = LocalFocusManager.current
     
     // Bundled fonts only
-    val bundledFonts = listOf("matrix_code_nfi.ttf", "space_grotesk.ttf", "jetbrains_mono.ttf")
+    val bundledFonts = remember(existingSet?.fontFileName) {
+        val fonts = FontUtils.getAvailableFontFiles()
+        if (existingSet?.fontFileName != null && existingSet.fontFileName !in fonts) {
+            fonts + existingSet.fontFileName
+        } else {
+            fonts
+        }
+    }
     
     // Character sanitization (preserving repetition for weighting)
     val sanitizedCharacters = remember(characters) {
@@ -167,6 +180,8 @@ fun CreateOrEditSymbolSetScreen(
     val characterCount = sanitizedCharacters.length
     val isValid = name.isNotBlank() && characterCount > 0 && characterCount <= 2000
     
+    val backgroundTapSource = remember { MutableInteractionSource() }
+
     SettingsScreenContainer(
         title = if (isEditing) "EDIT SYMBOL SET" else "CREATE SYMBOL SET",
         onBack = onBackPressed,
@@ -177,8 +192,10 @@ fun CreateOrEditSymbolSetScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(scrollState)
-                    .clickable { focusManager.clearFocus() },
+                    .clickable(
+                        interactionSource = backgroundTapSource,
+                        indication = null
+                    ) { focusManager.clearFocus() },
                 verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sectionSpacing)
             ) {
             
@@ -336,6 +353,53 @@ fun CreateOrEditSymbolSetScreen(
                 }
             }
             
+            // Font selection
+            SettingsSection(
+                title = "Font",
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.md)
+                ) {
+                    Text(
+                        text = "Choose one of the bundled fonts",
+                        style = AppTypography.bodySmall,
+                        color = ui.textSecondary
+                    )
+                    
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm)
+                    ) {
+                        bundledFonts.forEach { fontFile ->
+                            FilterChip(
+                                selected = selectedFont == fontFile,
+                                onClick = { selectedFont = fontFile },
+                                label = {
+                                    Text(
+                                        text = FontUtils.getFontDisplayName(fontFile),
+                                        style = AppTypography.labelSmall
+                                    )
+                                }
+                            )
+                        }
+                    }
+                    
+                    val sampleFontFamily = FontUtils.getFontFamily(selectedFont)
+                    Text(
+                        text = "Sample",
+                        style = AppTypography.labelMedium,
+                        color = ui.textSecondary
+                    )
+                    Text(
+                        text = "The Matrix has you...",
+                        style = AppTypography.bodyLarge.copy(fontFamily = sampleFontFamily),
+                        color = ui.textAccent
+                    )
+                }
+            }
+            
             
             // Character preview with dual samples
             SettingsSection(
@@ -346,6 +410,8 @@ fun CreateOrEditSymbolSetScreen(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.md)
                 ) {
+                    val previewFontFamily = FontUtils.getFontFamily(selectedFont)
+
                     // Fixed sample row (stable preview)
                     Column(
                         verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)
@@ -358,11 +424,10 @@ fun CreateOrEditSymbolSetScreen(
                         )
                         
                         val fixedSample = "A B C 1 2 3 $ @ # ? ! % * { }"
-                        com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                        Text(
                             text = fixedSample,
                             style = AppTypography.bodyLarge,
-                            color = ui.textAccent,
-                            settings = optimizedSettings
+                            color = ui.textAccent
                         )
                     }
                     
@@ -378,11 +443,10 @@ fun CreateOrEditSymbolSetScreen(
                         )
                         
                         if (sanitizedCharacters.isNotEmpty()) {
-                            com.example.matrixscreen.ui.theme.ModernTextWithGlow(
+                            Text(
                                 text = sanitizedCharacters.take(64) + if (sanitizedCharacters.length > 64) "..." else "",
-                                style = AppTypography.bodyLarge,
-                                color = ui.textAccent,
-                                settings = optimizedSettings
+                                style = AppTypography.bodyLarge.copy(fontFamily = previewFontFamily),
+                                color = ui.textAccent
                             )
                             
                             com.example.matrixscreen.ui.theme.ModernTextWithGlow(

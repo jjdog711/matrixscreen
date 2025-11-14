@@ -15,7 +15,7 @@ import com.example.matrixscreen.data.registry.ThemePresetId
  */
 data class MatrixSettings(
     // Schema version for migration compatibility
-    val schemaVersion: Int = 1,
+    val schemaVersion: Int = 2,
     
     // Motion settings
     val fallSpeed: Float = 2.0f,
@@ -23,6 +23,7 @@ data class MatrixSettings(
     val lineSpacing: Float = 0.9f,
     val activePercentage: Float = 0.4f,
     val speedVariance: Float = 0.01f,
+    val allowLandscape: Boolean = true,
     
     // Effects settings
     val glowIntensity: Float = 2.0f,
@@ -110,6 +111,7 @@ data class MatrixSettings(
                 "lineSpacing" -> updated.copy(lineSpacing = value as Float)
                 "activePercentage" -> updated.copy(activePercentage = value as Float)
                 "speedVariance" -> updated.copy(speedVariance = value as Float)
+                "allowLandscape" -> updated.copy(allowLandscape = value as Boolean)
                 "glowIntensity" -> updated.copy(glowIntensity = value as Float)
                 "jitterAmount" -> updated.copy(jitterAmount = value as Float)
                 "flickerAmount" -> updated.copy(flickerAmount = value as Float)

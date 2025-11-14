@@ -2,12 +2,11 @@ package com.example.matrixscreen.ui.settings.background
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,8 +36,10 @@ fun BackgroundSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft
+    val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { uiState.draft }
+    }
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     val context = LocalContext.current
@@ -51,7 +52,7 @@ fun BackgroundSettingsScreen(
     val recommendedFpsOptions = remember { FpsCoercionUtil.getRecommendedFpsOptions(context) }
     
     SettingsScreenContainer(
-        title = "BACKGROUND",
+        title = null,
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
@@ -59,16 +60,15 @@ fun BackgroundSettingsScreen(
         content = {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
             // Film Grain Section
             SettingsSection(
-                title = "Film Grain",
+                title = null,
                 ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
+                optimizedSettings = optimizedSettings
+            ) {
                 // Render all background specs using typed SettingId access
                 val grainDensitySpec = BACKGROUND_SPECS.specFor(GrainD)
                 RenderSetting(
@@ -83,15 +83,14 @@ fun BackgroundSettingsScreen(
                     value = currentSettings.get(GrainO),
                     onValueChange = { v: Float -> settingsViewModel.updateDraft(GrainO, v) }
                 )
-                }
-            )
+            }
             
             // Performance Section
             SettingsSection(
-                title = "Performance",
+                title = null,
                 ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
+                optimizedSettings = optimizedSettings
+            ) {
                 val targetFpsSpec = BACKGROUND_SPECS.specFor(Fps)
                 RenderSetting(
                     spec = targetFpsSpec,
@@ -159,8 +158,7 @@ fun BackgroundSettingsScreen(
                         )
                     }
                 }
-                }
-            )
+            }
         }
         },
         modifier = modifier

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
@@ -99,7 +100,7 @@ fun QuickSettingsPanel(
     specs: List<WidgetSpec<*>> = QuickPanelSpecs.SPECS,
     onOpenAdvanced: (SettingCategory) -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings = uiState.draft
 
     Surface(tonalElevation = 4.dp) {

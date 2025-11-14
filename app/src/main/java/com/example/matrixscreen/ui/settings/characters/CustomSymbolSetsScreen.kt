@@ -6,9 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,6 +18,8 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -50,11 +50,11 @@ import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 fun CustomSymbolSetsScreen(
     viewModel: CustomSymbolSetViewModel,
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
-    onBackPressed: () -> Unit,
-    onNavigateToCreate: () -> Unit,
-    onNavigateToEdit: (String) -> Unit
+    onBack: () -> Unit,
+    onCreateNew: () -> Unit,
+    onEdit: (String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val fileManager = remember { SymbolSetFileManager(context) }
 
@@ -83,22 +83,23 @@ fun CustomSymbolSetsScreen(
     
     
     // Get UI state for theming
-    val settingsUiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = settingsUiState.saved
+    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { settingsUiState.saved }
+    }
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
     SettingsScreenContainer(
         title = "CUSTOM SYMBOL SETS",
-        onBack = onBackPressed,
+        onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
         expanded = true, // Always expanded for custom sets
         content = {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
             ) {
                 // Import/Export section
@@ -308,9 +309,8 @@ fun CustomSymbolSetsScreen(
                                     onSelect = {
                                         viewModel.setActiveCustomSet(customSet.id)
                                         settingsViewModel.updateDraft(SymbolSetId, BuiltInSymbolSets.CUSTOM.value)
-                                        settingsViewModel.commit() // Immediate commit for symbol sets
                                     },
-                                    onEdit = { onNavigateToEdit(customSet.id) },
+                                    onEdit = { onEdit(customSet.id) },
                                     onDuplicate = {
                                         viewModel.duplicateCustomSet(customSet.id)
                                     },
@@ -325,7 +325,7 @@ fun CustomSymbolSetsScreen(
                 
                 // Create new set button
                 Button(
-                    onClick = onNavigateToCreate,
+                    onClick = onCreateNew,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ui.primary,
                         contentColor = ui.textPrimary

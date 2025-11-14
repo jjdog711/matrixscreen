@@ -50,7 +50,7 @@ enum class SettingCategory(
 data class SettingPreset(
     val name: String,
     val description: String,
-    val settings: Map<String, Any> // key -> value mapping
+    val updates: Map<SettingId<*>, Any> // SettingId -> value mapping
 )
 
 /**
@@ -60,45 +60,44 @@ object SettingPresets {
     val FILM_ACCURATE = SettingPreset(
         name = "Film-Accurate",
         description = "Cinematic baseline with authentic Matrix feel",
-        settings = mapOf(
-            "targetFps" to 30f,
-            "colorTint" to "GREEN",
-            "advancedColorsEnabled" to false,
-            "fallSpeed" to 2.0f,
-            "columnCount" to 150,
-            "rowHeightMultiplier" to 0.9f,
-            "glowIntensity" to 1.5f,
-            "flickerRate" to 0.15f,
-            "mutationRate" to 0.05f,
-            "grainDensity" to 220,
-            "grainOpacity" to 0.03f
+        updates = mapOf(
+            Fps to 30,
+            AdvancedColorsEnabled to false,
+            Speed to 2.0f,
+            Columns to 150,
+            LineSpace to 0.9f,
+            Glow to 1.5f,
+            Flicker to 0.15f,
+            Mutation to 0.05f,
+            GrainD to 220,
+            GrainO to 0.03f
         )
     )
     
     val PERFORMANCE = SettingPreset(
         name = "Performance",
         description = "Optimized for low-end devices",
-        settings = mapOf(
-            "targetFps" to 60f,
-            "columnCount" to 90,
-            "glowIntensity" to 0.8f,
-            "grainDensity" to 120,
-            "maxTrailLength" to 60,
-            "maxBrightTrailLength" to 8
+        updates = mapOf(
+            Fps to 60,
+            Columns to 90,
+            Glow to 0.8f,
+            GrainD to 120,
+            MaxTrailLength to 60,
+            MaxBrightTrailLength to 8
         )
     )
     
     val SHOWCASE = SettingPreset(
         name = "Showcase",
         description = "Maximum visual flair and effects",
-        settings = mapOf(
-            "glowIntensity" to 2.5f,
-            "flickerRate" to 0.3f,
-            "mutationRate" to 0.15f,
-            "maxTrailLength" to 120,
-            "maxBrightTrailLength" to 20,
-            "columnCount" to 200,
-            "jitterAmount" to 2.5f
+        updates = mapOf(
+            Glow to 2.5f,
+            Flicker to 0.3f,
+            Mutation to 0.15f,
+            MaxTrailLength to 120,
+            MaxBrightTrailLength to 20,
+            Columns to 200,
+            Jitter to 2.5f
         )
     )
     

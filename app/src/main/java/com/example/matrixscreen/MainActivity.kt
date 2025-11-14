@@ -1,10 +1,13 @@
 package com.example.matrixscreen
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.graphics.BlurMaskFilter
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
+import android.content.pm.ActivityInfo
 import com.example.matrixscreen.font.MatrixFontManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +49,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -61,7 +66,6 @@ import com.example.matrixscreen.ui.MatrixSplashScreen
 // import com.example.matrixscreen.ui.MatrixSettingType // Moved to legacy
 // Removed legacy imports - using proper settings navigation now
 import com.example.matrixscreen.ui.NewSettingsViewModel
-import com.example.matrixscreen.ui.settings.SettingsNavGraph
 import com.example.matrixscreen.data.model.MatrixSettings as LegacyMatrixSettings
 import com.example.matrixscreen.ui.theme.MatrixScreenTheme
 import com.example.matrixscreen.ui.preview.DebugSettingsHarness
@@ -140,9 +144,6 @@ fun MatrixApp() {
                     }
                 )
             }
-            composable("ui-style-preview") {
-                com.example.matrixscreen.ui.preview.UIStylePreviewScreen()
-            }
         }
         // Custom symbol sets navigation - handled by SettingsOverlayHost pager system
         // These routes redirect to main settings where the full custom sets UI is available
@@ -180,9 +181,27 @@ fun MatrixScreen(
     settingsViewModel: NewSettingsViewModel,
     navController: androidx.navigation.NavController
 ) {
-    val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft // Use draft for live preview
-    val previewOverride by settingsViewModel.previewOverrideSymbolSet.collectAsState()
+    val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { uiState.draft }
+    }
+    val previewOverride by settingsViewModel.previewOverrideSymbolSet.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+
+    LaunchedEffect(activity, currentSettings.allowLandscape) {
+        activity?.requestedOrientation = if (currentSettings.allowLandscape) {
+            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+    }
+
+    DisposableEffect(activity) {
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
     // val settingsState = SettingsState.MatrixScreen // Default state for matrix screen - moved to legacy
     val livePreviewSettings = null // No live preview in new system
     
@@ -254,6 +273,12 @@ fun MatrixScreen(
         )
         
     }
+}
+
+private tailrec fun android.content.Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable

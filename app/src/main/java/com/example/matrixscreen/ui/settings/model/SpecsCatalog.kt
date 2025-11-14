@@ -23,6 +23,13 @@ import com.example.matrixscreen.ui.settings.model.WidgetSpec.*
 
 // Motion Settings - Controls for matrix rain movement and behavior
 val MOTION_SPECS = listOf(
+    ToggleSpec(
+        id = AllowLandscape,
+        label = "Allow Landscape Mode",
+        default = true,
+        help = "Allow the matrix rain to rotate and adapt when the device is turned sideways"
+    ),
+
     SliderSpec(
         id = Speed,
         label = "Fall Speed",
@@ -123,6 +130,28 @@ val EFFECTS_SPECS = listOf(
         unit = "rate",
         affectsPerf = false,
         help = "Rate at which matrix characters change to new symbols"
+    ),
+    
+    IntSliderSpec(
+        id = MaxTrailLength,
+        label = "Max Trail Length",
+        range = 20..200,
+        step = 5,
+        default = 100,
+        unit = "rows",
+        affectsPerf = true,
+        help = "Maximum number of characters that can be visible in a rain column"
+    ),
+    
+    IntSliderSpec(
+        id = MaxBrightTrailLength,
+        label = "Bright Trail Length",
+        range = 4..40,
+        step = 1,
+        default = 15,
+        unit = "rows",
+        affectsPerf = false,
+        help = "Number of characters that remain at maximum brightness at the leading edge"
     )
 )
 

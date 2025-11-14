@@ -108,6 +108,7 @@ object DesignTokens {
         // Overlay sizing
         val overlayMinHeight = 200.dp
         val overlayMaxHeight = 400.dp
+        val overlayContentMaxWidth = 520.dp
         val quickPanelHeight = 120.dp
         
         // Settings components
@@ -118,6 +119,7 @@ object DesignTokens {
         // New unified sizing
         val minTouchTarget = 48.dp
         val buttonHeight = 36.dp
+        val tabSwipeThreshold = 64.dp
         
         // Responsive header sizing
         val headerHeight = 64.dp

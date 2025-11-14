@@ -1,11 +1,10 @@
 package com.example.matrixscreen.ui.settings.motion
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.ui.settings.components.*
@@ -17,11 +16,12 @@ import com.example.matrixscreen.ui.settings.model.Columns
 import com.example.matrixscreen.ui.settings.model.LineSpace
 import com.example.matrixscreen.ui.settings.model.ActivePct
 import com.example.matrixscreen.ui.settings.model.SpeedVar
+import com.example.matrixscreen.ui.settings.model.AllowLandscape
 import com.example.matrixscreen.ui.settings.model.MOTION_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
-import com.example.matrixscreen.ui.theme.ModernTextWithGlow
+import com.example.matrixscreen.core.design.DesignTokens
 
 /**
  * Motion settings screen with spec-driven UI for rain speed, columns, and flow controls.
@@ -35,129 +35,97 @@ fun MotionSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft
+    val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { uiState.draft }
+    }
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
+    // Memoize spec lookups at composable level (best practice - avoids recomposition issues)
+    val allowLandscapeSpec = remember { MOTION_SPECS.specFor(AllowLandscape) }
+    val speedSpec = remember { MOTION_SPECS.specFor(Speed) }
+    val columnsSpec = remember { MOTION_SPECS.specFor(Columns) }
+    val lineSpaceSpec = remember { MOTION_SPECS.specFor(LineSpace) }
+    val activePctSpec = remember { MOTION_SPECS.specFor(ActivePct) }
+    val speedVarSpec = remember { MOTION_SPECS.specFor(SpeedVar) }
+    
     SettingsScreenContainer(
-        title = "MOTION",
+        title = null,
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
         expanded = true,
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sectionSpacing)
+        ) {
+            Text(
+                text = "Controls flow density and pacing.",
+                style = AppTypography.bodyMedium,
+                color = ui.textSecondary
+            )
+
+            SettingsSection(
+                title = "Motion Controls",
+                ui = ui,
+                optimizedSettings = optimizedSettings
             ) {
-                // Description
-                Text(
-                    text = "Controls flow density and pacing.",
-                    style = AppTypography.bodyMedium,
-                    color = ui.textSecondary
-                )
-                
-                // Live Preview Section
-                SettingsSection(
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
-                    ) {
-                        ModernTextWithGlow(
-                            text = "Live Preview",
-                            style = AppTypography.titleSmall,
-                            color = ui.textPrimary,
-                            settings = optimizedSettings
-                        )
-                        
-                        MotionPreviewTile(
-                            settings = currentSettings,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-                
-                // Motion Settings Section
-                SettingsSection(
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Render all motion specs using typed SettingId access
-                        val speedSpec = MOTION_SPECS.specFor(Speed)
-                        AnimatedRenderSetting(
-                            spec = speedSpec,
-                            value = currentSettings.get(Speed),
-                            onValueChange = { value -> settingsViewModel.updateDraft(Speed, value) },
-                            showPreview = true
-                        )
+                    RenderSetting(
+                        spec = allowLandscapeSpec,
+                        value = currentSettings.get(AllowLandscape),
+                        onValueChange = { value -> settingsViewModel.updateDraft(AllowLandscape, value) }
+                    )
 
-                        val columnsSpec = MOTION_SPECS.specFor(Columns)
-                        AnimatedRenderSetting(
-                            spec = columnsSpec,
-                            value = currentSettings.get(Columns),
-                            onValueChange = { value -> settingsViewModel.updateDraft(Columns, value) },
-                            showPreview = true
-                        )
+                    RenderSetting(
+                        spec = speedSpec,
+                        value = currentSettings.get(Speed),
+                        onValueChange = { value -> settingsViewModel.updateDraft(Speed, value) }
+                    )
 
-                        val lineSpaceSpec = MOTION_SPECS.specFor(LineSpace)
-                        AnimatedRenderSetting(
-                            spec = lineSpaceSpec,
-                            value = currentSettings.get(LineSpace),
-                            onValueChange = { value -> settingsViewModel.updateDraft(LineSpace, value) },
-                            showPreview = true
-                        )
+                    RenderSetting(
+                        spec = columnsSpec,
+                        value = currentSettings.get(Columns),
+                        onValueChange = { value -> settingsViewModel.updateDraft(Columns, value) }
+                    )
 
-                        val activePctSpec = MOTION_SPECS.specFor(ActivePct)
-                        AnimatedRenderSetting(
-                            spec = activePctSpec,
-                            value = currentSettings.get(ActivePct),
-                            onValueChange = { value -> settingsViewModel.updateDraft(ActivePct, value) },
-                            showPreview = true
-                        )
+                    RenderSetting(
+                        spec = lineSpaceSpec,
+                        value = currentSettings.get(LineSpace),
+                        onValueChange = { value -> settingsViewModel.updateDraft(LineSpace, value) }
+                    )
 
-                        val speedVarSpec = MOTION_SPECS.specFor(SpeedVar)
-                        AnimatedRenderSetting(
-                            spec = speedVarSpec,
-                            value = currentSettings.get(SpeedVar),
-                            onValueChange = { value -> settingsViewModel.updateDraft(SpeedVar, value) },
-                            showPreview = true
-                        )
-                        
-                        // Reset button for motion settings with animation
-                        AnimatedResetSectionButton(
-                            onReset = {
-                                // Reset motion settings to defaults
-                                MOTION_SPECS.forEach { spec ->
-                                    when (spec) {
-                                        is SliderSpec -> {
-                                            settingsViewModel.updateDraft(spec.id, spec.default)
-                                        }
-                                        is IntSliderSpec -> {
-                                            settingsViewModel.updateDraft(spec.id, spec.default)
-                                        }
-                                        is ToggleSpec -> {
-                                            settingsViewModel.updateDraft(spec.id, spec.default)
-                                        }
-                                        else -> {
-                                            // Handle other spec types if needed
-                                            throw IllegalArgumentException("Unsupported spec type for reset: ${spec::class.simpleName}")
-                                        }
-                                    }
+                    RenderSetting(
+                        spec = activePctSpec,
+                        value = currentSettings.get(ActivePct),
+                        onValueChange = { value -> settingsViewModel.updateDraft(ActivePct, value) }
+                    )
+
+                    RenderSetting(
+                        spec = speedVarSpec,
+                        value = currentSettings.get(SpeedVar),
+                        onValueChange = { value -> settingsViewModel.updateDraft(SpeedVar, value) }
+                    )
+
+                    AnimatedResetSectionButton(
+                        onReset = {
+                            MOTION_SPECS.forEach { spec ->
+                                when (spec) {
+                                    is SliderSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                    is IntSliderSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                    is ToggleSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                    else -> throw IllegalArgumentException("Unsupported spec type for reset: ${spec::class.simpleName}")
                                 }
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
-        },
-        modifier = modifier
-    )
+        }
+    }
 }

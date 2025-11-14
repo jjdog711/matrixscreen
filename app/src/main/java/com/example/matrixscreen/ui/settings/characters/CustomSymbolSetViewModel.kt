@@ -33,9 +33,9 @@ sealed class ImportExportState {
     object Idle : ImportExportState()
     object Exporting : ImportExportState()
     object Importing : ImportExportState()
-    data class ExportSuccess(val jsonData: String) : ImportExportState()
-    data class ImportSuccess(val importedCount: Int) : ImportExportState()
-    data class Error(val message: String) : ImportExportState()
+    data class ExportSuccess(val jsonData: String, val emittedAt: Long = System.currentTimeMillis()) : ImportExportState()
+    data class ImportSuccess(val importedCount: Int, val emittedAt: Long = System.currentTimeMillis()) : ImportExportState()
+    data class Error(val message: String, val emittedAt: Long = System.currentTimeMillis()) : ImportExportState()
 }
 
 /**

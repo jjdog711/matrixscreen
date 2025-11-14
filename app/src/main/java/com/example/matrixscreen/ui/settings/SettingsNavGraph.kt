@@ -20,9 +20,7 @@ import com.example.matrixscreen.ui.NewSettingsViewModel
 fun SettingsNavGraph(
     navController: NavHostController,
     settingsViewModel: NewSettingsViewModel,
-    onBack: () -> Unit,
-    onNavigateToCustomSets: () -> Unit,
-    onNavigateToUIPreview: () -> Unit
+    onBack: () -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -37,7 +35,6 @@ fun SettingsNavGraph(
                 onNavigateToEffects = { navController.navigate("effects") },
                 onNavigateToTiming = { navController.navigate("timing") },
                 onNavigateToBackground = { navController.navigate("background") },
-                onNavigateToUIPreview = onNavigateToUIPreview,
                 onBack = onBack
             )
         }
@@ -45,8 +42,7 @@ fun SettingsNavGraph(
         composable("theme") {
             ThemeSettingsScreen(
                 settingsViewModel = settingsViewModel,
-                onBack = { navController.popBackStack() },
-                onNavigateToCustomSets = onNavigateToCustomSets
+                onBack = { navController.popBackStack() }
             )
         }
         
@@ -54,7 +50,7 @@ fun SettingsNavGraph(
             CharactersSettingsScreen(
                 settingsViewModel = settingsViewModel,
                 onBack = { navController.popBackStack() },
-                onNavigateToCustomSets = onNavigateToCustomSets
+                onOpenCustomSets = { /* no-op in legacy graph */ }
             )
         }
         

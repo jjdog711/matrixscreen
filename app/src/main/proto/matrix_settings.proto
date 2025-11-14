@@ -17,6 +17,7 @@ message MatrixSettingsProto {
   float line_spacing = 4;
   float active_percentage = 5;
   float speed_variance = 6;
+  bool allow_landscape = 34;
   
   // Effects settings
   float glow_intensity = 7;

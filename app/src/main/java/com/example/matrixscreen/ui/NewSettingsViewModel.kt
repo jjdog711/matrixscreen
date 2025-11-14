@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -65,11 +66,20 @@ class NewSettingsViewModel @Inject constructor(
         // Load initial settings from repository
         viewModelScope.launch(dispatcher) {
             repository.observe().collect { settings ->
-                _uiState.value = _uiState.value.copy(
-                    saved = settings,
-                    draft = settings,
-                    dirty = false
-                )
+                _uiState.update { currentState ->
+                    val shouldPreserveDraft = currentState.dirty && currentState.draft != settings
+                    val baseDraft = if (shouldPreserveDraft) currentState.draft else settings
+                    val mergedDraft = baseDraft.copy(
+                        schemaVersion = settings.schemaVersion,
+                        savedCustomSets = settings.savedCustomSets,
+                        activeCustomSetId = settings.activeCustomSetId
+                    )
+                    currentState.copy(
+                        saved = settings,
+                        draft = mergedDraft,
+                        dirty = mergedDraft != settings
+                    )
+                }
             }
         }
     }

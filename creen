@@ -1,0 +1,225 @@
+[1mdiff --git a/app/src/main/java/com/example/matrixscreen/ui/settings/components/SettingsComponents.kt b/app/src/main/java/com/example/matrixscreen/ui/settings/components/SettingsComponents.kt[m
+[1mindex e946915..db3cc7e 100644[m
+[1m--- a/app/src/main/java/com/example/matrixscreen/ui/settings/components/SettingsComponents.kt[m
+[1m+++ b/app/src/main/java/com/example/matrixscreen/ui/settings/components/SettingsComponents.kt[m
+[36m@@ -5,6 +5,8 @@[m [mimport androidx.compose.foundation.border[m
+ import androidx.compose.foundation.clickable[m
+ import androidx.compose.foundation.layout.*[m
+ import androidx.compose.foundation.layout.statusBarsPadding[m
+[32m+[m[32mimport androidx.compose.foundation.rememberScrollState[m
+[32m+[m[32mimport androidx.compose.foundation.verticalScroll[m
+ import androidx.compose.foundation.shape.CircleShape[m
+ import androidx.compose.foundation.shape.RoundedCornerShape[m
+ import androidx.compose.material.icons.Icons[m
+[36m@@ -32,12 +34,17 @@[m [mimport com.example.matrixscreen.ui.theme.rememberOptimizedSettings[m
+  */[m
+ @Composable[m
+ fun SettingsScreenHeader([m
+[31m-    title: String,[m
+[32m+[m[32m    title: String?,[m
+     onBack: () -> Unit,[m
+     ui: MatrixUIColorScheme,[m
+     optimizedSettings: MatrixSettings,[m
+     modifier: Modifier = Modifier[m
+ ) {[m
+[32m+[m[32m    if (title.isNullOrBlank()) {[m
+[32m+[m[32m        Spacer(modifier = Modifier.height(8.dp))[m
+[32m+[m[32m        return[m
+[32m+[m[32m    }[m
+[32m+[m
+     Row([m
+         modifier = modifier[m
+             .fillMaxWidth()[m
+[36m@@ -47,14 +54,14 @@[m [mfun SettingsScreenHeader([m
+         verticalAlignment = Alignment.CenterVertically[m
+     ) {[m
+         Spacer(modifier = Modifier.size(32.dp))[m
+[31m-        [m
+[32m+[m
+         ModernTextWithGlow([m
+             text = title,[m
+             style = AppTypography.headlineMedium,[m
+             color = androidx.compose.ui.graphics.Color.White,[m
+             settings = optimizedSettings[m
+         )[m
+[31m-        [m
+[32m+[m
+         // Spacer for balance[m
+         Spacer(modifier = Modifier.size(32.dp))[m
+     }[m
+[36m@@ -65,7 +72,7 @@[m [mfun SettingsScreenHeader([m
+  */[m
+ @Composable[m
+ fun SettingsScreenContainer([m
+[31m-    title: String,[m
+[32m+[m[32m    title: String? = null,[m
+     onBack: () -> Unit,[m
+     ui: MatrixUIColorScheme,[m
+     optimizedSettings: MatrixSettings,[m
+[36m@@ -73,6 +80,8 @@[m [mfun SettingsScreenContainer([m
+     modifier: Modifier = Modifier,[m
+     expanded: Boolean = false[m
+ ) {[m
+[32m+[m[32m    val contentScrollState = rememberScrollState()[m
+[32m+[m
+     Box([m
+         modifier = modifier.fillMaxSize()[m
+     ) {[m
+[36m@@ -111,14 +120,16 @@[m [mfun SettingsScreenContainer([m
+                     ui = ui,[m
+                     optimizedSettings = optimizedSettings[m
+                 )[m
+[31m-                [m
+[32m+[m
+                 // Content area with proper scrolling support[m
+                 Column([m
+                     modifier = Modifier[m
+                         .weight(1f)[m
+                         .fillMaxWidth()[m
+[32m+[m[32m                        .verticalScroll(contentScrollState)[m
+                 ) {[m
+                     content()[m
+[32m+[m[32m                    Spacer(modifier = Modifier.height(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing))[m
+                 }[m
+             }[m
+         }[m
+[36m@@ -138,75 +149,66 @@[m [mfun SettingsSection([m
+     modifier: Modifier = Modifier,[m
+     content: @Composable ColumnScope.() -> Unit[m
+ ) {[m
+[31m-    Row([m
+[31m-        modifier = modifier.fillMaxWidth(),[m
+[31m-        horizontalArrangement = Arrangement.Center[m
+[31m-    ) {[m
+[31m-        Card([m
+[31m-            modifier = Modifier[m
+[31m-                .fillMaxWidth(0.9f)[m
+[31m-                .let { cardModifier ->[m
+[31m-                val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 5f) // Use spec range[m
+[31m-                val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)[m
+[32m+[m[32m    val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 5f)[m
+[32m+[m[32m    val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)[m
+[32m+[m[32m    val cardModifier = modifier[m
+[32m+[m[32m        .fillMaxWidth()[m
+[32m+[m[32m        .let { base ->[m
+[32m+[m[32m            if (glowIntensity > 0.1f) {[m
+[32m+[m[32m                val innerGlowElevation = (glowIntensity * 1.5f + 1f).dp[m
+[32m+[m[32m                val outerGlowElevation = (glowIntensity * 4f + 2f).dp[m
+[32m+[m[32m                val innerGlowAlpha = (glowIntensity * 0.2f + 0.3f).coerceIn(0.3f, 0.5f)[m
+[32m+[m[32m                val outerGlowAlpha = (glowIntensity * 0.075f + 0.1f).coerceIn(0.1f, 0.25f)[m
+ [m
+[31m-                if (glowIntensity > 0.1f) {[m
+[31m-                    // Industry standard neon values (based on Cyberpunk 2077, Unity/Unreal)[m
+[31m-                    val innerGlowElevation = (glowIntensity * 1.5f + 1f).dp // 1-4dp inner glow[m
+[31m-                    val outerGlowElevation = (glowIntensity * 4f + 2f).dp // 2-10dp outer glow[m
+[31m-[m
+[31m-                    val innerGlowAlpha = (glowIntensity * 0.2f + 0.3f).coerceIn(0.3f, 0.5f) // 30-50% inner[m
+[31m-                    val outerGlowAlpha = (glowIntensity * 0.075f + 0.1f).coerceIn(0.1f, 0.25f) // 10-25% outer[m
+[31m-[m
+[31m-                    cardModifier[m
+[31m-                        // Outer glow (subtle, wide spread)[m
+[31m-                        .shadow([m
+[31m-                            elevation = outerGlowElevation,[m
+[31m-                            shape = cardShape,[m
+[31m-                            ambientColor = ui.textAccent.copy(alpha = outerGlowAlpha),[m
+[31m-                            spotColor = ui.textAccent.copy(alpha = outerGlowAlpha * 0.8f)[m
+[31m-                        )[m
+[31m-                        // Inner glow (brighter, tighter)[m
+[31m-                        .shadow([m
+[31m-                            elevation = innerGlowElevation,[m
+[31m-                            shape = cardShape,[m
+[31m-                            ambientColor = ui.textAccent.copy(alpha = innerGlowAlpha),[m
+[31m-                            spotColor = ui.textAccent.copy(alpha = innerGlowAlpha * 0.9f)[m
+[31m-                        )[m
+[31m-                        // Clean border on top[m
+[31m-                        .border([m
+[31m-                            width = 1.dp,[m
+[31m-                            color = ui.textAccent,[m
+[31m-                            shape = cardShape[m
+[31m-                        )[m
+[31m-                } else {[m
+[31m-                    cardModifier[m
+[31m-                }[m
+[31m-                },[m
+[31m-            colors = CardDefaults.cardColors([m
+[31m-                containerColor = ui.overlayBackground,[m
+[31m-                contentColor = ui.textPrimary[m
+[31m-            ),[m
+[31m-            shape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard),[m
+[31m-            elevation = CardDefaults.cardElevation([m
+[31m-                defaultElevation = com.example.matrixscreen.core.design.DesignTokens.Elevation.previewCard[m
+[31m-            )[m
+[31m-        ) {[m
+[31m-            Column([m
+[31m-                modifier = Modifier.padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionPadding),[m
+[31m-                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.elementSpacing)[m
+[31m-            ) {[m
+[31m-                if (title != null) {[m
+[31m-                    ModernTextWithGlow([m
+[31m-                        text = title.uppercase(),[m
+[31m-                        style = AppTypography.headlineMedium,[m
+[32m+[m[32m                base[m
+[32m+[m[32m                    .shadow([m
+[32m+[m[32m                        elevation = outerGlowElevation,[m
+[32m+[m[32m                        shape = cardShape,[m
+[32m+[m[32m                        ambientColor = ui.textAccent.copy(alpha = outerGlowAlpha),[m
+[32m+[m[32m                        spotColor = ui.textAccent.copy(alpha = outerGlowAlpha * 0.8f)[m
+[32m+[m[32m                    )[m
+[32m+[m[32m                    .shadow([m
+[32m+[m[32m                        elevation = innerGlowElevation,[m
+[32m+[m[32m                        shape = cardShape,[m
+[32m+[m[32m                        ambientColor = ui.textAccent.copy(alpha = innerGlowAlpha),[m
+[32m+[m[32m                        spotColor = ui.textAccent.copy(alpha = innerGlowAlpha * 0.9f)[m
+[32m+[m[32m                    )[m
+[32m+[m[32m                    .border([m
+[32m+[m[32m                        width = 1.dp,[m
+                         color = ui.textAccent,[m
+[31m-                        settings = optimizedSettings[m
+[32m+[m[32m                        shape = cardShape[m
+                     )[m
+[31m-                }[m
+[31m-                [m
+[31m-                content()[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                base[m
+             }[m
+         }[m
+[32m+[m
+[32m+[m[32m    Card([m
+[32m+[m[32m        modifier = cardModifier,[m
+[32m+[m[32m        colors = CardDefaults.cardColors([m
+[32m+[m[32m            containerColor = ui.overlayBackground,[m
+[32m+[m[32m            contentColor = ui.textPrimary[m
+[32m+[m[32m        ),[m
+[32m+[m[32m        shape = cardShape,[m
+[32m+[m[32m        elevation = CardDefaults.cardElevation([m
+[32m+[m[32m            defaultElevation = com.example.matrixscreen.core.design.DesignTokens.Elevation.previewCard[m
+[32m+[m[32m        )[m
+[32m+[m[32m    ) {[m
+[32m+[m[32m        Column([m
+[32m+[m[32m            modifier = Modifier.padding(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionPadding),[m
+[32m+[m[32m            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.elementSpacing)[m
+[32m+[m[32m        ) {[m
+[32m+[m[32m            if (title != null) {[m
+[32m+[m[32m                ModernTextWithGlow([m
+[32m+[m[32m                    text = title.uppercase(),[m
+[32m+[m[32m                    style = AppTypography.headlineMedium,[m
+[32m+[m[32m                    color = ui.textAccent,[m
+[32m+[m[32m                    settings = optimizedSettings[m
+[32m+[m[32m                )[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            content()[m
+[32m+[m[32m        }[m
+     }[m
+ }[m
+ [m
+[36m@@ -291,7 +293,7 @@[m [mfun ConfirmCancelButtons([m
+                     color = ui.textSecondary[m
+                 )[m
+             }[m
+[31m-            [m
+[32m+[m
+             // Confirm button[m
+             Button([m
+                 onClick = onConfirm,[m

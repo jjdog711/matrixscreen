@@ -86,8 +86,14 @@ fun <T> AnimatedRenderSetting(
                 )
             }
             is ToggleSpec -> {
-        }
-        is BooleanSpec -> {
+                AnimatedToggleSetting(
+                    spec = spec,
+                    value = value as Boolean,
+                    onValueChange = onValueChange as (Boolean) -> Unit,
+                    interactionSource = interactionSource
+                )
+            }
+            is BooleanSpec -> {
                 AnimatedBooleanSetting(
                     spec = spec,
                     value = value as Boolean,

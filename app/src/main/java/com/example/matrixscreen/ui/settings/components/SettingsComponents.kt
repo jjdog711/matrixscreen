@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,12 +34,17 @@ import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
  */
 @Composable
 fun SettingsScreenHeader(
-    title: String,
+    title: String?,
     onBack: () -> Unit,
     ui: MatrixUIColorScheme,
     optimizedSettings: MatrixSettings,
     modifier: Modifier = Modifier
 ) {
+    if (title.isNullOrBlank()) {
+        Spacer(modifier = Modifier.height(8.dp))
+        return
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -47,14 +54,14 @@ fun SettingsScreenHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Spacer(modifier = Modifier.size(32.dp))
-        
+
         ModernTextWithGlow(
             text = title,
             style = AppTypography.headlineMedium,
             color = androidx.compose.ui.graphics.Color.White,
             settings = optimizedSettings
         )
-        
+
         // Spacer for balance
         Spacer(modifier = Modifier.size(32.dp))
     }
@@ -65,14 +72,16 @@ fun SettingsScreenHeader(
  */
 @Composable
 fun SettingsScreenContainer(
-    title: String,
+    title: String? = null,
     onBack: () -> Unit,
     ui: MatrixUIColorScheme,
     optimizedSettings: MatrixSettings,
-    content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
-    expanded: Boolean = false
+    expanded: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit
 ) {
+    val contentScrollState = rememberScrollState()
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -111,12 +120,13 @@ fun SettingsScreenContainer(
                     ui = ui,
                     optimizedSettings = optimizedSettings
                 )
-                
+
                 // Content area with proper scrolling support
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
+                        .verticalScroll(contentScrollState)
                 ) {
                     content()
                 }
@@ -142,51 +152,48 @@ fun SettingsSection(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .let { cardModifier ->
-                val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 5f) // Use spec range
-                val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)
-
+        val glowIntensity = optimizedSettings.glowIntensity.coerceIn(0f, 5f)
+        val cardShape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard)
+        val cardModifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = com.example.matrixscreen.core.design.DesignTokens.Sizing.overlayContentMaxWidth)
+            .let { base ->
                 if (glowIntensity > 0.1f) {
-                    // Industry standard neon values (based on Cyberpunk 2077, Unity/Unreal)
-                    val innerGlowElevation = (glowIntensity * 1.5f + 1f).dp // 1-4dp inner glow
-                    val outerGlowElevation = (glowIntensity * 4f + 2f).dp // 2-10dp outer glow
+                    val innerGlowElevation = (glowIntensity * 1.5f + 1f).dp
+                    val outerGlowElevation = (glowIntensity * 4f + 2f).dp
+                    val innerGlowAlpha = (glowIntensity * 0.2f + 0.3f).coerceIn(0.3f, 0.5f)
+                    val outerGlowAlpha = (glowIntensity * 0.075f + 0.1f).coerceIn(0.1f, 0.25f)
 
-                    val innerGlowAlpha = (glowIntensity * 0.2f + 0.3f).coerceIn(0.3f, 0.5f) // 30-50% inner
-                    val outerGlowAlpha = (glowIntensity * 0.075f + 0.1f).coerceIn(0.1f, 0.25f) // 10-25% outer
-
-                    cardModifier
-                        // Outer glow (subtle, wide spread)
+                    base
                         .shadow(
                             elevation = outerGlowElevation,
                             shape = cardShape,
                             ambientColor = ui.textAccent.copy(alpha = outerGlowAlpha),
                             spotColor = ui.textAccent.copy(alpha = outerGlowAlpha * 0.8f)
                         )
-                        // Inner glow (brighter, tighter)
                         .shadow(
                             elevation = innerGlowElevation,
                             shape = cardShape,
                             ambientColor = ui.textAccent.copy(alpha = innerGlowAlpha),
                             spotColor = ui.textAccent.copy(alpha = innerGlowAlpha * 0.9f)
                         )
-                        // Clean border on top
                         .border(
                             width = 1.dp,
                             color = ui.textAccent,
                             shape = cardShape
                         )
                 } else {
-                    cardModifier
+                    base
                 }
-                },
+            }
+
+        Card(
+            modifier = cardModifier,
             colors = CardDefaults.cardColors(
                 containerColor = ui.overlayBackground,
                 contentColor = ui.textPrimary
             ),
-            shape = RoundedCornerShape(com.example.matrixscreen.core.design.DesignTokens.Radius.previewCard),
+            shape = cardShape,
             elevation = CardDefaults.cardElevation(
                 defaultElevation = com.example.matrixscreen.core.design.DesignTokens.Elevation.previewCard
             )
@@ -203,7 +210,7 @@ fun SettingsSection(
                         settings = optimizedSettings
                     )
                 }
-                
+
                 content()
             }
         }
@@ -256,58 +263,6 @@ fun ResetSectionButton(
             color = ui.textSecondary,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         )
-    }
-}
-
-/**
- * Confirm/Cancel buttons for settings changes
- */
-@Composable
-fun ConfirmCancelButtons(
-    hasChanges: Boolean,
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit,
-    ui: MatrixUIColorScheme,
-    optimizedSettings: MatrixSettings,
-    modifier: Modifier = Modifier
-) {
-    if (hasChanges) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Cancel button
-            Button(
-                onClick = onCancel,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ui.selectionBackground,
-                    contentColor = ui.textSecondary
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "Cancel",
-                    style = AppTypography.labelMedium,
-                    color = ui.textSecondary
-                )
-            }
-            
-            // Confirm button
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ui.primary,
-                    contentColor = ui.textPrimary
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "Apply",
-                    style = AppTypography.labelMedium,
-                    color = ui.textPrimary
-                )
-            }
-        }
     }
 }
 

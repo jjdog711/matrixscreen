@@ -100,7 +100,7 @@ internal class SharedPreferencesMigration(
         val legacyPrefs = context.getSharedPreferences(legacyPrefsName, Context.MODE_PRIVATE)
         
         return MatrixSettingsProto.newBuilder()
-            .setSchemaVersion(1)
+            .setSchemaVersion(2)
             
             // Motion settings
             .setFallSpeed(legacyPrefs.getFloat("fall_speed", 2.0f))
@@ -108,6 +108,7 @@ internal class SharedPreferencesMigration(
             .setLineSpacing(legacyPrefs.getFloat("line_spacing", 0.9f))
             .setActivePercentage(legacyPrefs.getFloat("active_percentage", 0.4f))
             .setSpeedVariance(legacyPrefs.getFloat("speed_variance", 0.01f))
+            .setAllowLandscape(true)
             
             // Effects settings
             .setGlowIntensity(legacyPrefs.getFloat("glow_intensity", 2.0f))

@@ -3,7 +3,8 @@ setlocal enabledelayedexpansion
 
 REM Matrix App Backup Script
 REM Creates a timestamped backup excluding gitignore/cursorignore files
-REM Compresses with 7zip and saves to C:\Users\jjdog\Documents\app backups
+REM Compresses with 7zip and saves to C:\dev\app backups\batch
+REM Also copies debug APK to C:\dev\app backups\apk
 
 echo ========================================
 echo Matrix App Backup Script
@@ -19,7 +20,8 @@ REM Set paths
 set "source_dir=%~dp0"
 REM Remove trailing backslash from source_dir
 set "source_dir=%source_dir:~0,-1%"
-set "backup_base=C:\Users\jjdog\Documents\app backups"
+set "backup_base=C:\dev\app backups\batch"
+set "apk_base=C:\dev\app backups\apk"
 set "backup_folder=%backup_base%\matrix_backup_%timestamp%"
 set "backup_zip=%backup_base%\matrix_backup_%timestamp%.zip"
 set "sevenzip_path=C:\Program Files\7-Zip\7z.exe"
@@ -28,10 +30,14 @@ echo Source directory: %source_dir%
 echo Backup folder: %backup_folder%
 echo Backup zip: %backup_zip%
 
-REM Create backup base directory if it doesn't exist
+REM Create backup base directories if they don't exist
 if not exist "%backup_base%" (
     echo Creating backup directory: %backup_base%
     mkdir "%backup_base%"
+)
+if not exist "%apk_base%" (
+    echo Creating APK directory: %apk_base%
+    mkdir "%apk_base%"
 )
 
 REM Create timestamped backup folder (remove if exists)
@@ -86,6 +92,25 @@ if %errorlevel% neq 0 (
 echo.
 echo Cleaning up temporary backup folder...
 rmdir /s /q "%backup_folder%"
+
+echo.
+echo Copying debug APK...
+set "debug_apk=%source_dir%\app\build\outputs\apk\debug\app-debug.apk"
+set "apk_dest=%apk_base%\matrixscreen_debug_%timestamp%.apk"
+echo Looking for APK at: %debug_apk%
+echo Destination: %apk_dest%
+if exist "%debug_apk%" (
+    echo APK found, copying...
+    copy "%debug_apk%" "%apk_dest%"
+    if %errorlevel% equ 0 (
+        echo APK copied successfully: %apk_dest%
+    ) else (
+        echo WARNING: Failed to copy APK
+    )
+) else (
+    echo WARNING: Debug APK not found at %debug_apk%
+    echo Make sure to run 'gradlew assembleDebug' first
+)
 
 echo.
 echo ========================================

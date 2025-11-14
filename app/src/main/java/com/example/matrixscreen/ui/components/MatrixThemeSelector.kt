@@ -17,7 +17,8 @@ import com.example.matrixscreen.ui.theme.MatrixColorThemePresets
 @Composable
 fun MatrixThemeSelector(
     currentThemeName: String?,
-    onThemeSelected: (MatrixColorTheme) -> Unit
+    onThemeSelected: (MatrixColorTheme) -> Unit,
+    themes: List<MatrixColorTheme> = MatrixColorThemePresets
 ) {
     val listState = rememberLazyListState()
     
@@ -27,7 +28,7 @@ fun MatrixThemeSelector(
         contentPadding = PaddingValues(horizontal = 4.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        items(MatrixColorThemePresets) { theme ->
+        items(themes) { theme ->
             ThemePreviewBox(
                 theme = theme,
                 isSelected = currentThemeName == theme.name,

@@ -1,11 +1,10 @@
 package com.example.matrixscreen.ui.settings.effects
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.ui.settings.components.*
@@ -16,11 +15,12 @@ import com.example.matrixscreen.ui.settings.model.Glow
 import com.example.matrixscreen.ui.settings.model.Jitter
 import com.example.matrixscreen.ui.settings.model.Flicker
 import com.example.matrixscreen.ui.settings.model.Mutation
+import com.example.matrixscreen.ui.settings.model.MaxTrailLength
+import com.example.matrixscreen.ui.settings.model.MaxBrightTrailLength
 import com.example.matrixscreen.ui.settings.model.EFFECTS_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
-import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 
 /**
  * Effects settings screen with spec-driven UI for glow, jitter, flicker, and mutation controls.
@@ -34,13 +34,23 @@ fun EffectsSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft
+    val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { uiState.draft }
+    }
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
+    // Memoize spec lookups at composable level (best practice - avoids recomposition issues)
+    val glowSpec = remember { EFFECTS_SPECS.specFor(Glow) }
+    val jitterSpec = remember { EFFECTS_SPECS.specFor(Jitter) }
+    val flickerSpec = remember { EFFECTS_SPECS.specFor(Flicker) }
+    val mutationSpec = remember { EFFECTS_SPECS.specFor(Mutation) }
+    val maxTrailSpec = remember { EFFECTS_SPECS.specFor(MaxTrailLength) }
+    val maxBrightTrailSpec = remember { EFFECTS_SPECS.specFor(MaxBrightTrailLength) }
+    
     SettingsScreenContainer(
-        title = "EFFECTS",
+        title = null,
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
@@ -48,8 +58,7 @@ fun EffectsSettingsScreen(
         content = {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
                 // Description
@@ -59,29 +68,7 @@ fun EffectsSettingsScreen(
                     color = ui.textSecondary
                 )
                 
-                // Live Preview Section
-                SettingsSection(
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
-                    ) {
-                        ModernTextWithGlow(
-                            text = "Live Preview",
-                            style = AppTypography.titleSmall,
-                            color = ui.textPrimary,
-                            settings = optimizedSettings
-                        )
-                        
-                        EffectsPreviewTile(
-                            settings = currentSettings,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-                
-                // Effects Settings Section
+                // Effects Settings Section (per-screen preview tile removed; main matrix rain is the preview)
                 SettingsSection(
                     ui = ui,
                     optimizedSettings = optimizedSettings
@@ -89,37 +76,41 @@ fun EffectsSettingsScreen(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Render all effects specs using typed SettingId access
-                        val glowSpec = EFFECTS_SPECS.specFor(Glow)
-                        AnimatedRenderSetting(
+                        // Use the simpler base RenderSetting components here for robustness.
+                        RenderSetting(
                             spec = glowSpec,
                             value = currentSettings.get(Glow),
-                            onValueChange = { value -> settingsViewModel.updateDraft(Glow, value) },
-                            showPreview = true
+                            onValueChange = { value -> settingsViewModel.updateDraft(Glow, value) }
                         )
 
-                        val jitterSpec = EFFECTS_SPECS.specFor(Jitter)
-                        AnimatedRenderSetting(
+                        RenderSetting(
                             spec = jitterSpec,
                             value = currentSettings.get(Jitter),
-                            onValueChange = { value -> settingsViewModel.updateDraft(Jitter, value) },
-                            showPreview = true
+                            onValueChange = { value -> settingsViewModel.updateDraft(Jitter, value) }
                         )
 
-                        val flickerSpec = EFFECTS_SPECS.specFor(Flicker)
-                        AnimatedRenderSetting(
+                        RenderSetting(
                             spec = flickerSpec,
                             value = currentSettings.get(Flicker),
-                            onValueChange = { value -> settingsViewModel.updateDraft(Flicker, value) },
-                            showPreview = true
+                            onValueChange = { value -> settingsViewModel.updateDraft(Flicker, value) }
                         )
 
-                        val mutationSpec = EFFECTS_SPECS.specFor(Mutation)
-                        AnimatedRenderSetting(
+                        RenderSetting(
                             spec = mutationSpec,
                             value = currentSettings.get(Mutation),
-                            onValueChange = { value -> settingsViewModel.updateDraft(Mutation, value) },
-                            showPreview = true
+                            onValueChange = { value -> settingsViewModel.updateDraft(Mutation, value) }
+                        )
+
+                        RenderSetting(
+                            spec = maxTrailSpec,
+                            value = currentSettings.get(MaxTrailLength),
+                            onValueChange = { value -> settingsViewModel.updateDraft(MaxTrailLength, value) }
+                        )
+
+                        RenderSetting(
+                            spec = maxBrightTrailSpec,
+                            value = currentSettings.get(MaxBrightTrailLength),
+                            onValueChange = { value -> settingsViewModel.updateDraft(MaxBrightTrailLength, value) }
                         )
                         
                         // Reset button for effects settings with animation
@@ -127,7 +118,12 @@ fun EffectsSettingsScreen(
                             onReset = {
                                 // Reset effects settings to defaults
                                 EFFECTS_SPECS.forEach { spec ->
-                                    settingsViewModel.updateDraft(spec.id, spec.default)
+                                    when (spec) {
+                                        is SliderSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                        is IntSliderSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                        is ToggleSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                        else -> Unit
+                                    }
                                 }
                             }
                         )

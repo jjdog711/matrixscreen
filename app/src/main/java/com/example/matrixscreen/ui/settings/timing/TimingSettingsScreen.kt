@@ -1,11 +1,10 @@
 package com.example.matrixscreen.ui.settings.timing
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,13 +30,15 @@ fun TimingSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.draft
+    val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { uiState.draft }
+    }
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
     SettingsScreenContainer(
-        title = "TIMING",
+        title = null,
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
@@ -45,8 +46,7 @@ fun TimingSettingsScreen(
         content = {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
         ) {
             // Description
@@ -58,10 +58,10 @@ fun TimingSettingsScreen(
             
             // Timing Controls Section
             SettingsSection(
-                title = "Timing Controls",
+                title = null,
                 ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
+                optimizedSettings = optimizedSettings
+            ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.lg)
                 ) {
@@ -81,24 +81,22 @@ fun TimingSettingsScreen(
                         onValueChange = { v: Float -> settingsViewModel.updateDraft(ColumnRestartDelay, v) }
                     )
                 }
-                }
-            )
+            }
             
             // Reset Section
             SettingsSection(
-                title = "Reset",
+                title = null,
                 ui = ui,
-                optimizedSettings = optimizedSettings,
-                content = {
-                ResetSectionButton(
+                optimizedSettings = optimizedSettings
+            ) {
+                AnimatedResetSectionButton(
                     onReset = {
-                        settingsViewModel.revert()
-                    },
-                    ui = ui,
-                    optimizedSettings = optimizedSettings
+                        TIMING_SPECS.forEach { spec ->
+                            settingsViewModel.updateDraft(spec.id, spec.default)
+                        }
+                    }
                 )
-                }
-            )
+            }
             
             // Future: Flow Direction Section (placeholder)
             SettingsSection(

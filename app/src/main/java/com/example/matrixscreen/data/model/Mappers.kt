@@ -20,7 +20,7 @@ import kotlinx.serialization.json.Json
  */
 fun MatrixSettingsProto.toDomain(): MatrixSettings {
     return MatrixSettings(
-        schemaVersion = this.schemaVersion.coerceAtLeast(1),
+        schemaVersion = this.schemaVersion.coerceAtLeast(2),
         
         // Motion settings with clamping (FIXED to match MOTION_SPECS)
         fallSpeed = this.fallSpeed.coerceIn(0.5f, 10.0f),  // Fixed: was 5.0f, now matches spec
@@ -28,6 +28,7 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         lineSpacing = this.lineSpacing.coerceIn(0.5f, 2.0f),
         activePercentage = this.activePercentage.coerceIn(0.1f, 1.0f),
         speedVariance = this.speedVariance.coerceIn(0.0f, 0.5f),  // Fixed: was 0.1f, now matches spec
+        allowLandscape = if (this.schemaVersion < 2) true else this.allowLandscape,
         
         // Effects settings with clamping (FIXED to match EFFECTS_SPECS)
         glowIntensity = this.glowIntensity.coerceIn(0.0f, 5.0f),  // Fixed: was 3.0f, now matches spec
@@ -96,6 +97,7 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
         .setLineSpacing(this.lineSpacing)
         .setActivePercentage(this.activePercentage)
         .setSpeedVariance(this.speedVariance)
+        .setAllowLandscape(this.allowLandscape)
         
         // Effects settings
         .setGlowIntensity(this.glowIntensity)
@@ -211,6 +213,7 @@ fun clampSettingValue(key: String, value: Any): Any {
         "lineSpacing" -> (value as Float).coerceIn(0.5f, 2.0f)
         "activePercentage" -> (value as Float).coerceIn(0.1f, 1.0f)
         "speedVariance" -> (value as Float).coerceIn(0.0f, 0.1f)
+        "allowLandscape" -> value as Boolean
         "glowIntensity" -> (value as Float).coerceIn(0.0f, 3.0f)
         "jitterAmount" -> (value as Float).coerceIn(0.0f, 5.0f)
         "flickerAmount" -> (value as Float).coerceIn(0.0f, 1.0f)

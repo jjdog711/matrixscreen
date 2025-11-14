@@ -29,6 +29,7 @@ fun <T> MatrixSettings.get(id: SettingId<T>): T {
         LineSpace -> lineSpacing as T
         ActivePct -> activePercentage as T
         SpeedVar -> speedVariance as T
+        AllowLandscape -> allowLandscape as T
         
         // Effects settings
         Glow -> glowIntensity as T
@@ -101,6 +102,7 @@ fun <T> MatrixSettings.with(id: SettingId<T>, value: T): MatrixSettings {
         LineSpace -> copy(lineSpacing = value as Float)
         ActivePct -> copy(activePercentage = value as Float)
         SpeedVar -> copy(speedVariance = value as Float)
+        AllowLandscape -> copy(allowLandscape = value as Boolean)
         
         // Effects settings
         Glow -> copy(glowIntensity = value as Float)

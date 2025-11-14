@@ -1,11 +1,10 @@
 package com.example.matrixscreen.ui.settings.characters
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,64 +33,58 @@ import com.example.matrixscreen.core.design.scrollableContent
 fun CharactersSettingsScreen(
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     onBack: () -> Unit,
-    onNavigateToCustomSets: () -> Unit,
+    onOpenCustomSets: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by settingsViewModel.uiState.collectAsState()
-    val currentSettings = uiState.saved
+    val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val currentSettings by remember {
+        derivedStateOf { uiState.saved }
+    }
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
     SettingsScreenContainer(
-        title = "CHARACTERS",
+        title = null,
         onBack = onBack,
         ui = ui,
         optimizedSettings = optimizedSettings,
         expanded = true,
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sectionSpacing)
+        ) {
+            SettingsSection(
+                title = null,
+                ui = ui,
+                optimizedSettings = optimizedSettings
             ) {
-                // Symbol Set Section
-                SettingsSection(
-                    title = "Symbol Set",
+                SymbolSetGrid(
+                    currentSettings = currentSettings,
+                    settingsViewModel = settingsViewModel,
+                    onOpenCustomSets = onOpenCustomSets,
                     ui = ui,
-                    optimizedSettings = optimizedSettings,
-                    content = {
-                        SymbolSetGrid(
-                            currentSettings = currentSettings,
-                            settingsViewModel = settingsViewModel,
-                            onNavigateToCustomSets = onNavigateToCustomSets,
-                            ui = ui,
-                            optimizedSettings = optimizedSettings
-                        )
-                    }
-                )
-                
-                // Font Section
-                SettingsSection(
-                    title = "Font & Size",
-                    ui = ui,
-                    optimizedSettings = optimizedSettings,
-                    content = {
-                        FontSizeControl(
-                            currentSize = currentSettings.get(FontSize),
-                            onSizeChanged = { 
-                                settingsViewModel.updateDraft(FontSize, it)
-                                settingsViewModel.commit()
-                            },
-                            ui = ui,
-                            optimizedSettings = optimizedSettings
-                        )
-                    }
+                    optimizedSettings = optimizedSettings
                 )
             }
-        },
-        modifier = modifier
-    )
+
+            SettingsSection(
+                title = "Font & Size",
+                ui = ui,
+                optimizedSettings = optimizedSettings
+            ) {
+                FontSizeControl(
+                    currentSize = currentSettings.get(FontSize),
+                    onSizeChanged = {
+                        settingsViewModel.updateDraft(FontSize, it)
+                    },
+                    ui = ui,
+                    optimizedSettings = optimizedSettings
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -101,7 +94,7 @@ fun CharactersSettingsScreen(
 private fun SymbolSetGrid(
     currentSettings: MatrixSettings,
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
-    onNavigateToCustomSets: () -> Unit,
+    onOpenCustomSets: () -> Unit,
     ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
     optimizedSettings: MatrixSettings
 ) {
@@ -130,7 +123,6 @@ private fun SymbolSetGrid(
                             isSelected = currentSettings.symbolSetId == id.value,
                             onClick = { 
                                 settingsViewModel.updateDraft(SymbolSetId, id.value)
-                                settingsViewModel.commit() // Immediate commit for symbol sets
                             },
                             ui = ui,
                             optimizedSettings = optimizedSettings,
@@ -147,7 +139,7 @@ private fun SymbolSetGrid(
 
         // Custom sets button
         androidx.compose.material3.Button(
-            onClick = onNavigateToCustomSets,
+            onClick = onOpenCustomSets,
             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                 containerColor = ui.primary,
                 contentColor = ui.textPrimary

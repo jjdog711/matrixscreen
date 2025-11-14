@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.example.matrixscreen.data.model.MatrixSettings
+import com.example.matrixscreen.core.util.applyColorLinking
 
 /**
  * Modern color scheme system for MatrixScreen UI
@@ -52,9 +53,11 @@ data class MatrixUIColorScheme(
  */
 @Composable
 fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
+    val effectiveSettings = applyColorLinking(settings)
+
     // Get base color from settings with error handling
     val baseColor = try {
-        Color(settings.uiAccent)
+        Color(effectiveSettings.uiAccent)
     } catch (e: Exception) {
         android.util.Log.e("ColorScheme", "Error getting base color: ${e.message}")
         Color(0xFF00CC00) // Fallback to Matrix green
@@ -68,7 +71,7 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
     return MatrixUIColorScheme(
         // Text colors - Cyberpunk 2077 hierarchy with theme support
         textPrimary = try {
-            if (isLightBackground(settings.backgroundColor)) {
+            if (isLightBackground(effectiveSettings.backgroundColor)) {
                 Color(0xFF1A1A1A) // Dark text for light backgrounds
             } else {
                 Color(0xFFFFFFFF) // Pure white for dark backgrounds (Cyberpunk style)
@@ -78,7 +81,7 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
             Color(0xFFFFFFFF) // Fallback to pure white
         },
         textSecondary = try {
-            if (isLightBackground(settings.backgroundColor)) {
+            if (isLightBackground(effectiveSettings.backgroundColor)) {
                 Color(0xFF666666) // Dark gray for light backgrounds
             } else {
                 Color(0xFFCCCCCC) // Light gray for dark backgrounds (improved readability)
@@ -90,17 +93,17 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         
         // Background colors - use dynamic background from settings with error handling
         backgroundPrimary = try {
-            Color(settings.backgroundColor)
+            Color(effectiveSettings.backgroundColor)
         } catch (e: Exception) {
             android.util.Log.e("ColorScheme", "Error getting background color: ${e.message}")
             Color(0xFF000000) // Fallback to black
         },
         backgroundSecondary = try {
-            Color(settings.backgroundColor).copy(alpha = 0.8f)
+            Color(effectiveSettings.backgroundColor).copy(alpha = 0.8f)
         } catch (e: Exception) {
             Color(0xFF000000).copy(alpha = 0.8f)
         },
-        overlayBackground = Color(settings.uiOverlayBg), // Use the alpha from settings directly
+        overlayBackground = Color(effectiveSettings.uiOverlayBg), // Use the alpha from settings directly
         
         // Slider colors
         sliderActive = baseColor,
@@ -115,14 +118,14 @@ fun getMatrixUIColorScheme(settings: MatrixSettings): MatrixUIColorScheme {
         primaryDim = baseColor.copy(alpha = 0.7f),
         primaryBright = baseColor.copy(alpha = 1.0f),
         background = try {
-            Color(settings.backgroundColor)
+            Color(effectiveSettings.backgroundColor)
         } catch (e: Exception) {
             Color(0xFF000000)
         },
         border = baseColor,
         buttonConfirm = baseColor.copy(alpha = 0.2f),
         buttonCancel = Color(0xFF330000),
-        selectionBackground = Color(settings.uiSelectionBg),
+        selectionBackground = Color(effectiveSettings.uiSelectionBg),
         textGlow = textGlow,
         buttonGlow = buttonGlow
     )

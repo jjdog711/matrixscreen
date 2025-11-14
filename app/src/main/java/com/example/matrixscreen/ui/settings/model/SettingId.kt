@@ -36,6 +36,10 @@ object SpeedVar : SettingId<Float> {
     override val key = "speedVariance" 
 }
 
+object AllowLandscape : SettingId<Boolean> {
+    override val key = "allowLandscape"
+}
+
 // Effects settings
 object Glow : SettingId<Float> { 
     override val key = "glowIntensity" 

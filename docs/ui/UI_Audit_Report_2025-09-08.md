@@ -1,5 +1,7 @@
 # MatrixScreen — UI Audit & Spec Integrity Report
 
+> **Archive Note (2025-11-14):** This report captures the 2025-09 audit state. Current follow-up items now live in `docs/FUTURE_WORK.md`. Historical findings remain below for reference, with inline notes where the codebase has since changed (e.g., the UI preview screen has been removed).
+
 _Generated: 2025-09-08 22:07:38_
 
 ## Progress Log
@@ -181,8 +183,9 @@ _(Tasks will be moved here as completed with What → Why → How → Done forma
   - `app/src/main/java/com/example/matrixscreen/ui/components/ModernUIComponents.kt`
   - `app/src/main/java/com/example/matrixscreen/ui/components/ThemePreviewBox.kt`
   - `app/src/main/java/com/example/matrixscreen/ui/preview/DebugSettingsHarness.kt`
-  - `app/src/main/java/com/example/matrixscreen/ui/preview/UIStylePreviewScreen.kt`
   - `app/src/main/java/com/example/matrixscreen/ui/preview/components/ColorPickerPreviews.kt`
+
+_(Removed in 2025-11: `app/src/main/java/com/example/matrixscreen/ui/preview/UIStylePreviewScreen.kt`.)_
 
 **What:** Wildcard imports.
 
@@ -239,13 +242,14 @@ Call sites that reference Color Picker dialogs/components:
 2. Replace hardcoded dp in UI with tokens (cards, dialogs, chips).
 3. Keep **glow** helpers restricted to headers/titles; audit usages (see below).
 
-**Glow helper usage sites:**
-- `app/src/main/java/com/example/matrixscreen/ui/preview/UIStylePreviewScreen.kt`
+**Glow helper usage sites (2025-09 snapshot):**
 - `app/src/main/java/com/example/matrixscreen/ui/settings/SettingsHomeScreen.kt`
 - `app/src/main/java/com/example/matrixscreen/ui/settings/background/BackgroundSettingsScreen.kt`
 - `app/src/main/java/com/example/matrixscreen/ui/settings/characters/CharactersSettingsScreen.kt`
 - `app/src/main/java/com/example/matrixscreen/ui/settings/components/ModernUIComponents.kt`
 - `app/src/main/java/com/example/matrixscreen/ui/settings/components/SettingsComponents.kt`
+
+_(The dedicated UI preview screen was removed; glow usage there is no longer relevant.)_
 - `app/src/main/java/com/example/matrixscreen/ui/settings/effects/EffectsSettingsScreen.kt`
 - `app/src/main/java/com/example/matrixscreen/ui/settings/motion/MotionSettingsScreen.kt`
 - `app/src/main/java/com/example/matrixscreen/ui/settings/theme/ThemeSettingsScreen.kt`
@@ -313,4 +317,4 @@ Call sites that reference Color Picker dialogs/components:
 
 7) **Run a full build + UI test harness smoke**  
    **Why:** Verify consolidation didn’t break previews/strings.  
-   **How:** Assemble Debug, run previews (`UIStylePreviewScreen`), and snapshot the visual state.
+   **How:** Assemble Debug, exercise each settings tab in the live overlay (or emulator), and capture the visual state.
