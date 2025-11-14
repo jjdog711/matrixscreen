@@ -1,5 +1,6 @@
 package com.example.matrixscreen.domain.usecase
 
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.engine.uniforms.RendererParams
 import org.junit.Test
@@ -31,6 +32,7 @@ class MapSettingsToRendererParamsTest {
             lineSpacing = 1.0f,
             activePercentage = 0.5f,
             speedVariance = 0.02f,
+            flowDirection = FlowDirection.RIGHT_TO_LEFT,
             
             // Effects settings
             glowIntensity = 3.0f,
@@ -79,6 +81,7 @@ class MapSettingsToRendererParamsTest {
         assertEquals(0xFF00CC00L, result.brightTrailColor)
         assertEquals(0xFF008800L, result.trailColor)
         assertEquals(0xFF004400L, result.dimColor)
+        assertEquals(FlowDirection.RIGHT_TO_LEFT, result.flowDirection)
     }
     
     @Test
@@ -107,6 +110,7 @@ class MapSettingsToRendererParamsTest {
         // Then
         assertEquals(60f, result.effectiveFps) // Should be coerced to 60 (nearest)
         assertEquals(45f, result.targetFps) // Original target should be preserved
+        assertEquals(FlowDirection.TOP_TO_BOTTOM, result.flowDirection)
     }
     
     @Test
@@ -166,6 +170,7 @@ class MapSettingsToRendererParamsTest {
         assertEquals(0xFF00CC00L, result.brightTrailColor) // Default from MatrixSettings
         assertEquals(0xFF008800L, result.trailColor) // Default from MatrixSettings
         assertEquals(0xFF004400L, result.dimColor) // Default from MatrixSettings
+        assertEquals(FlowDirection.TOP_TO_BOTTOM, result.flowDirection)
     }
     
     @Test

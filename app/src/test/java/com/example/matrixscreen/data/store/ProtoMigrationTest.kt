@@ -1,5 +1,6 @@
 package com.example.matrixscreen.data.store
 
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.model.createDefaultProto
 import com.example.matrixscreen.data.model.toDomain
@@ -23,6 +24,10 @@ class ProtoMigrationTest {
         
         // Then it has the correct schema version
         assertEquals(1, defaultProto.schemaVersion)
+        assertEquals(
+            MatrixSettingsProto.FlowDirectionProto.FLOW_DIRECTION_TOP_TO_BOTTOM,
+            defaultProto.flowDirection
+        )
     }
     
     @Test
@@ -46,7 +51,8 @@ class ProtoMigrationTest {
             targetFps = 30,
             glowIntensity = 1.5f,
             backgroundColor = 0xFFFF0000L,
-            headColor = 0xFF00FF00L
+            headColor = 0xFF00FF00L,
+            flowDirection = FlowDirection.RIGHT_TO_LEFT
         )
         
         // When converting to proto and back
@@ -98,5 +104,6 @@ class ProtoMigrationTest {
         assertEquals(0.5f, domain.lineSpacing, 0.01f) // Proto3 default 0.0f, clamped to 0.5f
         assertEquals(5, domain.targetFps) // Proto3 default 0, clamped to 5
         assertEquals(0x00000000L, domain.backgroundColor) // Proto3 default 0L, valid range
+        assertEquals(FlowDirection.TOP_TO_BOTTOM, domain.flowDirection) // Missing field defaults to top->bottom
     }
 }

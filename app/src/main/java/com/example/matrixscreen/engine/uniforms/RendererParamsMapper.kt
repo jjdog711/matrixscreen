@@ -34,6 +34,7 @@ object RendererParamsMapper {
             rowHeight = rowHeight,
             screenRows = screenRows,
             targetFps = params.effectiveFps, // Use effective FPS for engine
+            flowDirection = params.flowDirection,
             
             // Motion parameters
             printSpeedMultiplier = params.fallSpeed,

@@ -5,6 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matrixscreen.core.design.DesignTokens
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.data.model.MatrixSettings
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -94,7 +100,25 @@ fun MotionPreviewTile(
             activePercentage = settings.activePercentage,
             columnActivity = columnActivity,
             lineSpacing = settings.lineSpacing,
-            speedVariance = settings.speedVariance
+            speedVariance = settings.speedVariance,
+            flowDirection = settings.flowDirection
+        )
+        
+        val directionIcon = when (settings.flowDirection) {
+            FlowDirection.TOP_TO_BOTTOM -> Icons.Rounded.ArrowDownward
+            FlowDirection.BOTTOM_TO_TOP -> Icons.Rounded.ArrowUpward
+            FlowDirection.LEFT_TO_RIGHT -> Icons.Rounded.ArrowForward
+            FlowDirection.RIGHT_TO_LEFT -> Icons.Rounded.ArrowBack
+        }
+        
+        Icon(
+            imageVector = directionIcon,
+            contentDescription = "Flow direction indicator",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(6.dp)
+                .size(18.dp)
         )
         
         // Overlay label
@@ -184,61 +208,118 @@ private fun MatrixRainPreview(
     activePercentage: Float,
     columnActivity: Float,
     lineSpacing: Float,
-    speedVariance: Float
+    speedVariance: Float,
+    flowDirection: FlowDirection
 ) {
     val columnsToShow = (columnCount / 10).coerceAtMost(20) // Scale down for preview
     val activeColumns = (columnsToShow * activePercentage).toInt()
     
-    Row(
-        modifier = Modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        repeat(columnsToShow) { columnIndex ->
-            val isActive = columnIndex < activeColumns
-            val columnSpeed = fallSpeed * (1f + Random.nextFloat() * speedVariance)
-            
-            if (isActive) {
-                Column(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .fillMaxHeight()
-                        .graphicsLayer {
-                            translationY = (fallSpeed % 100f) - 100f
+    val isVertical = flowDirection == FlowDirection.TOP_TO_BOTTOM || flowDirection == FlowDirection.BOTTOM_TO_TOP
+    
+    if (isVertical) {
+        val verticalMultiplier = if (flowDirection == FlowDirection.BOTTOM_TO_TOP) -1f else 1f
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            repeat(columnsToShow) { columnIndex ->
+                val isActive = columnIndex < activeColumns
+                if (isActive) {
+                    Column(
+                        modifier = Modifier
+                            .width(2.dp)
+                            .fillMaxHeight()
+                            .graphicsLayer {
+                                translationY = ((fallSpeed % 100f) - 50f) * verticalMultiplier
+                            }
+                    ) {
+                        repeat(8) { lineIndex ->
+                            val alpha = (1f - (lineIndex * 0.15f)).coerceAtLeast(0.1f)
+                            val char = if (Random.nextFloat() < 0.1f) {
+                                Random.nextInt(0x30A0, 0x30FF).toChar()
+                            } else {
+                                Random.nextInt(0x0030, 0x0039).toChar()
+                            }
+                            
+                            Text(
+                                text = char.toString(),
+                                color = Color.Green.copy(alpha = alpha),
+                                fontSize = 8.sp,
+                                fontFamily = FontFamily.Monospace,
+                                modifier = Modifier.padding(vertical = (lineSpacing * 2).dp)
+                            )
                         }
-                ) {
-                    repeat(8) { lineIndex ->
-                        val alpha = (1f - (lineIndex * 0.15f)).coerceAtLeast(0.1f)
-                        val char = if (Random.nextFloat() < 0.1f) {
-                            Random.nextInt(0x30A0, 0x30FF).toChar() // Katakana range
-                        } else {
-                            Random.nextInt(0x0030, 0x0039).toChar() // Numbers
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .width(2.dp)
+                            .fillMaxHeight()
+                    ) {
+                        repeat(3) {
+                            val char = Random.nextInt(0x0030, 0x0039).toChar()
+                            Text(
+                                text = char.toString(),
+                                color = Color.Green.copy(alpha = 0.2f),
+                                fontSize = 8.sp,
+                                fontFamily = FontFamily.Monospace,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
                         }
-                        
-                        Text(
-                            text = char.toString(),
-                            color = Color.Green.copy(alpha = alpha),
-                            fontSize = 8.sp,
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(vertical = (lineSpacing * 2).dp)
-                        )
                     }
                 }
-            } else {
-                // Inactive column - show dimmed characters
-                Column(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .fillMaxHeight()
-                ) {
-                    repeat(3) { lineIndex ->
-                        val char = Random.nextInt(0x0030, 0x0039).toChar()
-                        Text(
-                            text = char.toString(),
-                            color = Color.Green.copy(alpha = 0.2f),
-                            fontSize = 8.sp,
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+            }
+        }
+    } else {
+        val horizontalMultiplier = if (flowDirection == FlowDirection.RIGHT_TO_LEFT) -1f else 1f
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            repeat(columnsToShow) { rowIndex ->
+                val isActive = rowIndex < activeColumns
+                if (isActive) {
+                    Row(
+                        modifier = Modifier
+                            .height(12.dp)
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                translationX = ((fallSpeed % 100f) - 50f) * horizontalMultiplier
+                            },
+                        horizontalArrangement = Arrangement.spacedBy((lineSpacing * 2).dp)
+                    ) {
+                        repeat(8) { lineIndex ->
+                            val alpha = (1f - (lineIndex * 0.15f)).coerceAtLeast(0.1f)
+                            val char = if (Random.nextFloat() < 0.1f) {
+                                Random.nextInt(0x30A0, 0x30FF).toChar()
+                            } else {
+                                Random.nextInt(0x0030, 0x0039).toChar()
+                            }
+                            
+                            Text(
+                                text = char.toString(),
+                                color = Color.Green.copy(alpha = alpha),
+                                fontSize = 8.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .height(12.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        repeat(3) {
+                            val char = Random.nextInt(0x0030, 0x0039).toChar()
+                            Text(
+                                text = char.toString(),
+                                color = Color.Green.copy(alpha = 0.2f),
+                                fontSize = 8.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
                     }
                 }
             }

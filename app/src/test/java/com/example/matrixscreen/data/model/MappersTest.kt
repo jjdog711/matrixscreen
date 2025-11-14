@@ -27,6 +27,7 @@ class MappersTest {
         assertEquals(5, domain.targetFps) // Proto3 default is 0, clamped to 5
         assertEquals(0x00000000L, domain.backgroundColor) // Proto3 default is 0L, valid range
         assertEquals(0x00000000L, domain.headColor) // Proto3 default is 0L, valid range
+        assertEquals(FlowDirection.TOP_TO_BOTTOM, domain.flowDirection)
     }
     
     @Test
@@ -38,6 +39,7 @@ class MappersTest {
             .setTargetFps(200) // Should be clamped to 120
             .setGlowIntensity(-1.0f) // Should be clamped to 0.0f
             .setBackgroundColor(-1L) // Should be clamped
+            .setFlowDirection(MatrixSettingsProto.FlowDirectionProto.FLOW_DIRECTION_RIGHT_TO_LEFT)
             .build()
         
         // When converting to domain
@@ -49,6 +51,7 @@ class MappersTest {
         assertTrue("Target FPS should be clamped", domain.targetFps <= 120)
         assertTrue("Glow intensity should be clamped", domain.glowIntensity >= 0.0f)
         assertTrue("Background color should be valid", domain.backgroundColor in 0x00000000L..0xFFFFFFFFL)
+        assertEquals(FlowDirection.RIGHT_TO_LEFT, domain.flowDirection)
     }
     
     @Test
@@ -60,7 +63,8 @@ class MappersTest {
             targetFps = 30,
             glowIntensity = 1.5f,
             backgroundColor = 0xFFFF0000L,
-            headColor = 0xFF00FF00L
+            headColor = 0xFF00FF00L,
+            flowDirection = FlowDirection.LEFT_TO_RIGHT
         )
         
         // When converting to proto
@@ -74,6 +78,10 @@ class MappersTest {
         assertEquals(domain.glowIntensity, proto.glowIntensity, 0.01f)
         assertEquals(domain.backgroundColor, proto.backgroundColor)
         assertEquals(domain.headColor, proto.headColor)
+        assertEquals(
+            MatrixSettingsProto.FlowDirectionProto.FLOW_DIRECTION_LEFT_TO_RIGHT,
+            proto.flowDirection
+        )
     }
     
     @Test
@@ -100,7 +108,8 @@ class MappersTest {
             uiAccent = 0xFF00CC00L,
             uiOverlayBg = 0x80000000L,
             uiSelectionBg = 0x4000FF00L,
-            fontSize = 16
+            fontSize = 16,
+            flowDirection = FlowDirection.BOTTOM_TO_TOP
         )
         
         // When converting to proto and back

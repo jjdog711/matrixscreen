@@ -1,5 +1,6 @@
 package com.example.matrixscreen.ui.settings.model
 
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.ui.settings.model.SettingId.*
 import com.example.matrixscreen.ui.settings.model.WidgetSpec.*
 
@@ -28,6 +29,22 @@ val MOTION_SPECS = listOf(
         label = "Allow Landscape Mode",
         default = true,
         help = "Allow the matrix rain to rotate and adapt when the device is turned sideways"
+    ),
+
+    SelectSpec(
+        id = FlowDirectionSetting,
+        label = "Flow Direction",
+        options = FlowDirection.values().toList(),
+        toLabel = { direction ->
+            when (direction) {
+                FlowDirection.TOP_TO_BOTTOM -> "Down"
+                FlowDirection.BOTTOM_TO_TOP -> "Up"
+                FlowDirection.LEFT_TO_RIGHT -> "Right"
+                FlowDirection.RIGHT_TO_LEFT -> "Left"
+            }
+        },
+        default = FlowDirection.TOP_TO_BOTTOM,
+        help = "Choose which edge Matrix rain spawns from"
     ),
 
     SliderSpec(

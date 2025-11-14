@@ -8,6 +8,14 @@ option java_multiple_files = true;
 // MatrixScreen settings stored in Proto DataStore
 // Schema version for migration compatibility
 message MatrixSettingsProto {
+  enum FlowDirectionProto {
+    FLOW_DIRECTION_UNSPECIFIED = 0;
+    FLOW_DIRECTION_TOP_TO_BOTTOM = 1;
+    FLOW_DIRECTION_BOTTOM_TO_TOP = 2;
+    FLOW_DIRECTION_LEFT_TO_RIGHT = 3;
+    FLOW_DIRECTION_RIGHT_TO_LEFT = 4;
+  }
+
   // Schema version for migration compatibility
   int32 schema_version = 1;
   
@@ -29,6 +37,7 @@ message MatrixSettingsProto {
   int32 grain_density = 11;
   float grain_opacity = 12;
   int32 target_fps = 13;
+  FlowDirectionProto flow_direction = 35;
   
   // Color settings (stored as int64 ARGB values)
   int64 background_color = 14;

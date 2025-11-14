@@ -113,8 +113,9 @@ class SpecsCatalogTest {
         assertTrue("Should contain lineSpacing", motionKeys.contains("lineSpacing"))
         assertTrue("Should contain activePercentage", motionKeys.contains("activePercentage"))
         assertTrue("Should contain speedVariance", motionKeys.contains("speedVariance"))
+        assertTrue("Should contain flowDirection", motionKeys.contains("flowDirection"))
         
-        assertEquals("Should have 5 motion specs", 5, MOTION_SPECS.size)
+        assertEquals("Should have 6 motion specs", 6, MOTION_SPECS.size)
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.example.matrixscreen.engine.uniforms
 
+import com.example.matrixscreen.data.model.FlowDirection
+
 /**
  * Renderer parameters for the Matrix animation engine.
  * 
@@ -12,6 +14,7 @@ data class RendererParams(
     // Performance parameters
     val effectiveFps: Float,
     val targetFps: Float,
+    val flowDirection: FlowDirection,
     
     // Background effects
     val grainDensity: Int,
@@ -61,6 +64,7 @@ data class RendererParams(
             return RendererParams(
                 effectiveFps = 60f,
                 targetFps = 60f,
+                flowDirection = FlowDirection.TOP_TO_BOTTOM,
                 grainDensity = 200,
                 grainOpacity = 0.03f,
                 fallSpeed = 2.0f,

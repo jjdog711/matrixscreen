@@ -43,6 +43,7 @@ class MapSettingsToRendererParams @Inject constructor(
             // Performance parameters with device-aware FPS
             effectiveFps = effectiveFps,
             targetFps = settings.targetFps.toFloat(),
+            flowDirection = settings.flowDirection,
             
             // Background effects (from BACKGROUND_SPECS)
             grainDensity = settings.grainDensity,
@@ -104,6 +105,7 @@ class MapSettingsToRendererParams @Inject constructor(
             // Performance parameters with provided effective FPS
             effectiveFps = effectiveFps,
             targetFps = settings.targetFps.toFloat(),
+            flowDirection = settings.flowDirection,
             
             // Background effects (from BACKGROUND_SPECS)
             grainDensity = settings.grainDensity,

@@ -33,6 +33,8 @@ fun MatrixSettings.getMaxTrailLength(): Int = this.maxTrailLength
 
 fun MatrixSettings.getMaxBrightTrailLength(): Int = this.maxBrightTrailLength
 
+fun MatrixSettings.getFlowDirection(): FlowDirection = this.flowDirection
+
 fun MatrixSettings.getFlickerRate(): Float = this.flickerAmount
 
 fun MatrixSettings.getColumnStartDelay(): Float = this.columnStartDelay

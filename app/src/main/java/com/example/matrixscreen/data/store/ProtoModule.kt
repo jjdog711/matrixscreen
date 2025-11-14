@@ -101,6 +101,7 @@ internal class SharedPreferencesMigration(
         
         return MatrixSettingsProto.newBuilder()
             .setSchemaVersion(2)
+            .setFlowDirection(MatrixSettingsProto.FlowDirectionProto.FLOW_DIRECTION_TOP_TO_BOTTOM)
             
             // Motion settings
             .setFallSpeed(legacyPrefs.getFloat("fall_speed", 2.0f))

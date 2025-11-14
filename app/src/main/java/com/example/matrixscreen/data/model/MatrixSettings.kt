@@ -13,6 +13,24 @@ import com.example.matrixscreen.data.registry.ThemePresetId
  * All settings are stored as primitive types for simplicity and performance.
  * Colors are stored as Long values representing ARGB color values.
  */
+enum class FlowDirection {
+    TOP_TO_BOTTOM,
+    BOTTOM_TO_TOP,
+    LEFT_TO_RIGHT,
+    RIGHT_TO_LEFT;
+
+    companion object {
+        fun fromKey(key: String?): FlowDirection {
+            return when (key?.uppercase()) {
+                "BOTTOM_TO_TOP" -> BOTTOM_TO_TOP
+                "LEFT_TO_RIGHT" -> LEFT_TO_RIGHT
+                "RIGHT_TO_LEFT" -> RIGHT_TO_LEFT
+                else -> TOP_TO_BOTTOM
+            }
+        }
+    }
+}
+
 data class MatrixSettings(
     // Schema version for migration compatibility
     val schemaVersion: Int = 2,
@@ -35,6 +53,7 @@ data class MatrixSettings(
     val grainDensity: Int = 200,
     val grainOpacity: Float = 0.03f,
     val targetFps: Int = 60,
+    val flowDirection: FlowDirection = FlowDirection.TOP_TO_BOTTOM,
     
     // Color settings (stored as int64 ARGB values)
     val backgroundColor: Long = 0xFF000000L,
@@ -112,6 +131,7 @@ data class MatrixSettings(
                 "activePercentage" -> updated.copy(activePercentage = value as Float)
                 "speedVariance" -> updated.copy(speedVariance = value as Float)
                 "allowLandscape" -> updated.copy(allowLandscape = value as Boolean)
+                "flowDirection" -> updated.copy(flowDirection = value as FlowDirection)
                 "glowIntensity" -> updated.copy(glowIntensity = value as Float)
                 "jitterAmount" -> updated.copy(jitterAmount = value as Float)
                 "flickerAmount" -> updated.copy(flickerAmount = value as Float)

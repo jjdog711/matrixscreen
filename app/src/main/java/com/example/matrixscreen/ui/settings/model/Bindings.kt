@@ -1,5 +1,6 @@
 package com.example.matrixscreen.ui.settings.model
 
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.data.model.MatrixSettings
 
 /**
@@ -30,6 +31,7 @@ fun <T> MatrixSettings.get(id: SettingId<T>): T {
         ActivePct -> activePercentage as T
         SpeedVar -> speedVariance as T
         AllowLandscape -> allowLandscape as T
+        FlowDirectionSetting -> flowDirection as T
         
         // Effects settings
         Glow -> glowIntensity as T
@@ -103,6 +105,7 @@ fun <T> MatrixSettings.with(id: SettingId<T>, value: T): MatrixSettings {
         ActivePct -> copy(activePercentage = value as Float)
         SpeedVar -> copy(speedVariance = value as Float)
         AllowLandscape -> copy(allowLandscape = value as Boolean)
+        FlowDirectionSetting -> copy(flowDirection = value as FlowDirection)
         
         // Effects settings
         Glow -> copy(glowIntensity = value as Float)

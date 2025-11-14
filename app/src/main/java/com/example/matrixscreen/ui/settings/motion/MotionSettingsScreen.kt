@@ -44,6 +44,7 @@ fun MotionSettingsScreen(
     
     // Memoize spec lookups at composable level (best practice - avoids recomposition issues)
     val allowLandscapeSpec = remember { MOTION_SPECS.specFor(AllowLandscape) }
+    val flowDirectionSpec = remember { MOTION_SPECS.specFor(FlowDirectionSetting) }
     val speedSpec = remember { MOTION_SPECS.specFor(Speed) }
     val columnsSpec = remember { MOTION_SPECS.specFor(Columns) }
     val lineSpaceSpec = remember { MOTION_SPECS.specFor(LineSpace) }
@@ -83,6 +84,12 @@ fun MotionSettingsScreen(
                     )
 
                     RenderSetting(
+                        spec = flowDirectionSpec,
+                        value = currentSettings.get(FlowDirectionSetting),
+                        onValueChange = { value -> settingsViewModel.updateDraft(FlowDirectionSetting, value) }
+                    )
+
+                    RenderSetting(
                         spec = speedSpec,
                         value = currentSettings.get(Speed),
                         onValueChange = { value -> settingsViewModel.updateDraft(Speed, value) }
@@ -119,6 +126,13 @@ fun MotionSettingsScreen(
                                     is SliderSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
                                     is IntSliderSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
                                     is ToggleSpec -> settingsViewModel.updateDraft(spec.id, spec.default)
+                                    is SelectSpec<*> -> {
+                                        @Suppress("UNCHECKED_CAST")
+                                        val id = spec.id as SettingId<Any>
+                                        @Suppress("UNCHECKED_CAST")
+                                        val defaultValue = spec.default as Any
+                                        settingsViewModel.updateDraft(id, defaultValue)
+                                    }
                                     else -> throw IllegalArgumentException("Unsupported spec type for reset: ${spec::class.simpleName}")
                                 }
                             }

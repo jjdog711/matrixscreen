@@ -1,6 +1,7 @@
 package com.example.matrixscreen.data.model
 
 import com.example.matrixscreen.data.proto.MatrixSettingsProto
+import com.example.matrixscreen.data.proto.MatrixSettingsProto.FlowDirectionProto
 import com.example.matrixscreen.data.custom.CustomSymbolSet
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -40,6 +41,7 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         grainDensity = this.grainDensity.coerceIn(0, 1000),
         grainOpacity = this.grainOpacity.coerceIn(0.0f, 0.2f),   // Fixed: was 1.0f, now matches spec
         targetFps = this.targetFps.coerceIn(5, 120),
+        flowDirection = this.flowDirection.toDomainFlowDirection(),
         
         // Color settings with validation
         backgroundColor = this.backgroundColor.coerceIn(0x00000000L, 0xFFFFFFFFL),
@@ -109,6 +111,7 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
         .setGrainDensity(this.grainDensity)
         .setGrainOpacity(this.grainOpacity)
         .setTargetFps(this.targetFps)
+        .setFlowDirection(this.flowDirection.toProto())
         
         // Color settings
         .setBackgroundColor(this.backgroundColor)
@@ -157,6 +160,26 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
  */
 fun createDefaultProto(): MatrixSettingsProto {
     return MatrixSettings.DEFAULT.toProto()
+}
+
+private fun FlowDirectionProto.toDomainFlowDirection(): FlowDirection {
+    return when (this) {
+        FlowDirectionProto.FLOW_DIRECTION_BOTTOM_TO_TOP -> FlowDirection.BOTTOM_TO_TOP
+        FlowDirectionProto.FLOW_DIRECTION_LEFT_TO_RIGHT -> FlowDirection.LEFT_TO_RIGHT
+        FlowDirectionProto.FLOW_DIRECTION_RIGHT_TO_LEFT -> FlowDirection.RIGHT_TO_LEFT
+        FlowDirectionProto.UNRECOGNIZED,
+        FlowDirectionProto.FLOW_DIRECTION_UNSPECIFIED,
+        FlowDirectionProto.FLOW_DIRECTION_TOP_TO_BOTTOM -> FlowDirection.TOP_TO_BOTTOM
+    }
+}
+
+private fun FlowDirection.toProto(): FlowDirectionProto {
+    return when (this) {
+        FlowDirection.TOP_TO_BOTTOM -> FlowDirectionProto.FLOW_DIRECTION_TOP_TO_BOTTOM
+        FlowDirection.BOTTOM_TO_TOP -> FlowDirectionProto.FLOW_DIRECTION_BOTTOM_TO_TOP
+        FlowDirection.LEFT_TO_RIGHT -> FlowDirectionProto.FLOW_DIRECTION_LEFT_TO_RIGHT
+        FlowDirection.RIGHT_TO_LEFT -> FlowDirectionProto.FLOW_DIRECTION_RIGHT_TO_LEFT
+    }
 }
 
 /**

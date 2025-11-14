@@ -1,5 +1,7 @@
 package com.example.matrixscreen.ui.settings.model
 
+import com.example.matrixscreen.data.model.FlowDirection
+
 /**
  * Typed keys for MatrixScreen settings.
  * 
@@ -38,6 +40,10 @@ object SpeedVar : SettingId<Float> {
 
 object AllowLandscape : SettingId<Boolean> {
     override val key = "allowLandscape"
+}
+
+object FlowDirectionSetting : SettingId<FlowDirection> {
+    override val key = "flowDirection"
 }
 
 // Effects settings

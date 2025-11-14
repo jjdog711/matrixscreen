@@ -486,16 +486,26 @@ fun MatrixDigitalRain(
     
     // AUTHENTIC MATRIX: Configuration for discrete terminal-style printing
     val configuration = LocalConfiguration.current
-    val reactiveAnimationConfig = remember(settings) {
+    val reactiveAnimationConfig = remember(settings, configuration.screenHeightDp, configuration.screenWidthDp) {
         val fontSize = with(density) { settings.fontSize.dp.toPx() }
         val rowHeight = fontSize * settings.getRowHeightMultiplier()
         val screenHeight = with(density) { configuration.screenHeightDp.dp.toPx() }
+        val screenWidth = with(density) { configuration.screenWidthDp.dp.toPx() }
+        val verticalRows = (screenHeight / rowHeight).toInt() + 50
+        val horizontalRows = (screenWidth / rowHeight).toInt() + 50
+        val flowRowCount = when (settings.flowDirection) {
+            FlowDirection.TOP_TO_BOTTOM,
+            FlowDirection.BOTTOM_TO_TOP -> verticalRows
+            FlowDirection.LEFT_TO_RIGHT,
+            FlowDirection.RIGHT_TO_LEFT -> horizontalRows
+        }
         MatrixAnimationConfig(
             fontSize = fontSize,
             columnCount = settings.columnCount,
             rowHeight = rowHeight,
-            screenRows = (screenHeight / rowHeight).toInt() + 50,
+            screenRows = flowRowCount,
             targetFps = settings.targetFps.toFloat(),
+            flowDirection = settings.flowDirection,
             printSpeedMultiplier = settings.fallSpeed,
             matrixColor = settings.getColorTint(),
             maxTrailLength = settings.maxTrailLength,
@@ -550,7 +560,8 @@ fun MatrixDigitalRain(
         characterPools,
         settings.symbolSetId,
         settings.activeCustomSetId, // Include activeCustomSetId to force column rebuild when switching custom sets
-        previewOverride // Include previewOverride to force column rebuild when preview is applied
+        previewOverride, // Include previewOverride to force column rebuild when preview is applied
+        settings.flowDirection
     ) {
         createMatrixColumns(reactiveAnimationConfig, matrixChars, characterPools)
     }
@@ -619,26 +630,39 @@ private fun AuthenticMatrixCanvas(
 ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val canvasWidth = size.width
-        // val canvasHeight = size.height // Currently unused
-        
-        // Calculate column width
-        val columnWidth = canvasWidth / animationConfig.columnCount
+        val canvasHeight = size.height
+        val flowDirection = settings.flowDirection
         
         // Draw dynamic background color
         drawRect(androidx.compose.ui.graphics.Color(settings.getEffectiveBackgroundColor()), size = size)
         
-        // Draw each column independently
-        columns.forEachIndexed { columnIndex, column ->
-            val xPosition = columnIndex * columnWidth + columnWidth / 2
-            
-            // Draw all characters in this column
-            drawMatrixColumn(
-                column = column,
-                xPosition = xPosition,
-                animationConfig = animationConfig,
-                paintCache = paintCache,
-                settings = settings
-            )
+        val columnCount = animationConfig.columnCount.coerceAtLeast(1)
+        if (flowDirection.isVertical()) {
+            val columnWidth = canvasWidth / columnCount
+            columns.forEachIndexed { columnIndex, column ->
+                val xPosition = columnIndex * columnWidth + columnWidth / 2
+                drawMatrixColumn(
+                    column = column,
+                    crossAxisCenter = xPosition,
+                    flowDirection = flowDirection,
+                    animationConfig = animationConfig,
+                    paintCache = paintCache,
+                    settings = settings
+                )
+            }
+        } else {
+            val rowSpacing = canvasHeight / columnCount
+            columns.forEachIndexed { columnIndex, column ->
+                val yPosition = columnIndex * rowSpacing + rowSpacing / 2
+                drawMatrixColumn(
+                    column = column,
+                    crossAxisCenter = yPosition,
+                    flowDirection = flowDirection,
+                    animationConfig = animationConfig,
+                    paintCache = paintCache,
+                    settings = settings
+                )
+            }
         }
     }
 }
@@ -652,6 +676,7 @@ data class MatrixAnimationConfig(
     val rowHeight: Float,
     val screenRows: Int,
     val targetFps: Float,
+    val flowDirection: FlowDirection = FlowDirection.TOP_TO_BOTTOM,
     val printSpeedMultiplier: Float = 2.5f,
     val matrixColor: com.example.matrixscreen.data.MatrixColor = com.example.matrixscreen.data.MatrixColor.GREEN,
     val maxTrailLength: Int = 60,
@@ -1012,19 +1037,29 @@ private fun createMatrixColumns(
     }
 }
 
+private fun FlowDirection.isVertical(): Boolean {
+    return this == FlowDirection.TOP_TO_BOTTOM || this == FlowDirection.BOTTOM_TO_TOP
+}
+
 /*
  * AUTHENTIC MATRIX: Draw a single column with discrete row positioning
  * Uses stepped brightness levels instead of smooth alpha gradients
  */
 private fun DrawScope.drawMatrixColumn(
     column: MatrixColumn,
-    xPosition: Float,
+    crossAxisCenter: Float,
+    flowDirection: FlowDirection,
     animationConfig: MatrixAnimationConfig,
     paintCache: MatrixPaintCache,
     settings: MatrixSettings
 ) {
     val fontSize = animationConfig.fontSize
-    val adjustedXPos = xPosition - fontSize * 0.4f
+    val rowHeight = animationConfig.rowHeight
+    val primaryLimit = if (flowDirection.isVertical()) size.height else size.width
+    val crossLimit = if (flowDirection.isVertical()) size.width else size.height
+    val primaryBuffer = fontSize * 2
+    val crossBuffer = fontSize
+    val crossAxisBase = crossAxisCenter - fontSize * 0.4f
     
     drawIntoCanvas { canvas ->
         fun lightenColor(argb: Int, factor: Float): Int {
@@ -1038,98 +1073,95 @@ private fun DrawScope.drawMatrixColumn(
             return android.graphics.Color.argb(a, lr, lg, lb)
         }
         
-        // Draw each character at its discrete row position
         for (glyph in column.glyphs) {
-            val yPosition = glyph.rowPosition * animationConfig.rowHeight + fontSize * 0.6f
+            val primaryPosition = glyph.rowPosition * rowHeight + fontSize * 0.6f
             val charString = glyph.char.toString()
+            val crossAxisPosition = crossAxisBase + glyph.jitterX
             
-            // Skip if outside visible screen bounds (with small buffer for smooth rendering)
-            val visibleHeight = size.height
-            val renderBuffer = fontSize * 2 // Small buffer for smooth character rendering
-            if (yPosition < -renderBuffer || yPosition > visibleHeight + renderBuffer) continue
+            val (drawX, drawY) = when (flowDirection) {
+                FlowDirection.TOP_TO_BOTTOM -> crossAxisPosition to primaryPosition
+                FlowDirection.BOTTOM_TO_TOP -> crossAxisPosition to (primaryLimit - primaryPosition)
+                FlowDirection.LEFT_TO_RIGHT -> primaryPosition to crossAxisPosition
+                FlowDirection.RIGHT_TO_LEFT -> (primaryLimit - primaryPosition) to crossAxisPosition
+            }
             
-            // Apply jitter offset
-            val finalXPos = adjustedXPos + glyph.jitterX
+            val primaryValue = if (flowDirection.isVertical()) drawY else drawX
+            val crossValue = if (flowDirection.isVertical()) drawX else drawY
             
-            // Get character-specific typeface using character-based selection for all symbol sets
-            // This allows mixed character sets (Latin, Katakana, etc.) to use appropriate fonts
+            if (primaryValue < -primaryBuffer || primaryValue > primaryLimit + primaryBuffer) continue
+            if (crossValue < -crossBuffer || crossValue > crossLimit + crossBuffer) continue
+            
             val charTypeface = paintCache.fontManager.getTypefaceForCharacter(glyph.char, settings.symbolSetId)
             
-            // AUTHENTIC MATRIX: Enhanced stepped brightness levels with advanced color support
             when (glyph.brightness) {
-                4 -> { // Lead character - unified color with cinematic lift
+                4 -> {
                     val headBase = settings.getRainHeadColor().toInt()
-                    val headColor = lightenColor(headBase, 0.5f) // ~50% toward white for punch
+                    val headColor = lightenColor(headBase, 0.5f)
                     
-                    // Draw enhanced glow first
                     paintCache.leadGlowPaint.color = android.graphics.Color.argb(
-                        (200 * glyph.glowIntensity * animationConfig.glowIntensity).toInt().coerceAtMost(255), 
+                        (200 * glyph.glowIntensity * animationConfig.glowIntensity).toInt().coerceAtMost(255),
                         android.graphics.Color.red(headColor),
                         android.graphics.Color.green(headColor),
                         android.graphics.Color.blue(headColor)
                     )
                     paintCache.leadGlowPaint.typeface = charTypeface
-                    canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.leadGlowPaint)
+                    canvas.nativeCanvas.drawText(charString, drawX, drawY, paintCache.leadGlowPaint)
                     
-                    // Draw very bright head character with flicker
                     paintCache.brightPaint.color = android.graphics.Color.argb(
-                        (255 * glyph.flickerAlpha).toInt(), 
+                        (255 * glyph.flickerAlpha).toInt(),
                         android.graphics.Color.red(headColor),
                         android.graphics.Color.green(headColor),
                         android.graphics.Color.blue(headColor)
                     )
                     paintCache.brightPaint.typeface = charTypeface
-                    canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.brightPaint)
+                    canvas.nativeCanvas.drawText(charString, drawX, drawY, paintCache.brightPaint)
                 }
-                3 -> { // Bright trail - unified color with slight cinematic lift
+                3 -> {
                     val brightBase = settings.getRainBrightTrailColor().toInt()
-                    val brightTrailColor = lightenColor(brightBase, 0.15f) // ~15% toward white
+                    val brightTrailColor = lightenColor(brightBase, 0.15f)
                     
-                    // Draw subtle glow
                     paintCache.glowPaint.color = android.graphics.Color.argb(
-                        (60 * glyph.glowIntensity * animationConfig.glowIntensity).toInt(), 
+                        (60 * glyph.glowIntensity * animationConfig.glowIntensity).toInt(),
                         android.graphics.Color.red(brightTrailColor),
                         android.graphics.Color.green(brightTrailColor),
                         android.graphics.Color.blue(brightTrailColor)
                     )
                     paintCache.glowPaint.typeface = charTypeface
-                    canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.glowPaint)
+                    canvas.nativeCanvas.drawText(charString, drawX, drawY, paintCache.glowPaint)
                     
-                    // Draw bright trail character
                     paintCache.mainPaint.color = android.graphics.Color.argb(
-                        (android.graphics.Color.alpha(brightTrailColor) * glyph.flickerAlpha).toInt(), 
+                        (android.graphics.Color.alpha(brightTrailColor) * glyph.flickerAlpha).toInt(),
                         android.graphics.Color.red(brightTrailColor),
                         android.graphics.Color.green(brightTrailColor),
                         android.graphics.Color.blue(brightTrailColor)
                     )
                     paintCache.mainPaint.typeface = charTypeface
-                    canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
+                    canvas.nativeCanvas.drawText(charString, drawX, drawY, paintCache.mainPaint)
                 }
-                2 -> { // Regular trail - use rain trail color (unified)
+                2 -> {
                     val trailColor = settings.getRainTrailColor().toInt()
                     
                     paintCache.mainPaint.color = android.graphics.Color.argb(
-                        (android.graphics.Color.alpha(trailColor) * glyph.flickerAlpha).toInt(), 
+                        (android.graphics.Color.alpha(trailColor) * glyph.flickerAlpha).toInt(),
                         android.graphics.Color.red(trailColor),
                         android.graphics.Color.green(trailColor),
                         android.graphics.Color.blue(trailColor)
                     )
                     paintCache.mainPaint.typeface = charTypeface
-                    canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
+                    canvas.nativeCanvas.drawText(charString, drawX, drawY, paintCache.mainPaint)
                 }
-                1 -> { // Dim trail - use rain dim trail color (unified)
+                1 -> {
                     val dimTrailColor = settings.getRainDimTrailColor().toInt()
                     
                     paintCache.mainPaint.color = android.graphics.Color.argb(
-                        (android.graphics.Color.alpha(dimTrailColor) * glyph.flickerAlpha).toInt(), 
+                        (android.graphics.Color.alpha(dimTrailColor) * glyph.flickerAlpha).toInt(),
                         android.graphics.Color.red(dimTrailColor),
                         android.graphics.Color.green(dimTrailColor),
                         android.graphics.Color.blue(dimTrailColor)
                     )
                     paintCache.mainPaint.typeface = charTypeface
-                    canvas.nativeCanvas.drawText(charString, finalXPos, yPosition, paintCache.mainPaint)
+                    canvas.nativeCanvas.drawText(charString, drawX, drawY, paintCache.mainPaint)
                 }
-                // brightness 0 = invisible, don't draw
             }
         }
     }

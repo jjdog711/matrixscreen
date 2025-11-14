@@ -2,6 +2,7 @@ package com.example.matrixscreen.domain.usecase
 
 import android.content.Context
 import com.example.matrixscreen.data.custom.CustomSymbolSet
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.engine.uniforms.RendererParams
 import org.junit.Test
@@ -27,7 +28,8 @@ class MapSettingsToRendererParamsComprehensiveTest {
             columnCount = 200,
             lineSpacing = 1.1f,
             activePercentage = 0.6f,
-            speedVariance = 0.05f
+            speedVariance = 0.05f,
+            flowDirection = FlowDirection.LEFT_TO_RIGHT
         )
         
         val result = useCase.execute(settings, mockContext)
@@ -37,6 +39,7 @@ class MapSettingsToRendererParamsComprehensiveTest {
         assertEquals(1.1f, result.lineSpacing)
         assertEquals(0.6f, result.activePercentage)
         assertEquals(0.05f, result.speedVariance)
+        assertEquals(FlowDirection.LEFT_TO_RIGHT, result.flowDirection)
     }
     
     @Test

@@ -1,6 +1,7 @@
 package com.example.matrixscreen.engine.uniforms
 
 import com.example.matrixscreen.data.MatrixColor
+import com.example.matrixscreen.data.model.FlowDirection
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -18,6 +19,7 @@ class RendererParamsMapperTest {
         val params = RendererParams(
             effectiveFps = 90f,
             targetFps = 90f,
+            flowDirection = FlowDirection.LEFT_TO_RIGHT,
             grainDensity = 300,
             grainOpacity = 0.05f,
             fallSpeed = 2.5f,
@@ -75,6 +77,7 @@ class RendererParamsMapperTest {
         assertEquals(0.02f, result.speedVariationRate)
         assertEquals(300, result.grainDensity)
         assertEquals(0.05f, result.grainOpacity)
+        assertEquals(FlowDirection.LEFT_TO_RIGHT, result.flowDirection)
     }
     
     @Test
@@ -105,6 +108,7 @@ class RendererParamsMapperTest {
         assertEquals(0.01f, result.speedVariationRate)
         assertEquals(200, result.grainDensity)
         assertEquals(0.03f, result.grainOpacity)
+        assertEquals(FlowDirection.TOP_TO_BOTTOM, result.flowDirection)
     }
     
     @Test
@@ -151,6 +155,7 @@ class RendererParamsMapperTest {
         val params = RendererParams(
             effectiveFps = 120f,
             targetFps = 90f, // Different from effective
+            flowDirection = FlowDirection.TOP_TO_BOTTOM,
             grainDensity = 200,
             grainOpacity = 0.03f,
             fallSpeed = 2.0f,

@@ -2,9 +2,9 @@ package com.example.matrixscreen.ui.settings.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.example.matrixscreen.data.model.FlowDirection
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.ui.settings.model.*
-import com.example.matrixscreen.ui.theme.MatrixUIColorScheme
 
 /**
  * Generic function that maps WidgetSpec<T> to appropriate base components.
@@ -85,15 +85,27 @@ fun <T : Any> RenderSetting(
         }
         
         is SelectSpec<T> -> {
-            OptionChips(
-                label = spec.label,
-                options = spec.options,
-                selectedOption = value,
-                onOptionSelected = onValueChange,
-                toLabel = spec.toLabel,
-                help = spec.help,
-                modifier = modifier
-            )
+            if (spec.id == FlowDirectionSetting) {
+                FlowDirectionSelector(
+                    label = spec.label,
+                    value = value as FlowDirection,
+                    onValueChange = { direction ->
+                        (onValueChange as (FlowDirection) -> Unit).invoke(direction)
+                    },
+                    help = spec.help,
+                    modifier = modifier
+                )
+            } else {
+                OptionChips(
+                    label = spec.label,
+                    options = spec.options,
+                    selectedOption = value,
+                    onOptionSelected = onValueChange,
+                    toLabel = spec.toLabel,
+                    help = spec.help,
+                    modifier = modifier
+                )
+            }
         }
     }
 }
