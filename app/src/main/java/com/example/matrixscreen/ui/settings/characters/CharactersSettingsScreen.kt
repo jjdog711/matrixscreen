@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.SymbolSet
 import com.example.matrixscreen.data.registry.BuiltInSymbolSets
-import com.example.matrixscreen.data.registry.SymbolSetId as RegistrySymbolSetId
 import androidx.compose.foundation.clickable
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*

@@ -28,6 +28,10 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
     val clampedBrightTrail = this.maxBrightTrailLength
         .coerceIn(4, min(40, clampedMaxTrail))
 
+    val resolvedSymbolSetId = this.symbolSetId.takeIf { it.isNotBlank() }
+        ?: MatrixSettings.DEFAULT.symbolSetId
+    val resolvedThemePresetId = this.themePresetId.takeIf { it.isNotBlank() }
+
     return MatrixSettings(
         schemaVersion = this.schemaVersion.coerceAtLeast(2),
         
@@ -67,7 +71,7 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         fontSize = this.fontSize.coerceIn(8, 32),
         
         // Symbol set settings
-        symbolSetId = this.symbolSetId,
+        symbolSetId = resolvedSymbolSetId,
         savedCustomSets = decodeCustomSetsFromJson(this.savedCustomSets),
         activeCustomSetId = this.activeCustomSetId.takeIf { it.isNotBlank() },
         
@@ -76,7 +80,7 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         maxBrightTrailLength = clampedBrightTrail,
         
         // Theme preset settings
-        themePresetId = this.themePresetId,
+        themePresetId = resolvedThemePresetId,
         
         // Timing settings with clamping (MISSING - CRITICAL FIX)
         columnStartDelay = this.columnStartDelay.coerceIn(0.0f, 0.5f),
@@ -137,7 +141,7 @@ fun MatrixSettings.toProto(): MatrixSettingsProto {
         .setFontSize(this.fontSize)
         
         // Symbol set settings
-        .setSymbolSetId(this.symbolSetId)
+        .setSymbolSetId(this.symbolSetId.ifBlank { MatrixSettings.DEFAULT.symbolSetId })
         .setSavedCustomSets(encodeCustomSetsToJson(this.savedCustomSets))
         .setActiveCustomSetId(this.activeCustomSetId ?: "")
         

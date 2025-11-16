@@ -2,6 +2,7 @@ package com.example.matrixscreen.data.model
 
 import com.example.matrixscreen.data.proto.MatrixSettingsProto
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -19,7 +20,7 @@ class MappersTest {
         
         // When converting to domain
         val domain = proto.toDomain()
-        
+
         // Then default values are mapped correctly (proto3 defaults are 0, but our mapper clamps them)
         assertEquals(2, domain.schemaVersion) // Schema coerces to current version
         assertEquals(0.5f, domain.fallSpeed, 0.01f) // Proto3 default is 0.0f, clamped to 0.5f
@@ -28,6 +29,8 @@ class MappersTest {
         assertEquals(0x00000000L, domain.backgroundColor) // Proto3 default is 0L, valid range
         assertEquals(0x00000000L, domain.headColor) // Proto3 default is 0L, valid range
         assertEquals(FlowDirection.TOP_TO_BOTTOM, domain.flowDirection)
+        assertEquals(MatrixSettings.DEFAULT.symbolSetId, domain.symbolSetId)
+        assertNull(domain.themePresetId)
     }
     
     @Test
