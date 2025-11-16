@@ -259,6 +259,8 @@ fun clampSettingValue(key: String, value: Any): Any {
         "fontSize" -> (value as Int).coerceIn(8, 32)
         "maxTrailLength" -> (value as Int).coerceIn(20, 200)
         "maxBrightTrailLength" -> (value as Int).coerceIn(4, 40)
+        "columnStartDelay" -> (value as Float).coerceIn(0.0f, 0.5f)
+        "columnRestartDelay" -> (value as Float).coerceIn(0.0f, 0.5f)
         else -> value
     }
 }

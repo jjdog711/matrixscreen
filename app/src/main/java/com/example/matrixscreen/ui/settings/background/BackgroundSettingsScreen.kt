@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.core.util.FpsCoercionUtil
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.ui.settings.components.*
-import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.settings.model.specFor
 import com.example.matrixscreen.ui.settings.model.GrainD

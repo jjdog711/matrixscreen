@@ -13,7 +13,6 @@ import com.example.matrixscreen.data.SymbolSet
 import com.example.matrixscreen.data.registry.BuiltInSymbolSets
 import androidx.compose.foundation.clickable
 import com.example.matrixscreen.ui.settings.components.*
-import com.example.matrixscreen.ui.settings.model.*
 import com.example.matrixscreen.ui.settings.model.CHARACTERS_SPECS
 import com.example.matrixscreen.ui.settings.model.get
 import com.example.matrixscreen.ui.settings.model.FontSize

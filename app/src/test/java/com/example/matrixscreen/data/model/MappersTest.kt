@@ -153,6 +153,10 @@ class MappersTest {
         assertEquals(20, clampSettingValue("maxTrailLength", 5) as Int)
         assertEquals(40, clampSettingValue("maxBrightTrailLength", 100) as Int)
         assertEquals(4, clampSettingValue("maxBrightTrailLength", 1) as Int)
+        assertEquals(0.5f, clampSettingValue("columnStartDelay", 1.0f) as Float, 0.0001f)
+        assertEquals(0.0f, clampSettingValue("columnStartDelay", -1.0f) as Float, 0.0001f)
+        assertEquals(0.5f, clampSettingValue("columnRestartDelay", 2.0f) as Float, 0.0001f)
+        assertEquals(0.0f, clampSettingValue("columnRestartDelay", -0.5f) as Float, 0.0001f)
     }
     
     @Test
