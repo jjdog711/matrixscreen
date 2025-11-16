@@ -5,6 +5,7 @@ import com.example.matrixscreen.data.proto.MatrixSettingsProto.FlowDirectionProt
 import com.example.matrixscreen.data.custom.CustomSymbolSet
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlin.math.min
 
 /**
  * Mappers for converting between Proto and Domain models.
@@ -20,6 +21,13 @@ import kotlinx.serialization.json.Json
  * @return Validated and clamped domain model
  */
 fun MatrixSettingsProto.toDomain(): MatrixSettings {
+    // Renderer logic derives the random minimum as ~30% of max trail length,
+    // so we clamp to the spec range while keeping enough headroom for that spread.
+    val clampedMaxTrail = this.maxTrailLength.coerceIn(20, 200)
+    // Bright trails can never outgrow the actual column trail.
+    val clampedBrightTrail = this.maxBrightTrailLength
+        .coerceIn(4, min(40, clampedMaxTrail))
+
     return MatrixSettings(
         schemaVersion = this.schemaVersion.coerceAtLeast(2),
         
@@ -64,8 +72,8 @@ fun MatrixSettingsProto.toDomain(): MatrixSettings {
         activeCustomSetId = this.activeCustomSetId.takeIf { it.isNotBlank() },
         
         // Trail length settings with clamping
-        maxTrailLength = this.maxTrailLength.coerceAtLeast(10), // Minimum 10 for valid random range
-        maxBrightTrailLength = this.maxBrightTrailLength.coerceIn(2, this.maxTrailLength.coerceAtLeast(10)), // Must be 2+ and <= maxTrailLength
+        maxTrailLength = clampedMaxTrail,
+        maxBrightTrailLength = clampedBrightTrail,
         
         // Theme preset settings
         themePresetId = this.themePresetId,
@@ -231,20 +239,22 @@ private fun encodeCustomSetsToJson(customSets: List<CustomSymbolSet>): String {
  */
 fun clampSettingValue(key: String, value: Any): Any {
     return when (key) {
-        "fallSpeed" -> (value as Float).coerceIn(0.5f, 5.0f)
-        "columnCount" -> (value as Int).coerceIn(50, 200)
+        "fallSpeed" -> (value as Float).coerceIn(0.5f, 10.0f)
+        "columnCount" -> (value as Int).coerceIn(50, 500)
         "lineSpacing" -> (value as Float).coerceIn(0.5f, 2.0f)
         "activePercentage" -> (value as Float).coerceIn(0.1f, 1.0f)
-        "speedVariance" -> (value as Float).coerceIn(0.0f, 0.1f)
+        "speedVariance" -> (value as Float).coerceIn(0.0f, 0.5f)
         "allowLandscape" -> value as Boolean
-        "glowIntensity" -> (value as Float).coerceIn(0.0f, 3.0f)
+        "glowIntensity" -> (value as Float).coerceIn(0.0f, 5.0f)
         "jitterAmount" -> (value as Float).coerceIn(0.0f, 5.0f)
         "flickerAmount" -> (value as Float).coerceIn(0.0f, 1.0f)
-        "mutationRate" -> (value as Float).coerceIn(0.0f, 0.2f)
+        "mutationRate" -> (value as Float).coerceIn(0.0f, 0.5f)
         "grainDensity" -> (value as Int).coerceIn(0, 1000)
-        "grainOpacity" -> (value as Float).coerceIn(0.0f, 1.0f)
+        "grainOpacity" -> (value as Float).coerceIn(0.0f, 0.2f)
         "targetFps" -> (value as Int).coerceIn(5, 120)
         "fontSize" -> (value as Int).coerceIn(8, 32)
+        "maxTrailLength" -> (value as Int).coerceIn(20, 200)
+        "maxBrightTrailLength" -> (value as Int).coerceIn(4, 40)
         else -> value
     }
 }

@@ -3,10 +3,10 @@ package com.example.matrixscreen.ui.settings.characters
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.data.SymbolSet
@@ -25,6 +25,7 @@ import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.core.design.DesignTokens
 import com.example.matrixscreen.core.design.scrollableContent
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
 
 /**
  * Characters settings screen with symbol sets, fonts, and size controls
@@ -37,9 +38,7 @@ fun CharactersSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    val currentSettings by remember {
-        derivedStateOf { uiState.saved }
-    }
+    val currentSettings = uiState.draft
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
@@ -85,6 +84,17 @@ fun CharactersSettingsScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CharactersSettingsScreenPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    CharactersSettingsScreen(
+        settingsViewModel = previewViewModel,
+        onBack = {},
+        onOpenCustomSets = {}
+    )
 }
 
 /**

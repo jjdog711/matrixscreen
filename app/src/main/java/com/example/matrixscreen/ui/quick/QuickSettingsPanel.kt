@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.ui.NewSettingsViewModel
@@ -20,6 +21,7 @@ import com.example.matrixscreen.ui.settings.model.Jitter
 import com.example.matrixscreen.ui.settings.model.BgColor
 import com.example.matrixscreen.ui.settings.model.Fps
 import com.example.matrixscreen.ui.settings.components.RenderSetting
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
 
 /**
  * Helper function to render a spec setting with proper type handling
@@ -91,6 +93,16 @@ private fun renderSpecSetting(
             throw IllegalArgumentException("Unsupported SettingId in QuickSettingsPanel: ${spec.id::class.simpleName}")
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun QuickSettingsPanelPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    QuickSettingsPanel(
+        viewModel = previewViewModel,
+        onOpenAdvanced = {}
+    )
 }
 
 @Deprecated("Not used in production; kept for prototyping")

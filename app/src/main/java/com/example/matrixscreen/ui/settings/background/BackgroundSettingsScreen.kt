@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.core.util.FpsCoercionUtil
 import com.example.matrixscreen.data.model.MatrixSettings
@@ -26,6 +27,7 @@ import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
 
 /**
  * Background settings screen with film grain and performance controls
@@ -162,6 +164,16 @@ fun BackgroundSettingsScreen(
         }
         },
         modifier = modifier
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BackgroundSettingsScreenPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    BackgroundSettingsScreen(
+        settingsViewModel = previewViewModel,
+        onBack = {}
     )
 }
 
