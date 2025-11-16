@@ -243,7 +243,7 @@ class NewSettingsViewModelTest {
         viewModel.updateDraft(GrainD, 300) // Background
         viewModel.updateDraft(FontSize, 16) // Characters
         viewModel.updateDraft(BgColor, 0xFF111111L) // Theme
-        
+
         // Then all changes are applied
         val uiState = viewModel.uiState.value
         assertEquals(3.0f, uiState.draft.fallSpeed, 0.01f)
@@ -251,6 +251,46 @@ class NewSettingsViewModelTest {
         assertEquals(300, uiState.draft.grainDensity)
         assertEquals(16, uiState.draft.fontSize)
         assertEquals(0xFF111111L, uiState.draft.backgroundColor)
+        assertTrue(uiState.dirty)
+    }
+
+    @Test
+    fun `draft tracks repository updates when clean`() = runTest {
+        val repoFlow = MutableStateFlow(MatrixSettings.DEFAULT)
+        whenever(mockRepository.observe()).thenReturn(repoFlow)
+
+        viewModel = NewSettingsViewModel(mockRepository, testDispatcher)
+        advanceUntilIdle()
+
+        val persisted = MatrixSettings.DEFAULT.copy(fontSize = 22, symbolSetId = "katakana")
+        repoFlow.value = persisted
+        advanceUntilIdle()
+
+        val uiState = viewModel.uiState.value
+        assertEquals(persisted, uiState.saved)
+        assertEquals(persisted, uiState.draft)
+        assertFalse(uiState.dirty)
+    }
+
+    @Test
+    fun `dirty draft survives repository refresh until commit`() = runTest {
+        val repoFlow = MutableStateFlow(MatrixSettings.DEFAULT)
+        whenever(mockRepository.observe()).thenReturn(repoFlow)
+
+        viewModel = NewSettingsViewModel(mockRepository, testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.updateDraft(FontSize, 30)
+        viewModel.updateDraft(SymbolSetId, "custom")
+
+        val refreshed = MatrixSettings.DEFAULT.copy(fontSize = 18)
+        repoFlow.value = refreshed
+        advanceUntilIdle()
+
+        val uiState = viewModel.uiState.value
+        assertEquals(refreshed, uiState.saved)
+        assertEquals(30, uiState.draft.fontSize)
+        assertEquals("custom", uiState.draft.symbolSetId)
         assertTrue(uiState.dirty)
     }
 }

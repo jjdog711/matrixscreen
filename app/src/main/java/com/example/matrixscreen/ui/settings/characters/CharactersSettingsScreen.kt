@@ -3,7 +3,6 @@ package com.example.matrixscreen.ui.settings.characters
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,9 +36,7 @@ fun CharactersSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    val currentSettings by remember {
-        derivedStateOf { uiState.saved }
-    }
+    val currentSettings = uiState.draft
     val ui = getSafeUIColorScheme(currentSettings)
     val optimizedSettings = rememberOptimizedSettings(currentSettings)
     
