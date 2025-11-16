@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
@@ -22,6 +23,7 @@ import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.core.design.DesignTokens
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
 
 /**
  * Motion settings screen with spec-driven UI for rain speed, columns, and flow controls.
@@ -142,4 +144,14 @@ fun MotionSettingsScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MotionSettingsScreenPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    MotionSettingsScreen(
+        settingsViewModel = previewViewModel,
+        onBack = {}
+    )
 }

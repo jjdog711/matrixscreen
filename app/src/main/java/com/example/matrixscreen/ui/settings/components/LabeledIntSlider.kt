@@ -9,6 +9,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.core.design.DesignTokens
 import com.example.matrixscreen.ui.theme.MatrixTextStyles
+import kotlin.math.roundToInt
 
 /**
  * A labeled slider component for integer values.
@@ -70,14 +71,18 @@ fun LabeledIntSlider(
         Spacer(modifier = Modifier.height(DesignTokens.Spacing.sm))
         
         // Slider
+        val sliderSteps = remember(range.first, range.last, step) {
+            calculateIntSliderSteps(range, step)
+        }
+
         Slider(
             value = value.toFloat(),
             onValueChange = { newValue ->
-                val steppedValue = ((newValue - range.first) / step) * step + range.first
-                onValueChange(steppedValue.toInt().coerceIn(range))
+                val snappedValue = snapIntSliderValue(newValue, range, step)
+                onValueChange(snappedValue)
             },
             valueRange = range.first.toFloat()..range.last.toFloat(),
-            steps = (range.last - range.first) / step - 1,
+            steps = sliderSteps,
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
@@ -123,4 +128,18 @@ fun LabeledIntSlider(
             )
         }
     }
+}
+
+private fun calculateIntSliderSteps(range: IntRange, step: Int): Int {
+    if (step <= 0 || range.last <= range.first) return 0
+    val intervals = ((range.last - range.first).toFloat() / step.toFloat()).roundToInt().coerceAtLeast(0)
+    return (intervals - 1).coerceAtLeast(0)
+}
+
+private fun snapIntSliderValue(value: Float, range: IntRange, step: Int): Int {
+    if (step <= 0 || range.last <= range.first) return value.roundToInt().coerceIn(range)
+    val relative = (value - range.first) / step
+    val stepIndex = relative.roundToInt()
+    val snapped = range.first + (stepIndex * step)
+    return snapped.coerceIn(range)
 }

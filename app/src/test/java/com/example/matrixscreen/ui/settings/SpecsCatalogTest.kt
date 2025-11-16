@@ -107,15 +107,16 @@ class SpecsCatalogTest {
     @Test
     fun `motion specs contain expected settings`() {
         val motionKeys = MOTION_SPECS.map { it.id.key }
-        
+
+        assertTrue("Should contain allowLandscape", motionKeys.contains("allowLandscape"))
         assertTrue("Should contain fallSpeed", motionKeys.contains("fallSpeed"))
         assertTrue("Should contain columnCount", motionKeys.contains("columnCount"))
         assertTrue("Should contain lineSpacing", motionKeys.contains("lineSpacing"))
         assertTrue("Should contain activePercentage", motionKeys.contains("activePercentage"))
         assertTrue("Should contain speedVariance", motionKeys.contains("speedVariance"))
         assertTrue("Should contain flowDirection", motionKeys.contains("flowDirection"))
-        
-        assertEquals("Should have 6 motion specs", 6, MOTION_SPECS.size)
+
+        assertEquals("Should have 7 motion specs", 7, MOTION_SPECS.size)
     }
 
     @Test
@@ -126,8 +127,10 @@ class SpecsCatalogTest {
         assertTrue("Should contain jitterAmount", effectsKeys.contains("jitterAmount"))
         assertTrue("Should contain flickerAmount", effectsKeys.contains("flickerAmount"))
         assertTrue("Should contain mutationRate", effectsKeys.contains("mutationRate"))
-        
-        assertEquals("Should have 4 effects specs", 4, EFFECTS_SPECS.size)
+        assertTrue("Should contain maxTrailLength", effectsKeys.contains("maxTrailLength"))
+        assertTrue("Should contain maxBrightTrailLength", effectsKeys.contains("maxBrightTrailLength"))
+
+        assertEquals("Should have 6 effects specs", 6, EFFECTS_SPECS.size)
     }
 
     @Test
@@ -162,15 +165,23 @@ class SpecsCatalogTest {
     @Test
     fun `characters specs contain expected settings`() {
         val charactersKeys = CHARACTERS_SPECS.map { it.id.key }
-        
+
         assertTrue("Should contain fontSize", charactersKeys.contains("fontSize"))
-        
+
         assertEquals("Should have 1 character spec", 1, CHARACTERS_SPECS.size)
     }
 
     @Test
+    fun `developer specs contain expected settings`() {
+        val developerKeys = DEVELOPER_SPECS.map { it.id.key }
+
+        assertTrue("Should contain alwaysShowHints", developerKeys.contains("alwaysShowHints"))
+        assertEquals("Should have 1 developer spec", 1, DEVELOPER_SPECS.size)
+    }
+
+    @Test
     fun `all categories are properly defined`() {
-        assertEquals("Should have 6 categories", 6, ALL_SPEC_CATEGORIES.size)
+        assertEquals("Should have 7 categories", 7, ALL_SPEC_CATEGORIES.size)
         
         assertTrue("Should contain Motion category", ALL_SPEC_CATEGORIES.containsKey("Motion"))
         assertTrue("Should contain Effects category", ALL_SPEC_CATEGORIES.containsKey("Effects"))
@@ -178,15 +189,61 @@ class SpecsCatalogTest {
         assertTrue("Should contain Timing category", ALL_SPEC_CATEGORIES.containsKey("Timing"))
         assertTrue("Should contain Characters category", ALL_SPEC_CATEGORIES.containsKey("Characters"))
         assertTrue("Should contain Theme category", ALL_SPEC_CATEGORIES.containsKey("Theme"))
-        
-        // Timing specs is currently empty (FPS is in Background specs)
-        assertEquals("Timing specs should be empty for now", 0, TIMING_SPECS.size)
+        assertTrue("Should contain Developer category", ALL_SPEC_CATEGORIES.containsKey("Developer"))
+
+        assertEquals("Timing specs should include spawn and respawn", 2, TIMING_SPECS.size)
+        val timingKeys = TIMING_SPECS.map { it.id.key }
+        assertTrue("Timing should contain columnStartDelay", timingKeys.contains("columnStartDelay"))
+        assertTrue("Timing should contain columnRestartDelay", timingKeys.contains("columnRestartDelay"))
+    }
+
+    @Test
+    fun `spec defaults match MatrixSettings defaults`() {
+        val defaultSettings = MatrixSettings.DEFAULT
+
+        ALL_SPECS.forEach { spec ->
+            when (spec) {
+                is SliderSpec -> {
+                    val settingValue = defaultSettings.get(spec.id)
+                    assertEquals(
+                        "Default for ${spec.id.key} should match MatrixSettings.DEFAULT",
+                        settingValue,
+                        spec.default,
+                        0.0001f
+                    )
+                }
+                is IntSliderSpec -> {
+                    val settingValue = defaultSettings.get(spec.id)
+                    assertEquals(
+                        "Default for ${spec.id.key} should match MatrixSettings.DEFAULT",
+                        settingValue,
+                        spec.default
+                    )
+                }
+                is ToggleSpec -> {
+                    val settingValue = defaultSettings.get(spec.id)
+                    assertEquals(settingValue, spec.default)
+                }
+                is BooleanSpec -> {
+                    val settingValue = defaultSettings.get(spec.id)
+                    assertEquals(settingValue, spec.default)
+                }
+                is SelectSpec<*> -> {
+                    val settingValue = defaultSettings.get(spec.id)
+                    assertEquals(settingValue, spec.default)
+                }
+                else -> {
+                    // Color specs do not have defaults in the spec definition.
+                }
+            }
+        }
     }
 
     @Test
     fun `total spec count is correct`() {
-        val expectedCount = MOTION_SPECS.size + EFFECTS_SPECS.size + BACKGROUND_SPECS.size + 
-                           TIMING_SPECS.size + CHARACTERS_SPECS.size + THEME_SPECS.size
+        val expectedCount = MOTION_SPECS.size + EFFECTS_SPECS.size + BACKGROUND_SPECS.size +
+                           TIMING_SPECS.size + CHARACTERS_SPECS.size + THEME_SPECS.size +
+                           DEVELOPER_SPECS.size
         
         assertEquals("Total spec count should match sum of all categories", expectedCount, TOTAL_SPEC_COUNT)
         assertEquals("ALL_SPECS should have correct count", expectedCount, ALL_SPECS.size)

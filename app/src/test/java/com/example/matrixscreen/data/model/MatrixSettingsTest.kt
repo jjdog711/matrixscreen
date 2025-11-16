@@ -17,19 +17,23 @@ class MatrixSettingsTest {
         val defaultSettings = MatrixSettings.DEFAULT
         
         // Then all values are within valid ranges
-        assertTrue("Fall speed should be in valid range", defaultSettings.fallSpeed in 0.5f..5.0f)
-        assertTrue("Column count should be in valid range", defaultSettings.columnCount in 50..200)
+        assertTrue("Fall speed should be in valid range", defaultSettings.fallSpeed in 0.5f..10.0f)
+        assertTrue("Column count should be in valid range", defaultSettings.columnCount in 50..500)
         assertTrue("Line spacing should be in valid range", defaultSettings.lineSpacing in 0.5f..2.0f)
         assertTrue("Active percentage should be in valid range", defaultSettings.activePercentage in 0.1f..1.0f)
-        assertTrue("Speed variance should be in valid range", defaultSettings.speedVariance in 0.0f..0.1f)
-        assertTrue("Glow intensity should be in valid range", defaultSettings.glowIntensity in 0.0f..3.0f)
+        assertTrue("Speed variance should be in valid range", defaultSettings.speedVariance in 0.0f..0.5f)
+        assertTrue("Glow intensity should be in valid range", defaultSettings.glowIntensity in 0.0f..5.0f)
         assertTrue("Jitter amount should be in valid range", defaultSettings.jitterAmount in 0.0f..5.0f)
         assertTrue("Flicker amount should be in valid range", defaultSettings.flickerAmount in 0.0f..1.0f)
-        assertTrue("Mutation rate should be in valid range", defaultSettings.mutationRate in 0.0f..0.2f)
+        assertTrue("Mutation rate should be in valid range", defaultSettings.mutationRate in 0.0f..0.5f)
         assertTrue("Grain density should be in valid range", defaultSettings.grainDensity in 0..1000)
-        assertTrue("Grain opacity should be in valid range", defaultSettings.grainOpacity in 0.0f..1.0f)
+        assertTrue("Grain opacity should be in valid range", defaultSettings.grainOpacity in 0.0f..0.2f)
         assertTrue("Target FPS should be in valid range", defaultSettings.targetFps in 5..120)
         assertTrue("Font size should be in valid range", defaultSettings.fontSize in 8..32)
+        assertTrue("Max trail length should be in valid range", defaultSettings.maxTrailLength in 20..200)
+        assertTrue("Bright trail length should be in valid range", defaultSettings.maxBrightTrailLength in 4..40)
+        assertTrue("Column start delay should be in valid range", defaultSettings.columnStartDelay in 0.0f..0.5f)
+        assertTrue("Column restart delay should be in valid range", defaultSettings.columnRestartDelay in 0.0f..0.5f)
         
         // Color values should be valid ARGB
         assertTrue("Background color should be valid", defaultSettings.backgroundColor in 0x00000000L..0xFFFFFFFFL)

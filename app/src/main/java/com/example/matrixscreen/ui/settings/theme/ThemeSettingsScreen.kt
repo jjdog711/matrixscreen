@@ -4,17 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matrixscreen.data.model.MatrixSettings
@@ -46,6 +45,7 @@ import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
 import com.example.matrixscreen.core.design.DesignTokens
 import com.example.matrixscreen.core.util.applyColorLinking
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
 
 /**
  * Theme settings screen with presets, color mode toggle, and advanced color controls
@@ -72,10 +72,6 @@ fun ThemeSettingsScreen(
             }
         }
     }
-    
-    // Color picker state
-    var showColorPickerDialog by remember { mutableStateOf(false) }
-    var selectedColorType by remember { mutableStateOf("") }
     
     SettingsScreenContainer(
         title = null,
@@ -123,29 +119,21 @@ fun ThemeSettingsScreen(
                     settingsViewModel = settingsViewModel,
                     currentSettings = currentSettings,
                     displaySettings = displaySettings,
-                    ui = ui,
-                    optimizedSettings = optimizedSettings,
-                    onColorClick = { type ->
-                        selectedColorType = type
-                        showColorPickerDialog = true
-                    }
+                    ui = ui
                 )
             }
         }
     }
-    
-    // Color picker dialog
-    if (showColorPickerDialog) {
-        ColorPickerDialog(
-            isOpen = showColorPickerDialog,
-            initialColor = getCurrentColor(currentSettings, selectedColorType),
-            onColorSelected = { color ->
-                updateColor(settingsViewModel, selectedColorType, color)
-                showColorPickerDialog = false
-            },
-            onDismiss = { showColorPickerDialog = false }
-        )
-    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ThemeSettingsScreenPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    ThemeSettingsScreen(
+        settingsViewModel = previewViewModel,
+        onBack = {}
+    )
 }
 
 @Composable
@@ -226,9 +214,7 @@ private fun ColorControls(
     settingsViewModel: com.example.matrixscreen.ui.NewSettingsViewModel,
     currentSettings: MatrixSettings,
     displaySettings: MatrixSettings,
-    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
-    optimizedSettings: MatrixSettings,
-    onColorClick: (String) -> Unit
+    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.md)
@@ -236,109 +222,21 @@ private fun ColorControls(
         val linkedUiSpecs = setOf(UiAccent, UiOverlay, UiSelectBg)
         val linkingActive = currentSettings.linkUiAndRainColors
 
-        // Render color specs from THEME_SPECS (excluding boolean specs)
         THEME_SPECS.filterIsInstance<ColorSpec>().forEach { spec ->
             val isLinkedSpec = linkingActive && linkedUiSpecs.contains(spec.id)
             ColorControlRow(
-                spec = spec,
-                currentColor = getCurrentColor(displaySettings, spec.id.key),
-                onColorClick = {
+                label = spec.label,
+                color = getCurrentColor(displaySettings, spec.id.key),
+                onColorChange = { color ->
                     if (!isLinkedSpec) {
-                        onColorClick(spec.id.key)
+                        updateColor(settingsViewModel, spec.id.key, color)
                     }
                 },
-                enabled = !isLinkedSpec,
-                helperText = spec.help,
+                help = spec.help,
                 statusText = if (isLinkedSpec) "Linked to rain colors" else null,
-                ui = ui,
-                optimizedSettings = optimizedSettings
-            )
-        }
-    }
-}
-
-/**
- * Color control row using ColorSpec
- */
-@Composable
-private fun ColorControlRow(
-    spec: ColorSpec,
-    currentColor: Long,
-    onColorClick: () -> Unit,
-    enabled: Boolean = true,
-    helperText: String? = null,
-    statusText: String? = null,
-    ui: com.example.matrixscreen.ui.theme.MatrixUIColorScheme,
-    optimizedSettings: MatrixSettings
-) {
-    val contentAlpha = if (enabled) 1f else 0.6f
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = spec.label,
-                style = AppTypography.titleMedium,
-                color = ui.textPrimary
-            )
-            helperText?.let {
-                Text(
-                    text = it,
-                    style = AppTypography.bodySmall,
-                    color = ui.textSecondary
-                )
-            }
-            statusText?.let {
-                Text(
-                    text = it,
-                    style = AppTypography.bodySmall,
-                    color = ui.textAccent
-                )
-            }
-        }
-        
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(com.example.matrixscreen.core.design.DesignTokens.Spacing.sm)
-        ) {
-            // Color swatch
-            Box(
-                modifier = Modifier
-                    .size(com.example.matrixscreen.core.design.DesignTokens.Sizing.colorSwatchSize)
-                    .clip(CircleShape)
-                    .background(Color(currentColor))
-                    .border(
-                        width = 2.dp,
-                        color = ui.selectionBackground,
-                        shape = CircleShape
-                    )
-                    .alpha(contentAlpha)
-                    .let { base ->
-                        if (enabled) {
-                            base.clickable { onColorClick() }
-                        } else {
-                            base
-                        }
-                    }
-            )
-            
-            // Picker button
-            Text(
-                text = "•••",
-                style = AppTypography.bodyMedium,
-                color = ui.textSecondary,
-                modifier = Modifier
-                    .alpha(contentAlpha)
-                    .let { base ->
-                        if (enabled) {
-                            base.clickable { onColorClick() }
-                        } else {
-                            base
-                        }
-                    }
+                enabled = !isLinkedSpec,
+                uiColors = ui,
+                showPickerButton = true
             )
         }
     }

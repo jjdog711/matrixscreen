@@ -1,5 +1,6 @@
 package com.example.matrixscreen.ui.settings.model
 
+import com.example.matrixscreen.data.custom.CustomSymbolSet
 import com.example.matrixscreen.data.model.FlowDirection
 
 /**
@@ -124,17 +125,19 @@ object FontSize : SettingId<Int> {
     override val key = "fontSize" 
 }
 
-// Symbol set settings
-object SymbolSetId : SettingId<String> { 
-    override val key = "symbolSetId" 
+// Symbol set settings (SymbolSetId is user-facing; the others are internal persistence helpers)
+object SymbolSetId : SettingId<String> {
+    override val key = "symbolSetId"
 }
 
-object SavedCustomSets : SettingId<List<com.example.matrixscreen.data.custom.CustomSymbolSet>> { 
-    override val key = "savedCustomSets" 
+// Internal-only: backing store for custom sets managed by bespoke Characters flows
+object SavedCustomSets : SettingId<List<CustomSymbolSet>> {
+    override val key = "savedCustomSets"
 }
 
-object ActiveCustomSetId : SettingId<String?> { 
-    override val key = "activeCustomSetId" 
+// Internal-only: currently selected custom set identifier for bespoke flows
+object ActiveCustomSetId : SettingId<String?> {
+    override val key = "activeCustomSetId"
 }
 
 // Trail length settings

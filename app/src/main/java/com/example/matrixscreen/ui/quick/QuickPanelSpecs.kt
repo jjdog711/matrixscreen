@@ -51,7 +51,7 @@ object QuickPanelSpecs {
         SelectSpec(
             id = Fps,
             label = "FPS",
-            options = listOf(15, 30, 45, 60, 90, 120),
+            options = listOf(30, 60, 90, 120),
             toLabel = { "$it fps" },
             default = 60,
             help = "Target frames per second for the animation"

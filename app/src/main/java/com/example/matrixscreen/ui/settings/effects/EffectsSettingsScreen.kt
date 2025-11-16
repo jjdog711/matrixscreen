@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.ui.settings.components.*
 import com.example.matrixscreen.ui.settings.model.*
@@ -21,6 +22,8 @@ import com.example.matrixscreen.ui.settings.model.EFFECTS_SPECS
 import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
+import kotlin.math.min
 
 /**
  * Effects settings screen with spec-driven UI for glow, jitter, flicker, and mutation controls.
@@ -48,6 +51,14 @@ fun EffectsSettingsScreen(
     val mutationSpec = remember { EFFECTS_SPECS.specFor(Mutation) }
     val maxTrailSpec = remember { EFFECTS_SPECS.specFor(MaxTrailLength) }
     val maxBrightTrailSpec = remember { EFFECTS_SPECS.specFor(MaxBrightTrailLength) }
+    val dynamicBrightTrailSpec = remember(currentSettings.maxTrailLength) {
+        val minRange = maxBrightTrailSpec.range.first
+        val cappedUpper = min(
+            maxBrightTrailSpec.range.last,
+            currentSettings.maxTrailLength.coerceAtLeast(minRange)
+        )
+        maxBrightTrailSpec.copy(range = minRange..cappedUpper)
+    }
     
     SettingsScreenContainer(
         title = null,
@@ -108,7 +119,7 @@ fun EffectsSettingsScreen(
                         )
 
                         RenderSetting(
-                            spec = maxBrightTrailSpec,
+                            spec = dynamicBrightTrailSpec,
                             value = currentSettings.get(MaxBrightTrailLength),
                             onValueChange = { value -> settingsViewModel.updateDraft(MaxBrightTrailLength, value) }
                         )
@@ -132,5 +143,15 @@ fun EffectsSettingsScreen(
         }
         },
         modifier = modifier
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EffectsSettingsScreenPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    EffectsSettingsScreen(
+        settingsViewModel = previewViewModel,
+        onBack = {}
     )
 }

@@ -2,6 +2,7 @@ package com.example.matrixscreen.data.model
 
 import com.example.matrixscreen.data.proto.MatrixSettingsProto
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -19,23 +20,25 @@ class MappersTest {
         
         // When converting to domain
         val domain = proto.toDomain()
-        
+
         // Then default values are mapped correctly (proto3 defaults are 0, but our mapper clamps them)
-        assertEquals(1, domain.schemaVersion) // We set this to 1 in our mapper
+        assertEquals(2, domain.schemaVersion) // Schema coerces to current version
         assertEquals(0.5f, domain.fallSpeed, 0.01f) // Proto3 default is 0.0f, clamped to 0.5f
         assertEquals(50, domain.columnCount) // Proto3 default is 0, clamped to 50
         assertEquals(5, domain.targetFps) // Proto3 default is 0, clamped to 5
         assertEquals(0x00000000L, domain.backgroundColor) // Proto3 default is 0L, valid range
         assertEquals(0x00000000L, domain.headColor) // Proto3 default is 0L, valid range
         assertEquals(FlowDirection.TOP_TO_BOTTOM, domain.flowDirection)
+        assertEquals(MatrixSettings.DEFAULT.symbolSetId, domain.symbolSetId)
+        assertNull(domain.themePresetId)
     }
     
     @Test
     fun `toDomain clamps out-of-range values`() {
         // Given proto with out-of-range values
         val proto = MatrixSettingsProto.newBuilder()
-            .setFallSpeed(10.0f) // Should be clamped to 5.0f
-            .setColumnCount(500) // Should be clamped to 200
+            .setFallSpeed(20.0f) // Should be clamped to 10.0f
+            .setColumnCount(600) // Should be clamped to 500
             .setTargetFps(200) // Should be clamped to 120
             .setGlowIntensity(-1.0f) // Should be clamped to 0.0f
             .setBackgroundColor(-1L) // Should be clamped
@@ -46,8 +49,8 @@ class MappersTest {
         val domain = proto.toDomain()
         
         // Then values are clamped to valid ranges
-        assertTrue("Fall speed should be clamped", domain.fallSpeed <= 5.0f)
-        assertTrue("Column count should be clamped", domain.columnCount <= 200)
+        assertTrue("Fall speed should be clamped", domain.fallSpeed <= 10.0f)
+        assertTrue("Column count should be clamped", domain.columnCount <= 500)
         assertTrue("Target FPS should be clamped", domain.targetFps <= 120)
         assertTrue("Glow intensity should be clamped", domain.glowIntensity >= 0.0f)
         assertTrue("Background color should be valid", domain.backgroundColor in 0x00000000L..0xFFFFFFFFL)
@@ -119,20 +122,41 @@ class MappersTest {
         // Then values are preserved
         assertEquals(originalDomain, convertedDomain)
     }
+
+    @Test
+    fun `bright trail clamp respects max trail length`() {
+        val proto = MatrixSettingsProto.newBuilder()
+            .setMaxTrailLength(30)
+            .setMaxBrightTrailLength(50)
+            .build()
+
+        val domain = proto.toDomain()
+
+        assertEquals(30, domain.maxTrailLength)
+        assertTrue(domain.maxBrightTrailLength <= domain.maxTrailLength)
+    }
     
     @Test
     fun `clampSettingValue clamps individual values correctly`() {
         // Test various clamping scenarios
-        assertEquals(5.0f, clampSettingValue("fallSpeed", 10.0f) as Float, 0.01f)
+        assertEquals(10.0f, clampSettingValue("fallSpeed", 20.0f) as Float, 0.01f)
         assertEquals(0.5f, clampSettingValue("fallSpeed", 0.1f) as Float, 0.01f)
-        assertEquals(200, clampSettingValue("columnCount", 500) as Int)
+        assertEquals(500, clampSettingValue("columnCount", 800) as Int)
         assertEquals(50, clampSettingValue("columnCount", 10) as Int)
         assertEquals(120, clampSettingValue("targetFps", 200) as Int)
         assertEquals(5, clampSettingValue("targetFps", 1) as Int)
         assertEquals(0.0f, clampSettingValue("glowIntensity", -1.0f) as Float, 0.01f)
-        assertEquals(3.0f, clampSettingValue("glowIntensity", 5.0f) as Float, 0.01f)
+        assertEquals(5.0f, clampSettingValue("glowIntensity", 6.0f) as Float, 0.01f)
         assertEquals(32, clampSettingValue("fontSize", 50) as Int)
         assertEquals(8, clampSettingValue("fontSize", 5) as Int)
+        assertEquals(200, clampSettingValue("maxTrailLength", 500) as Int)
+        assertEquals(20, clampSettingValue("maxTrailLength", 5) as Int)
+        assertEquals(40, clampSettingValue("maxBrightTrailLength", 100) as Int)
+        assertEquals(4, clampSettingValue("maxBrightTrailLength", 1) as Int)
+        assertEquals(0.5f, clampSettingValue("columnStartDelay", 1.0f) as Float, 0.0001f)
+        assertEquals(0.0f, clampSettingValue("columnStartDelay", -1.0f) as Float, 0.0001f)
+        assertEquals(0.5f, clampSettingValue("columnRestartDelay", 2.0f) as Float, 0.0001f)
+        assertEquals(0.0f, clampSettingValue("columnRestartDelay", -0.5f) as Float, 0.0001f)
     }
     
     @Test
@@ -153,7 +177,7 @@ class MappersTest {
         val defaultProto = createDefaultProto()
         
         // Then it has valid default values
-        assertEquals(1, defaultProto.schemaVersion)
+        assertEquals(2, defaultProto.schemaVersion)
         assertEquals(2.0f, defaultProto.fallSpeed, 0.01f)
         assertEquals(150, defaultProto.columnCount)
         assertEquals(60, defaultProto.targetFps)

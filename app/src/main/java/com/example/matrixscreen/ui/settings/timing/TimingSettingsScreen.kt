@@ -7,6 +7,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.matrixscreen.data.model.MatrixSettings
 import com.example.matrixscreen.ui.settings.components.*
@@ -20,6 +21,7 @@ import com.example.matrixscreen.ui.theme.AppTypography
 import com.example.matrixscreen.ui.theme.getSafeUIColorScheme
 import com.example.matrixscreen.ui.theme.rememberOptimizedSettings
 import com.example.matrixscreen.ui.theme.ModernTextWithGlow
+import com.example.matrixscreen.ui.preview.rememberPreviewSettingsViewModel
 
 /**
  * Timing settings screen with spawn and respawn delay controls
@@ -114,5 +116,15 @@ fun TimingSettingsScreen(
         }
         },
         modifier = modifier
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TimingSettingsScreenPreview() {
+    val previewViewModel = rememberPreviewSettingsViewModel()
+    TimingSettingsScreen(
+        settingsViewModel = previewViewModel,
+        onBack = {}
     )
 }
